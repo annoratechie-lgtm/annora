@@ -4,8 +4,7 @@ from datetime import date, timedelta
 import httpx
 
 from app.core.config import settings
-from app.api.v1.meal_plans import MealPlanningContext
-from app.schemas.meal_plan import GeneratedMealPlan
+from app.schemas.meal_plan import GeneratedMealPlan, MealPlanningContext
 
 
 SYSTEM_PROMPT = """
@@ -89,7 +88,7 @@ def _prompt(context: MealPlanningContext, start_date: date) -> str:
 
 
 async def generate_meal_plan(context: MealPlanningContext, start_date: date) -> GeneratedMealPlan:
-    if not settings.llm_api_key:
+    if not settings.llm_api_key or not settings.llm_model:
         raise RuntimeError("LLM provider is not configured.")
 
     base_url = settings.llm_base_url.rstrip("/")
@@ -131,7 +130,6 @@ async def generate_meal_plan(context: MealPlanningContext, start_date: date) -> 
         raise RuntimeError("LLM returned an invalid structured meal plan.") from exc
 
     plan = GeneratedMealPlan.model_validate(parsed)
-
     expected_dates = [start_date + timedelta(days=i) for i in range(7)]
     actual_dates = [day.date for day in plan.days]
     if actual_dates != expected_dates:
