@@ -1,8 +1,8 @@
 from datetime import date, timedelta
-from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
 from app.core.config import settings
@@ -11,6 +11,7 @@ from app.services.meal_plan_repository import MealPlanRepositoryError, save_meal
 from app.services.meal_planner import generate_meal_plan as run_llm_meal_plan
 
 router = APIRouter(prefix="/meal-plans", tags=["meal-plans"])
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 class GenerateMealPlanRequest(BaseModel):
@@ -27,17 +28,30 @@ class GenerateMealPlanResponse(BaseModel):
     days: int = 7
 
 
-async def _get_authenticated_user_id(authorization: str | None) -> str:
+async def _get_authenticated_user_id(
+    credentials: HTTPAuthorizationCredentials | None,
+) -> str:
     """Validate the Supabase access token and return the authenticated user id."""
-    if not authorization or not authorization.lower().startswith("bearer "):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing Bearer access token.")
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing Bearer access token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     if not settings.supabase_url or not settings.supabase_service_role_key:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Supabase backend configuration is missing.")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Supabase backend configuration is missing.",
+        )
 
-    token = authorization.split(" ", 1)[1].strip()
+    token = credentials.credentials.strip()
     if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Bearer access token.")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Bearer access token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     try:
         async with httpx.AsyncClient(timeout=10) as client:
@@ -49,14 +63,25 @@ async def _get_authenticated_user_id(authorization: str | None) -> str:
                 },
             )
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Could not reach Supabase Auth.") from exc
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not reach Supabase Auth.",
+        ) from exc
 
     if response.status_code != 200:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired access token.")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired access token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     user_id = response.json().get("id")
     if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authenticated user id was not returned by Supabase.")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authenticated user id was not returned by Supabase.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return user_id
 
 
@@ -89,14 +114,23 @@ async def _load_planning_context(user_id: str) -> MealPlanningContext:
                 headers=base_headers,
             )
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Could not reach Supabase.") from exc
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not reach Supabase.",
+        ) from exc
 
     if profile_response.status_code != 200 or exclusions_response.status_code != 200:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Could not load meal-planning data from Supabase.")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Could not load meal-planning data from Supabase.",
+        )
 
     profiles = profile_response.json()
     if not profiles:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Onboarding profile not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Onboarding profile not found.",
+        )
 
     profile = profiles[0]
     goals = profile.get("dietary_goals") or []
@@ -116,15 +150,18 @@ async def _load_planning_context(user_id: str) -> MealPlanningContext:
 @router.post("/generate", response_model=GenerateMealPlanResponse)
 async def generate_meal_plan(
     request: GenerateMealPlanRequest,
-    authorization: Annotated[str | None, Header()] = None,
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ):
     """Generate, validate, and persist a 7-day meal plan plus grocery list."""
-    user_id = await _get_authenticated_user_id(authorization)
+    user_id = await _get_authenticated_user_id(credentials)
     context = await _load_planning_context(user_id)
     start_date = request.start_date or date.today()
 
     if not settings.llm_api_key or not settings.llm_model:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="LLM provider is not configured.")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="LLM provider is not configured.",
+        )
 
     try:
         plan = await run_llm_meal_plan(context, start_date)
