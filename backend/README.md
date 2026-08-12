@@ -5,25 +5,25 @@ FastAPI service for Annora's server-side meal-planning orchestration.
 ## Current scope
 
 - Health check endpoints
-- Authenticated `POST /api/v1/meal-plans/generate` scaffold
+- Authenticated `POST /api/v1/meal-plans/generate`
 - Supabase-backed planning context loading from onboarding data and dietary exclusions
+- xAI/Grok structured 7-day meal-plan generation
+- Persistence of meal plans, meals, meal ingredients, and grocery lists/items
 
 The first meal-planning version generates a **7-day** plan. Pantry/inventory is intentionally out of scope for this milestone.
 
-## Planned generation flow
+## Generation flow
 
 ```text
 Flutter
   -> FastAPI
   -> validate Supabase access token
   -> load onboarding profile + dietary exclusions
-  -> LLM
+  -> xAI / Grok
   -> validate structured 7-day plan
   -> persist meal plan + meals + ingredients
-  -> calculate grocery list
+  -> aggregate ingredients into grocery list
 ```
-
-The LLM provider call and persistence layer are the next implementation step. The current endpoint deliberately returns a clear `501`/`503` instead of returning fake meal data.
 
 ## Setup
 
@@ -34,13 +34,15 @@ source .venv/bin/activate   # on Windows: .venv\\Scripts\\activate
 pip install -r requirements.txt
 ```
 
-Set these environment variables locally:
+Copy `.env.example` to `.env` and set your local secrets:
 
 ```env
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-LLM_API_KEY=your-server-side-llm-key
-LLM_MODEL=your-model-name
+LLM_API_KEY=your-xai-api-key
+LLM_MODEL=grok-4.5
+LLM_BASE_URL=https://api.x.ai/v1
+LLM_TIMEOUT_SECONDS=90
 ```
 
 **Never commit `.env` or secret keys.**
