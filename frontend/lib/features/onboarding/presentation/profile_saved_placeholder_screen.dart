@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_theme.dart';
+import '../../home/presentation/home_screen.dart';
 
+/// Temporary completion route kept under onboarding while the home feature
+/// is being introduced. The actual post-onboarding destination is HomeScreen.
 class ProfileSavedPlaceholderScreen extends StatelessWidget {
   const ProfileSavedPlaceholderScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
-        child: Text('Household basics saved ✓', style: TextStyle(color: AppColors.textPrimary)),
-      ),
-    );
+    return const HomeScreen();
   }
 }
