@@ -9,13 +9,11 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_service_role_key: str = ""
 
-    # Server-side LLM configuration. Keep the key out of source control.
-    # The default API shape is OpenAI-compatible so the provider can be swapped
-    # without changing the meal-planning contract.
+    # xAI / Grok server-side configuration. Keep the API key out of source control.
     llm_api_key: str = ""
-    llm_model: str = ""
-    llm_base_url: str = "https://api.openai.com/v1"
-    llm_timeout_seconds: float = 60.0
+    llm_model: str = "grok-4.5"
+    llm_base_url: str = "https://api.x.ai/v1"
+    llm_timeout_seconds: float = 90.0
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
