@@ -21,6 +21,16 @@ def _headers() -> dict[str, str]:
     }
 
 
+def _raise_supabase_error(action: str, response: httpx.Response) -> None:
+    if response.status_code >= 400:
+        detail = response.text.strip()
+        if len(detail) > 500:
+            detail = detail[:500]
+        raise MealPlanRepositoryError(
+            f"{action} failed ({response.status_code}): {detail or 'Supabase returned an empty error.'}"
+        )
+
+
 async def save_meal_plan(user_id: str, start_date: date, plan: GeneratedMealPlan) -> str:
     headers = _headers()
     base_url = settings.supabase_url.rstrip("/")
@@ -38,8 +48,7 @@ async def save_meal_plan(user_id: str, start_date: date, plan: GeneratedMealPlan
                 "generation_source": "llm",
             },
         )
-        if plan_response.status_code >= 400:
-            raise MealPlanRepositoryError("Could not save meal plan.")
+        _raise_supabase_error("Saving meal plan", plan_response)
 
         plan_rows = plan_response.json()
         if not plan_rows:
@@ -73,8 +82,7 @@ async def save_meal_plan(user_id: str, start_date: date, plan: GeneratedMealPlan
             headers=headers,
             json=meal_rows,
         )
-        if meal_response.status_code >= 400:
-            raise MealPlanRepositoryError("Could not save generated meals.")
+        _raise_supabase_error("Saving generated meals", meal_response)
 
         saved_meals = meal_response.json()
         if len(saved_meals) != len(meal_rows):
