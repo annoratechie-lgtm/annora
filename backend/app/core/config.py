@@ -8,6 +8,7 @@ class Settings(BaseSettings):
 
     supabase_url: str = ""
     supabase_service_role_key: str = ""
+    dev_user_id: str = ""
 
     # Groq server-side configuration. Keep the API key out of source control.
     grokapi: str = ""
