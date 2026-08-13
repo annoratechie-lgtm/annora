@@ -1,7 +1,7 @@
 import json
 from datetime import date, timedelta
 
-import httpx
+from groq import Groq
 
 from app.core.config import settings
 from app.schemas.meal_plan import GeneratedMealPlan, MealPlanningContext
@@ -87,47 +87,48 @@ def _prompt(context: MealPlanningContext, start_date: date) -> str:
     )
 
 
+def _extract_json(content: str) -> dict:
+    """Parse JSON returned by the model, tolerating accidental markdown fences."""
+    cleaned = content.strip()
+    if cleaned.startswith("```"):
+        lines = cleaned.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        cleaned = "\n".join(lines).strip()
+    return json.loads(cleaned)
+
+
 async def generate_meal_plan(context: MealPlanningContext, start_date: date) -> GeneratedMealPlan:
-    if not settings.llm_api_key or not settings.llm_model:
-        raise RuntimeError("LLM provider is not configured.")
+    if not settings.grokapi or not settings.llm_model:
+        raise RuntimeError("Groq provider is not configured.")
 
-    base_url = settings.llm_base_url.rstrip("/")
-    payload = {
-        "model": settings.llm_model,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": _prompt(context, start_date)},
-        ],
-        "temperature": 0.4,
-        "response_format": {
-            "type": "json_schema",
-            "json_schema": {
-                "name": "annora_seven_day_meal_plan",
-                "strict": True,
-                "schema": _schema(),
-            },
-        },
-    }
+    client = Groq(
+        api_key=settings.grokapi,
+        timeout=settings.llm_timeout_seconds,
+    )
 
-    async with httpx.AsyncClient(timeout=settings.llm_timeout_seconds) as client:
-        response = await client.post(
-            f"{base_url}/chat/completions",
-            headers={
-                "Authorization": f"Bearer {settings.llm_api_key}",
-                "Content-Type": "application/json",
-            },
-            json=payload,
-        )
-
-    if response.status_code >= 400:
-        raise RuntimeError(f"LLM provider returned HTTP {response.status_code}.")
-
-    data = response.json()
     try:
-        content = data["choices"][0]["message"]["content"]
-        parsed = json.loads(content)
-    except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:
-        raise RuntimeError("LLM returned an invalid structured meal plan.") from exc
+        completion = client.chat.completions.create(
+            model=settings.llm_model,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": _prompt(context, start_date)},
+            ],
+            temperature=settings.llm_temperature,
+            response_format={"type": "json_object"},
+        )
+    except Exception as exc:
+        raise RuntimeError(f"Groq request failed: {exc}") from exc
+
+    try:
+        content = completion.choices[0].message.content
+        if not content:
+            raise ValueError("empty model response")
+        parsed = _extract_json(content)
+    except (IndexError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise RuntimeError("Groq returned an invalid structured meal plan.") from exc
 
     plan = GeneratedMealPlan.model_validate(parsed)
     expected_dates = [start_date + timedelta(days=i) for i in range(7)]
