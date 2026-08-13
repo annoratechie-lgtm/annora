@@ -13,9 +13,9 @@ class MealPlanningContext(BaseModel):
 
 
 class DailyMeals(BaseModel):
-    breakfast: list[str] = Field(min_length=1)
-    lunch: list[str] = Field(min_length=1)
-    dinner: list[str] = Field(min_length=1)
+    breakfast: str = Field(min_length=1)
+    lunch: str = Field(min_length=1)
+    dinner: str = Field(min_length=1)
 
 
 class GeneratedMealPlan(BaseModel):
