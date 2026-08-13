@@ -31,7 +31,10 @@ class GenerateMealPlanResponse(BaseModel):
 async def _get_authenticated_user_id(
     credentials: HTTPAuthorizationCredentials | None,
 ) -> str:
-    """Validate the Supabase access token and return the authenticated user id."""
+    """Use DEV_USER_ID locally; validate a Supabase access token otherwise."""
+    if settings.environment.lower() == "development" and settings.dev_user_id:
+        return settings.dev_user_id
+
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -157,10 +160,10 @@ async def generate_meal_plan(
     context = await _load_planning_context(user_id)
     start_date = request.start_date or date.today()
 
-    if not settings.llm_api_key or not settings.llm_model:
+    if not settings.grokapi or not settings.llm_model:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="LLM provider is not configured.",
+            detail="Groq provider is not configured.",
         )
 
     try:
