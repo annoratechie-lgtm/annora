@@ -35,6 +35,28 @@ Example:
 """.strip()
 
 
+REPAIR_PROMPT = """
+You are a JSON repair step for Annora's meal-planning engine.
+The previous model response below is not in the required schema.
+Convert it into the exact required schema without changing the user's dietary constraints.
+Return ONLY JSON. Do not add markdown or explanation.
+
+Required top-level shape:
+{"days":[...]}
+
+Requirements:
+- "days" is an array of exactly 7 objects.
+- Dates are consecutive and must start on the requested start date.
+- Each day has "date" and "meals".
+- Each meal has "type", "name", "description", "prep_time_minutes", "nutrition", and "ingredients".
+- Meal type is breakfast, lunch, dinner, or snack.
+- Each ingredient has "name", positive numeric "quantity", and "unit".
+- "ingredients" is always an array.
+- "nutrition" is always an object.
+- Do not add top-level cost, grocery, budget, or summary fields.
+""".strip()
+
+
 def _prompt(context: MealPlanningContext, start_date: date) -> str:
     return json.dumps(
         {
@@ -61,6 +83,46 @@ def _extract_json(content: str) -> dict:
             lines = lines[:-1]
         cleaned = "\n".join(lines).strip()
     return json.loads(cleaned)
+
+
+def _validate_plan(parsed: dict, start_date: date) -> GeneratedMealPlan:
+    plan = GeneratedMealPlan.model_validate(parsed)
+    expected_dates = [start_date + timedelta(days=i) for i in range(7)]
+    actual_dates = [day.date for day in plan.days]
+    if actual_dates != expected_dates:
+        raise ValueError("LLM returned dates outside the requested 7-day window.")
+    return plan
+
+
+def _repair_plan(client: Groq, parsed: dict, start_date: date) -> GeneratedMealPlan:
+    repair_input = json.dumps(
+        {
+            "requested_start_date": start_date.isoformat(),
+            "requested_end_date": (start_date + timedelta(days=6)).isoformat(),
+            "invalid_response": parsed,
+        },
+        ensure_ascii=False,
+    )
+
+    try:
+        completion = client.chat.completions.create(
+            model=settings.llm_model,
+            messages=[
+                {"role": "system", "content": REPAIR_PROMPT},
+                {"role": "user", "content": repair_input},
+            ],
+            temperature=0,
+            response_format={"type": "json_object"},
+        )
+        content = completion.choices[0].message.content
+        if not content:
+            raise ValueError("empty repair response")
+        repaired = _extract_json(content)
+        return _validate_plan(repaired, start_date)
+    except Exception as exc:
+        raise RuntimeError(
+            "Groq returned a meal plan with an invalid structure and the repair attempt failed."
+        ) from exc
 
 
 async def generate_meal_plan(context: MealPlanningContext, start_date: date) -> GeneratedMealPlan:
@@ -94,13 +156,6 @@ async def generate_meal_plan(context: MealPlanningContext, start_date: date) -> 
         raise RuntimeError("Groq returned invalid JSON.") from exc
 
     try:
-        plan = GeneratedMealPlan.model_validate(parsed)
-    except Exception as exc:
-        raise RuntimeError("Groq returned a meal plan with an invalid structure. Expected a top-level 'days' array with 7 days and structured meals/ingredients.") from exc
-
-    expected_dates = [start_date + timedelta(days=i) for i in range(7)]
-    actual_dates = [day.date for day in plan.days]
-    if actual_dates != expected_dates:
-        raise RuntimeError("LLM returned dates outside the requested 7-day window.")
-
-    return plan
+        return _validate_plan(parsed, start_date)
+    except Exception:
+        return _repair_plan(client, parsed, start_date)
