@@ -23,7 +23,6 @@ class GenerateMealPlanResponse(BaseModel):
     status: str
     message: str
     meal_plan_id: str
-    grocery_list_id: str
     start_date: date
     end_date: date
     days: int = 7
@@ -164,7 +163,7 @@ async def generate_meal_plan(
     request: GenerateMealPlanRequest,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ):
-    """Generate, validate, and persist a 7-day meal plan plus grocery list."""
+    """Generate, validate, and persist a 7-day meal plan only."""
     user_id = await _get_authenticated_user_id(request.user_id, credentials)
     context = await _load_planning_context(user_id)
     start_date = request.start_date or date.today()
@@ -177,15 +176,14 @@ async def generate_meal_plan(
 
     try:
         plan = await run_llm_meal_plan(context, start_date)
-        meal_plan_id, grocery_list_id = await save_meal_plan(user_id, start_date, plan)
+        meal_plan_id = await save_meal_plan(user_id, start_date, plan)
     except (RuntimeError, MealPlanRepositoryError) as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
     return GenerateMealPlanResponse(
         status="active",
-        message="7-day meal plan and grocery list generated successfully.",
+        message="7-day meal plan generated successfully.",
         meal_plan_id=meal_plan_id,
-        grocery_list_id=grocery_list_id,
         start_date=start_date,
         end_date=start_date + timedelta(days=6),
     )
