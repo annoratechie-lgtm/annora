@@ -16,60 +16,23 @@ Return exactly 7 consecutive dates beginning on the requested start date.
 Each day should normally contain breakfast, lunch, and dinner.
 Every meal must include the ingredients and quantities needed to prepare it.
 Do not invent medical claims or present nutrition information as medical advice.
-Return only the requested JSON structure.
+
+OUTPUT FORMAT IS STRICT:
+Return ONLY JSON with exactly this top-level shape: {"days": [...]}
+The "days" value must be an array of exactly 7 day objects.
+Never use dates as JSON keys. Never return a top-level cost, grocery, budget, or summary field.
+Each day must contain "date" and "meals".
+Each meal must contain "type", "name", "description", "prep_time_minutes", "nutrition", and "ingredients".
+The meal type must be breakfast, lunch, dinner, or snack.
+Each ingredient must contain "name", positive numeric "quantity", and "unit".
+"ingredients" must be an array, not a string or object.
+"nutrition" must be an object.
+"description" may be null.
+"prep_time_minutes" may be null.
+
+Example:
+{"days":[{"date":"YYYY-MM-DD","meals":[{"type":"breakfast","name":"Meal name","description":"Short description","prep_time_minutes":15,"nutrition":{},"ingredients":[{"name":"ingredient","quantity":1,"unit":"cup"}]}]}]}
 """.strip()
-
-
-def _schema() -> dict:
-    return {
-        "type": "object",
-        "additionalProperties": False,
-        "properties": {
-            "days": {
-                "type": "array",
-                "minItems": 7,
-                "maxItems": 7,
-                "items": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "properties": {
-                        "date": {"type": "string", "format": "date"},
-                        "meals": {
-                            "type": "array",
-                            "minItems": 1,
-                            "items": {
-                                "type": "object",
-                                "additionalProperties": False,
-                                "properties": {
-                                    "type": {"type": "string", "enum": ["breakfast", "lunch", "dinner", "snack"]},
-                                    "name": {"type": "string"},
-                                    "description": {"type": ["string", "null"]},
-                                    "prep_time_minutes": {"type": ["integer", "null"]},
-                                    "nutrition": {"type": "object"},
-                                    "ingredients": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "object",
-                                            "additionalProperties": False,
-                                            "properties": {
-                                                "name": {"type": "string"},
-                                                "quantity": {"type": "number", "exclusiveMinimum": 0},
-                                                "unit": {"type": "string"},
-                                            },
-                                            "required": ["name", "quantity", "unit"],
-                                        },
-                                    },
-                                },
-                                "required": ["type", "name", "description", "prep_time_minutes", "nutrition", "ingredients"],
-                            },
-                        },
-                    },
-                    "required": ["date", "meals"],
-                },
-            }
-        },
-        "required": ["days"],
-    }
 
 
 def _prompt(context: MealPlanningContext, start_date: date) -> str:
@@ -128,9 +91,13 @@ async def generate_meal_plan(context: MealPlanningContext, start_date: date) -> 
             raise ValueError("empty model response")
         parsed = _extract_json(content)
     except (IndexError, TypeError, ValueError, json.JSONDecodeError) as exc:
-        raise RuntimeError("Groq returned an invalid structured meal plan.") from exc
+        raise RuntimeError("Groq returned invalid JSON.") from exc
 
-    plan = GeneratedMealPlan.model_validate(parsed)
+    try:
+        plan = GeneratedMealPlan.model_validate(parsed)
+    except Exception as exc:
+        raise RuntimeError("Groq returned a meal plan with an invalid structure. Expected a top-level 'days' array with 7 days and structured meals/ingredients.") from exc
+
     expected_dates = [start_date + timedelta(days=i) for i in range(7)]
     actual_dates = [day.date for day in plan.days]
     if actual_dates != expected_dates:
