@@ -5,6 +5,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/theme/app_theme.dart';
 import 'features/home/presentation/home_screen.dart';
+import 'features/meal_plan/data/meal_plan_api.dart';
+import 'features/meal_plan/data/meal_plan_config.dart';
+import 'features/meal_plan/presentation/meal_plan_screen.dart';
 import 'features/onboarding/data/onboarding_repository.dart';
 import 'features/onboarding/presentation/household_basics_screen.dart';
 import 'features/onboarding/presentation/welcome_screen.dart';
@@ -40,6 +43,8 @@ class AnnoraApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mealPlanApi = MealPlanApi(baseUrl: mealPlanBackendUrl);
+
     return MaterialApp(
       title: 'Annora',
       debugShowCheckedModeBanner: false,
@@ -61,7 +66,7 @@ class AnnoraApp extends StatelessWidget {
 
               final profile = profileSnapshot.data;
               return profile?.onboardingCompleted == true
-                  ? const HomeScreen()
+                  ? MealPlanScreen(api: mealPlanApi)
                   : const HouseholdBasicsScreen();
             },
           );
