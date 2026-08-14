@@ -57,25 +57,40 @@ async def save_meal_plan(user_id: str, start_date: date, plan: GeneratedMealPlan
 
         meal_rows = []
         for meal_date, meals in sorted(plan.days.items()):
-            for meal_type, meal_names in (
-                ("breakfast", meals.breakfast),
-                ("lunch", meals.lunch),
-                ("dinner", meals.dinner),
-            ):
-                for meal_name in meal_names:
-                    meal_rows.append({
+            meal_rows.extend(
+                [
+                    {
                         "meal_plan_id": plan_id,
                         "meal_date": meal_date.isoformat(),
-                        "meal_type": meal_type,
-                        "name": meal_name,
+                        "meal_type": "breakfast",
+                        "name": meals.breakfast,
                         "description": None,
                         "status": "planned",
                         "prep_time_minutes": None,
                         "nutrition": {},
-                    })
-
-        if not meal_rows:
-            raise MealPlanRepositoryError("Generated meal plan contains no meals.")
+                    },
+                    {
+                        "meal_plan_id": plan_id,
+                        "meal_date": meal_date.isoformat(),
+                        "meal_type": "lunch",
+                        "name": meals.lunch,
+                        "description": None,
+                        "status": "planned",
+                        "prep_time_minutes": None,
+                        "nutrition": {},
+                    },
+                    {
+                        "meal_plan_id": plan_id,
+                        "meal_date": meal_date.isoformat(),
+                        "meal_type": "dinner",
+                        "name": meals.dinner,
+                        "description": None,
+                        "status": "planned",
+                        "prep_time_minutes": None,
+                        "nutrition": {},
+                    },
+                ]
+            )
 
         meal_response = await client.post(
             f"{base_url}/rest/v1/meals",
