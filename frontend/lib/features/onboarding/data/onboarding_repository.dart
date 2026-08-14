@@ -4,20 +4,22 @@ class OnboardingProfile {
   final int familySize;
   final double monthlyBudget;
   final String dietaryPreference;
+  final List<String> dietaryGoals;
   final bool onboardingCompleted;
 
   OnboardingProfile({
     required this.familySize,
     required this.monthlyBudget,
     required this.dietaryPreference,
+    required this.dietaryGoals,
     required this.onboardingCompleted,
   });
 
-  factory OnboardingProfile.fromMap(Map<String, dynamic> map) =>
-      OnboardingProfile(
+  factory OnboardingProfile.fromMap(Map<String, dynamic> map) => OnboardingProfile(
         familySize: map['family_size'] as int,
         monthlyBudget: (map['monthly_budget'] as num).toDouble(),
         dietaryPreference: map['dietary_preference'] as String,
+        dietaryGoals: (map['dietary_goals'] as List<dynamic>? ?? []).cast<String>(),
         onboardingCompleted: map['onboarding_completed'] as bool,
       );
 }
@@ -39,38 +41,32 @@ class OnboardingRepository {
     return OnboardingProfile.fromMap(row);
   }
 
-  /// Upsert rather than only update: the database trigger normally creates a
-  /// profile at sign-up, but this also recovers safely if a user account was
-  /// created before that trigger was deployed.
+  /// Updates, not inserts -- the handle_new_user trigger already created
+  /// this row (with placeholder values) when the account was created.
+  /// dietaryGoals may be an empty list -- it's optional and skippable.
   Future<void> saveHouseholdBasics({
     required int familySize,
     required double monthlyBudget,
     required String dietaryPreference,
-  }) async {
-    await _client
-        .from('onboarding_profiles')
-        .upsert(
-          {
-            'user_id': _userId,
-            'family_size': familySize,
-            'monthly_budget': monthlyBudget,
-            'dietary_preference': dietaryPreference,
-          },
-          onConflict: 'user_id',
-        )
-        .select('user_id')
-        .single();
+    required List<String> dietaryGoals,
+  }) {
+    return _client.from('onboarding_profiles').update({
+      'family_size': familySize,
+      'monthly_budget': monthlyBudget,
+      'dietary_preference': dietaryPreference,
+      'dietary_goals': dietaryGoals,
+    }).eq('user_id', _userId);
   }
 
-  /// Saves the optional preferences from the final onboarding step and marks
-  /// the profile complete. Exclusions are replaced so this remains safe if a
-  /// user revisits the step before the app has a Settings screen.
+  /// Saves the final onboarding preferences, replaces dietary exclusions,
+  /// and marks the onboarding profile as complete.
   Future<void> completeOnboarding({
     required List<String> dietaryGoals,
     required List<String> exclusions,
   }) async {
     final cleanedExclusions = <String>[];
     final seen = <String>{};
+
     for (final exclusion in exclusions) {
       final value = exclusion.trim();
       if (value.isNotEmpty && seen.add(value.toLowerCase())) {
@@ -78,16 +74,22 @@ class OnboardingRepository {
       }
     }
 
-    await _client.from('dietary_exclusions').delete().eq('user_id', _userId);
+    await _client
+        .from('dietary_exclusions')
+        .delete()
+        .eq('user_id', _userId);
+
     if (cleanedExclusions.isNotEmpty) {
       await _client.from('dietary_exclusions').insert(
-            cleanedExclusions
-                .map((ingredient) => {
-                      'user_id': _userId,
-                      'ingredient_name': ingredient,
-                    })
-                .toList(),
-          );
+        cleanedExclusions
+            .map(
+              (ingredient) => {
+                'user_id': _userId,
+                'ingredient_name': ingredient,
+              },
+            )
+            .toList(),
+      );
     }
 
     await _client
@@ -95,10 +97,9 @@ class OnboardingRepository {
         .update({
           'dietary_goals': dietaryGoals,
           'onboarding_completed': true,
-          'onboarding_completed_at': DateTime.now().toUtc().toIso8601String(),
+          'onboarding_completed_at':
+              DateTime.now().toUtc().toIso8601String(),
         })
-        .eq('user_id', _userId)
-        .select('user_id')
-        .single();
+        .eq('user_id', _userId);
   }
 }
