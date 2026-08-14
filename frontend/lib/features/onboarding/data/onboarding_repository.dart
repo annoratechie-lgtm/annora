@@ -41,21 +41,22 @@ class OnboardingRepository {
     return OnboardingProfile.fromMap(row);
   }
 
-  /// Updates, not inserts -- the handle_new_user trigger already created
-  /// this row (with placeholder values) when the account was created.
-  /// dietaryGoals may be an empty list -- it's optional and skippable.
+  /// Saves the household information collected in onboarding step 1.
+  /// Dietary goals are collected in the following step and saved by
+  /// completeOnboarding().
   Future<void> saveHouseholdBasics({
     required int familySize,
     required double monthlyBudget,
     required String dietaryPreference,
-    required List<String> dietaryGoals,
-  }) {
-    return _client.from('onboarding_profiles').update({
-      'family_size': familySize,
-      'monthly_budget': monthlyBudget,
-      'dietary_preference': dietaryPreference,
-      'dietary_goals': dietaryGoals,
-    }).eq('user_id', _userId);
+  }) async {
+    await _client
+        .from('onboarding_profiles')
+        .update({
+          'family_size': familySize,
+          'monthly_budget': monthlyBudget,
+          'dietary_preference': dietaryPreference,
+        })
+        .eq('user_id', _userId);
   }
 
   /// Saves the final onboarding preferences, replaces dietary exclusions,
