@@ -7,34 +7,62 @@ from app.core.config import settings
 from app.schemas.meal_plan import GeneratedMealPlan, MealPlanningContext
 
 
-SYSTEM_PROMPT = """
+def _expected_dates(start_date: date) -> list[str]:
+    return [(start_date + timedelta(days=i)).isoformat() for i in range(7)]
+
+
+def _build_system_prompt(start_date: date) -> str:
+    dates = _expected_dates(start_date)
+    return f"""
 You are Annora's household meal-planning engine.
 Create a practical 7-day meal plan for the household context provided.
 Respect dietary preference, dietary goals, exclusions, family size, and budget.
 
-Return ONLY valid JSON. Do not return markdown, explanations, ingredients, quantities,
-nutrition, prep times, grocery lists, or costs.
+OUTPUT RULES — FOLLOW EXACTLY:
+1. Return ONLY one valid JSON object. No markdown, no ``` fences, no explanation.
+2. The JSON object must contain EXACTLY these 7 top-level keys, in this order:
+   {json.dumps(dates)}
+3. Do NOT use a top-level "days" wrapper.
+4. Each date must contain EXACTLY these 3 keys: "breakfast", "lunch", "dinner".
+5. Each breakfast, lunch, and dinner MUST be an array containing EXACTLY ONE string.
+6. Do not return two meal options. Choose one meal for each slot.
+7. Do not add ingredients, quantities, nutrition, prep times, costs, grocery lists, snacks, or any other keys.
+8. The first date MUST be {dates[0]} and the last date MUST be {dates[-1]}.
+9. Every one of the 7 dates above MUST be present. Never stop after a partial plan.
 
-The JSON must contain exactly 7 consecutive date keys, starting on the requested
-start date. Each date must contain exactly three keys: breakfast, lunch, dinner.
-Each meal value must be an array containing exactly one meal-name string.
-
-Return this exact shape:
-{
-  "YYYY-MM-DD": {
+Use this exact structure and replace the example meal names:
+{{
+  "{dates[0]}": {{
     "breakfast": ["meal name"],
     "lunch": ["meal name"],
     "dinner": ["meal name"]
-  }
-}
+  }},
+  "{dates[1]}": {{
+    "breakfast": ["meal name"],
+    "lunch": ["meal name"],
+    "dinner": ["meal name"]
+  }},
+  "...": {{
+    "breakfast": ["meal name"],
+    "lunch": ["meal name"],
+    "dinner": ["meal name"]
+  }},
+  "{dates[-1]}": {{
+    "breakfast": ["meal name"],
+    "lunch": ["meal name"],
+    "dinner": ["meal name"]
+  }}
+}}
 """.strip()
 
 
 def _prompt(context: MealPlanningContext, start_date: date) -> str:
+    dates = _expected_dates(start_date)
     return json.dumps(
         {
-            "start_date": start_date.isoformat(),
-            "end_date": (start_date + timedelta(days=6)).isoformat(),
+            "required_dates_in_order": dates,
+            "start_date": dates[0],
+            "end_date": dates[-1],
             "family_size": context.family_size,
             "monthly_budget": context.monthly_budget,
             "dietary_preference": context.dietary_preference,
@@ -61,13 +89,7 @@ def _extract_json(content: str) -> dict:
 
 
 def _normalize_plan(parsed: dict) -> dict:
-    """Accept the two common JSON-object forms returned by Llama.
-
-    Preferred form is the date map directly. If the model wraps that map in a
-    top-level `days` object, unwrap it. Also normalize a single meal string to
-    the required one-item array; this keeps the API contract strict while being
-    tolerant of minor LLM formatting variation.
-    """
+    """Normalize minor formatting variation while keeping one meal per slot."""
     if isinstance(parsed.get("days"), dict):
         parsed = parsed["days"]
 
@@ -81,10 +103,12 @@ def _normalize_plan(parsed: dict) -> dict:
             value = day.get(meal_type)
             if isinstance(value, str):
                 value = [value]
-            if not isinstance(value, list) or not value or not all(isinstance(x, str) for x in value):
-                raise ValueError(f"{meal_date}.{meal_type} must be an array of meal names")
+            if not isinstance(value, list) or len(value) != 1 or not isinstance(value[0], str):
+                raise ValueError(f"{meal_date}.{meal_type} must contain exactly one meal-name string")
             normalized_day[meal_type] = value
 
+        if set(day.keys()) != {"breakfast", "lunch", "dinner"}:
+            raise ValueError(f"{meal_date} contains unexpected meal keys")
         normalized[meal_date] = normalized_day
 
     return normalized
@@ -100,6 +124,8 @@ def _validate_plan(parsed: dict, start_date: date) -> GeneratedMealPlan:
             f"expected dates {[d.isoformat() for d in expected_dates]}, "
             f"got {[d.isoformat() for d in actual_dates]}"
         )
+    if len(plan.days) != 7:
+        raise ValueError(f"expected exactly 7 days, got {len(plan.days)}")
     return plan
 
 
@@ -111,15 +137,17 @@ async def generate_meal_plan(context: MealPlanningContext, start_date: date) -> 
         api_key=settings.grokapi,
         timeout=settings.llm_timeout_seconds,
     )
+    expected_dates = _expected_dates(start_date)
 
     try:
         completion = client.chat.completions.create(
             model=settings.llm_model,
             messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "system", "content": _build_system_prompt(start_date)},
                 {"role": "user", "content": _prompt(context, start_date)},
             ],
             temperature=settings.llm_temperature,
+            max_tokens=2048,
             response_format={"type": "json_object"},
         )
     except Exception as exc:
@@ -133,9 +161,10 @@ async def generate_meal_plan(context: MealPlanningContext, start_date: date) -> 
         parsed = _extract_json(content)
         return _validate_plan(parsed, start_date)
     except Exception as exc:
-        preview = content[:1000].replace("\n", " ")
+        preview = content[:1500].replace("\n", " ")
         raise RuntimeError(
             "Groq returned a meal plan with an invalid structure. "
-            f"Expected 7 date keys with breakfast/lunch/dinner arrays. "
+            f"Expected exactly these 7 dates: {expected_dates}. "
+            f"Each date must have exactly one breakfast, lunch, and dinner. "
             f"Model response preview: {preview}"
         ) from exc
