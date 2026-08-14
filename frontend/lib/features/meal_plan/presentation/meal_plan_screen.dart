@@ -31,7 +31,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   void _reload() {
-    setState(() => _future = widget.api.fetchMealPlan());
+    final future = widget.api.fetchMealPlan();
+    setState(() {
+      _future = future;
+    });
   }
 
   @override
