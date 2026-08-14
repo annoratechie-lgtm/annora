@@ -13,9 +13,11 @@ class MealPlanningContext(BaseModel):
 
 
 class DailyMeals(BaseModel):
-    breakfast: str = Field(min_length=1)
-    lunch: str = Field(min_length=1)
-    dinner: str = Field(min_length=1)
+    # The API/LLM contract uses arrays, while the current database schema
+    # permits one meal per meal type per date.
+    breakfast: list[str] = Field(min_length=1, max_length=1)
+    lunch: list[str] = Field(min_length=1, max_length=1)
+    dinner: list[str] = Field(min_length=1, max_length=1)
 
 
 class GeneratedMealPlan(BaseModel):
