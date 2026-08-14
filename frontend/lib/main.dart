@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/theme/app_theme.dart';
-import 'features/home/presentation/home_screen.dart';
 import 'features/meal_plan/data/meal_plan_api.dart';
 import 'features/meal_plan/data/meal_plan_config.dart';
 import 'features/meal_plan/presentation/meal_plan_screen.dart';
