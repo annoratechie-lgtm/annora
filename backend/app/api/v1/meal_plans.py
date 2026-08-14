@@ -19,15 +19,11 @@ class GenerateMealPlanRequest(BaseModel):
     start_date: date | None = None
 
 
-class SaveMealPlanRequest(BaseModel):
-    user_id: str
-    plan: GeneratedMealPlan
-
-
-class SaveMealPlanResponse(BaseModel):
+class GenerateMealPlanResponse(BaseModel):
     status: str
     message: str
     meal_plan_id: str
+    plan: GeneratedMealPlan
 
 
 async def _get_authenticated_user_id(
@@ -160,12 +156,12 @@ async def _load_planning_context(user_id: str) -> MealPlanningContext:
     )
 
 
-@router.post("/generate", response_model=GeneratedMealPlan)
+@router.post("/generate", response_model=GenerateMealPlanResponse)
 async def generate_meal_plan(
     request: GenerateMealPlanRequest,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ):
-    """Generate and return a 7-day meal plan. This endpoint does not write to Supabase."""
+    """Generate a 7-day meal plan with LLM and persist it in Supabase."""
     user_id = await _get_authenticated_user_id(request.user_id, credentials)
     context = await _load_planning_context(user_id)
     start_date = request.start_date or date.today()
@@ -177,27 +173,14 @@ async def generate_meal_plan(
         )
 
     try:
-        return await run_llm_meal_plan(context, start_date)
-    except RuntimeError as exc:
+        plan = await run_llm_meal_plan(context, start_date)
+        meal_plan_id = await save_meal_plan(user_id, start_date, plan)
+    except (RuntimeError, MealPlanRepositoryError) as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
-
-@router.post("/save", response_model=SaveMealPlanResponse)
-async def save_generated_meal_plan(
-    request: SaveMealPlanRequest,
-    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
-):
-    """Persist an already-generated meal plan. No LLM call is made here."""
-    user_id = await _get_authenticated_user_id(request.user_id, credentials)
-    start_date = min(request.plan.days)
-
-    try:
-        meal_plan_id = await save_meal_plan(user_id, start_date, request.plan)
-    except MealPlanRepositoryError as exc:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
-
-    return SaveMealPlanResponse(
+    return GenerateMealPlanResponse(
         status="active",
-        message="Meal plan saved successfully.",
+        message="7-day meal plan generated and saved successfully.",
         meal_plan_id=meal_plan_id,
+        plan=plan,
     )
