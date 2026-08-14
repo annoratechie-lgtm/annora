@@ -48,8 +48,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             if (snapshot.hasError) {
               return _ErrorState(message: snapshot.error.toString(), onRetry: _reload);
             }
-            final data = snapshot.data ?? const <String, dynamic>{};
-            return _buildContent(data);
+            return _buildContent(snapshot.data ?? const <String, dynamic>{});
           },
         ),
       ),
@@ -60,13 +59,18 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     final plan = Map<String, dynamic>.from(data['meal_plan'] ?? {});
     final rawMeals = (data['meals'] as List? ?? const []);
     final meals = rawMeals.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-    final dates = meals.map((e) => e['meal_date']?.toString()).whereType<String>().toSet().toList()..sort();
+    final dates = meals
+        .map((e) => e['meal_date']?.toString())
+        .whereType<String>()
+        .toSet()
+        .toList()
+      ..sort();
 
     if (dates.isEmpty) {
       return _ErrorState(message: 'No meals are available for this plan yet.', onRetry: _reload);
     }
 
-    final safeDay = _selectedDay.clamp(0, dates.length - 1);
+    final safeDay = _selectedDay.clamp(0, dates.length - 1).toInt();
     if (safeDay != _selectedDay) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) setState(() => _selectedDay = safeDay);
@@ -93,7 +97,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   const SizedBox(height: 12),
                   _buildNutritionSummary(),
                 ] else if (_selectedTab == 1)
-                  _buildNutritionTab(dayMeals)
+                  _buildNutritionTab()
                 else if (_selectedTab == 2)
                   _buildPantryTab()
                 else
@@ -110,7 +114,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   Widget _buildDayStrip(List<String> dates) {
     return Container(
       padding: const EdgeInsets.fromLTRB(15, 12, 15, 9),
-      decoration: const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: _border))),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: _border)),
+      ),
       child: Row(
         children: [
           for (var i = 0; i < dates.length && i < 7; i++)
@@ -123,8 +130,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   Widget _dayChip(int index, String iso) {
     final date = DateTime.tryParse(iso) ?? DateTime.now();
     final selected = index == _selectedDay;
-    final weekdays = const ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-    final dayLabel = weekdays[(date.weekday - 1).clamp(0, 6)];
+    const weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    final dayLabel = weekdays[date.weekday - 1];
     return GestureDetector(
       onTap: () => setState(() => _selectedDay = index),
       child: AnimatedContainer(
@@ -149,12 +156,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   Widget _buildTabs() {
-    const tabs = [
-      ('🍴', 'Meals'),
-      ('📊', 'Nutrition'),
-      ('🌿', 'From Pantry'),
-      ('⚡', 'Assist'),
-    ];
+    const tabs = [('🍴', 'Meals'), ('📊', 'Nutrition'), ('🌿', 'From Pantry'), ('⚡', 'Assist')];
     return Container(
       decoration: const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: _border))),
       child: Row(
@@ -166,11 +168,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(border: Border(bottom: BorderSide(color: i == _selectedTab ? _orange : Colors.transparent, width: 2))),
-                  child: Column(
-                    children: [
-                      Text('${tabs[i].$1} ${tabs[i].$2}', style: TextStyle(fontSize: 10.5, color: i == _selectedTab ? _orange : _muted)),
-                    ],
-                  ),
+                  child: Text('${tabs[i].$1} ${tabs[i].$2}', textAlign: TextAlign.center, style: TextStyle(fontSize: 10.5, color: i == _selectedTab ? _orange : _muted)),
                 ),
               ),
             ),
@@ -197,43 +195,34 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     final name = meal['name']?.toString() ?? 'Meal';
     final icon = type == 'breakfast' ? '🌞' : type == 'lunch' ? '🍲' : '🌙';
     final color = type == 'breakfast' ? _orange : type == 'lunch' ? _green : _blue;
+    final cooked = meal['status']?.toString() == 'cooked';
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), boxShadow: const [BoxShadow(color: Color(0x10000000), blurRadius: 10, offset: Offset(0, 4))]),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 11),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text('$icon ${type.toUpperCase()}', style: TextStyle(fontSize: 10, letterSpacing: 1.1, color: color, fontWeight: FontWeight.w600)),
-                const Spacer(),
-                _pill(meal['status']?.toString() == 'cooked' ? '✓ Done' : '⏰ Upcoming', meal['status']?.toString() == 'cooked' ? const Color(0xFFE5F4ED) : const Color(0xFFFFF1D9), meal['status']?.toString() == 'cooked' ? const Color(0xFF2D9070) : const Color(0xFFB96A14)),
-              ],
-            ),
-            const Divider(height: 18, color: _border),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(width: 46, height: 46, decoration: BoxDecoration(color: color.withOpacity(.18), borderRadius: BorderRadius.circular(14)), child: Center(child: Text(type == 'breakfast' ? '🥣' : type == 'lunch' ? '🍛' : '🍽️', style: const TextStyle(fontSize: 24)))),
-                const SizedBox(width: 11),
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _text)),
-                    const SizedBox(height: 4),
-                    const Text('Planned for your household', style: TextStyle(fontSize: 10.5, color: _muted)),
-                    const SizedBox(height: 7),
-                    Wrap(spacing: 6, children: [
-                      _pill('🌿 Veg', const Color(0xFFE5F4ED), const Color(0xFF2D9070)),
-                      _pill('✦ AI suggested', const Color(0xFFF0E9FF), const Color(0xFF8057D8)),
-                    ]),
-                  ]),
-                ),
-              ],
-            ),
-          ],
-        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Text('$icon ${type.toUpperCase()}', style: TextStyle(fontSize: 10, letterSpacing: 1.1, color: color, fontWeight: FontWeight.w600)),
+            const Spacer(),
+            _pill(cooked ? '✓ Done' : '⏰ Upcoming', cooked ? const Color(0xFFE5F4ED) : const Color(0xFFFFF1D9), cooked ? const Color(0xFF2D9070) : const Color(0xFFB96A14)),
+          ]),
+          const Divider(height: 18, color: _border),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Container(width: 46, height: 46, decoration: BoxDecoration(color: color.withOpacity(.18), borderRadius: BorderRadius.circular(14)), child: Center(child: Text(type == 'breakfast' ? '🥣' : type == 'lunch' ? '🍛' : '🍽️', style: const TextStyle(fontSize: 24)))),
+            const SizedBox(width: 11),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _text)),
+              const SizedBox(height: 4),
+              const Text('Planned for your household', style: TextStyle(fontSize: 10.5, color: _muted)),
+              const SizedBox(height: 7),
+              Wrap(spacing: 6, children: [
+                _pill('🌿 Veg', const Color(0xFFE5F4ED), const Color(0xFF2D9070)),
+                _pill('✦ AI suggested', const Color(0xFFF0E9FF), const Color(0xFF8057D8)),
+              ]),
+            ])),
+          ]),
+        ]),
       ),
     );
   }
@@ -265,7 +254,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     );
   }
 
-  Widget _buildNutritionTab(List<Map<String, dynamic>> meals) => _simpleCard('📊 Nutrition', 'Nutrition values will appear here once the meal nutrition data is populated.');
+  Widget _buildNutritionTab() => _simpleCard('📊 Nutrition', 'Nutrition values will appear here once the meal nutrition data is populated.');
   Widget _buildPantryTab() => _simpleCard('🌿 From Pantry', 'Pantry matching will appear here when pantry inventory is connected.');
   Widget _buildAssistTab() => _simpleCard('⚡ Annora Assist', 'Ask Annora for swaps and meal suggestions in a future iteration.');
 
