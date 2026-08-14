@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.api.v1 import health, meal_plans
+from app.api.v1 import health, meal_plans, ingredients
 from app.core.config import settings
 
 app = FastAPI(
@@ -14,6 +14,7 @@ app = FastAPI(
 
 app.include_router(health.router, prefix="/api/v1")
 app.include_router(meal_plans.router, prefix="/api/v1")
+app.include_router(ingredients.router, prefix="/api/v1")
 
 
 @app.get("/")
