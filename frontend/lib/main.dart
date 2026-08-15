@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'features/onboarding/presentation/household_basics_screen.dart';
+
 import 'core/theme/app_theme.dart';
-// import 'features/onboarding/presentation/onboarding_placeholder_screen.dart';
+import 'features/meal_plan/data/meal_plan_api.dart';
+import 'features/meal_plan/data/meal_plan_config.dart';
+import 'features/meal_plan/presentation/meal_plan_screen.dart';
+import 'features/onboarding/data/onboarding_repository.dart';
+import 'features/onboarding/presentation/household_basics_screen.dart';
 import 'features/onboarding/presentation/welcome_screen.dart';
 
 Future<void> main() async {
@@ -15,8 +19,10 @@ Future<void> main() async {
       const String.fromEnvironment('SUPABASE_URL');
   final supabaseKey = dotenv.env['SUPABASE_PUBLISHABLE_KEY'] ??
       dotenv.env['SUPABASE_ANON_KEY'] ??
-      const String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY',
-          defaultValue: String.fromEnvironment('SUPABASE_ANON_KEY'));
+      const String.fromEnvironment(
+        'SUPABASE_PUBLISHABLE_KEY',
+        defaultValue: String.fromEnvironment('SUPABASE_ANON_KEY'),
+      );
   if (supabaseUrl.isEmpty || supabaseKey.isEmpty) {
     throw StateError(
       'Missing SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in frontend/.env.',
@@ -36,6 +42,8 @@ class AnnoraApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mealPlanApi = MealPlanApi(baseUrl: mealPlanBackendUrl);
+
     return MaterialApp(
       title: 'Annora',
       debugShowCheckedModeBanner: false,
@@ -44,9 +52,23 @@ class AnnoraApp extends StatelessWidget {
         stream: Supabase.instance.client.auth.onAuthStateChange,
         builder: (context, snapshot) {
           final session = Supabase.instance.client.auth.currentSession;
-          return session != null
-              ? const HouseholdBasicsScreen()
-              : const WelcomeScreen();
+          if (session == null) return const WelcomeScreen();
+
+          return FutureBuilder<OnboardingProfile?>(
+            future: OnboardingRepository().fetchProfile(),
+            builder: (context, profileSnapshot) {
+              if (profileSnapshot.connectionState != ConnectionState.done) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              final profile = profileSnapshot.data;
+              return profile?.onboardingCompleted == true
+                  ? MealPlanScreen(api: mealPlanApi)
+                  : const HouseholdBasicsScreen();
+            },
+          );
         },
       ),
     );
