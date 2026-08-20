@@ -98,8 +98,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStats() {
-    return Row(
-      children: const [
+    return const Row(
+      children: [
         Expanded(child: _StatCard(icon: '🍽️', value: '22/30', label: 'Days planned')),
         SizedBox(width: 7),
         Expanded(child: _StatCard(icon: '🪙', value: '₹4.2K', label: 'Spent of ₹6K')),
