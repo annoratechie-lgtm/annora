@@ -31,10 +31,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   void _reload() {
-    final future = widget.api.fetchMealPlan();
-    setState(() {
-      _future = future;
-    });
+    setState(() => _future = widget.api.fetchMealPlan());
   }
 
   @override
@@ -212,7 +209,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           ]),
           const Divider(height: 18, color: _border),
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Container(width: 46, height: 46, decoration: BoxDecoration(color: color.withOpacity(.18), borderRadius: BorderRadius.circular(14)), child: Center(child: Text(type == 'breakfast' ? '🥣' : type == 'lunch' ? '🍛' : '🍽️', style: const TextStyle(fontSize: 24)))),
+            Container(width: 46, height: 46, decoration: BoxDecoration(color: color.withValues(alpha: .18), borderRadius: BorderRadius.circular(14)), child: Center(child: Text(type == 'breakfast' ? '🥣' : type == 'lunch' ? '🍛' : '🍽️', style: const TextStyle(fontSize: 24)))),
             const SizedBox(width: 11),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _text)),
