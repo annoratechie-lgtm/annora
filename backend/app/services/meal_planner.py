@@ -12,7 +12,7 @@ def _expected_dates(start_date: date) -> list[str]:
     return [(start_date + timedelta(days=i)).isoformat() for i in range(7)]
 
 
-async def _load_recipe_reference() -> list[dict[str, str | None]]:
+async def _load_recipe_reference(mealPreference) -> list[dict[str, str | None]]:
     """Load the only allowed recipe names/codes for meal generation from Supabase."""
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise RuntimeError("Supabase backend configuration is missing.")
@@ -28,8 +28,10 @@ async def _load_recipe_reference() -> list[dict[str, str | None]]:
             response = await client.get(
                 f"{base_url}/rest/v1/recipes",
                 params={
-                    "select": "recipe_name,source_recipe_code",
+                    "select": "recipe_name,source_recipe_code,category",
                     "status": "eq.active",
+                    "preference": f"eq.{mealPreference}",
+                    "category": "in.(breakfast,main_course)",
                     "order": "recipe_name.asc",
                 },
                 headers=headers,
@@ -59,10 +61,12 @@ async def _load_recipe_reference() -> list[dict[str, str | None]]:
             continue
         seen_names.add(recipe_name)
         source_recipe_code = row.get("source_recipe_code")
+        category = row.get("category")
         recipes.append(
             {
                 "recipe_name": recipe_name,
                 "source_recipe_code": source_recipe_code if isinstance(source_recipe_code, str) else None,
+                "category": category if isinstance(category, str) else None,
             }
         )
 
@@ -74,17 +78,27 @@ async def _load_recipe_reference() -> list[dict[str, str | None]]:
 
 def _build_system_prompt(
     start_date: date,
-    recipe_reference: list[dict[str, str | None]],
+    recipe_reference: dict[str, list[str]],
 ) -> str:
     dates = _expected_dates(start_date)
-    reference_json = json.dumps(recipe_reference, ensure_ascii=False)
+    breakfast_recipes = recipe_reference.get("breakfast", [])
+    main_course_recipes = recipe_reference.get("main_course", [])
+    if not breakfast_recipes or not main_course_recipes:
+        raise ValueError("The recipe reference must contain breakfast and main-course recipes.")
+    example_structure = {
+        meal_date: {
+            "breakfast": [f'breakfast_reference_{idx}'],
+            "lunch": [f'lunch_{idx}'],
+            "dinner": [f'dinner_{idx}'],
+        }
+        for idx, meal_date in enumerate(dates)
+    }
     return f"""
 You are Annora's household meal-planning engine.
 Create a practical 7-day meal plan for the household context provided.
 Respect dietary preference, dietary goals, exclusions, family size, and budget.
 
 RECIPE REFERENCE — THIS IS THE ONLY SOURCE OF RECIPES YOU MAY USE:
-{reference_json}
 
 HARD RECIPE RULES — FOLLOW EXACTLY:
 1. Every breakfast, lunch, and dinner MUST be selected from the RECIPE REFERENCE above.
@@ -92,6 +106,7 @@ HARD RECIPE RULES — FOLLOW EXACTLY:
 3. `source_recipe_code` is reference metadata and must not be used as the meal name.
 4. If a recipe does not exist in the RECIPE REFERENCE, you MUST NOT use it.
 5. Dietary preferences, goals, exclusions, family size, and budget are filters over the available reference recipes; they do not permit creating a new recipe.
+6. There should be variety in the meals across the 7 days. You may repeat a recipe, but do not repeat the same recipe for breakfast, lunch, or dinner on consecutive days.
 
 OUTPUT RULES — FOLLOW EXACTLY:
 1. Return ONLY one valid JSON object. No markdown, no ``` fences, no explanation.
@@ -101,34 +116,13 @@ OUTPUT RULES — FOLLOW EXACTLY:
 4. Each date must contain EXACTLY these 3 keys: "breakfast", "lunch", "dinner".
 5. Each breakfast, lunch, and dinner MUST be an array containing EXACTLY ONE string.
 6. Do not return two meal options. Choose one meal for each slot.
-7. Do not add ingredients, quantities, nutrition, prep times, costs, grocery lists, snacks, or any other keys.
+7. Do not add ingredients, quantities, nutrition, prep times, costs, grocery lists, or any other keys.
 8. The first date MUST be {dates[0]} and the last date MUST be {dates[-1]}.
 9. Every one of the 7 dates above MUST be present. Never stop after a partial plan.
-10. Every meal-name string in the output MUST exactly match one `recipe_name` from the RECIPE REFERENCE.
+10. Every meal-name string in the output MUST exactly match one `recipe_name` from the breakfast and main_course recipe references.
 
-Use this exact structure and replace the example meal names with exact recipe names from the reference:
-{{
-  "{dates[0]}": {{
-    "breakfast": ["recipe_name from reference"],
-    "lunch": ["recipe_name from reference"],
-    "dinner": ["recipe_name from reference"]
-  }},
-  "{dates[1]}": {{
-    "breakfast": ["recipe_name from reference"],
-    "lunch": ["recipe_name from reference"],
-    "dinner": ["recipe_name from reference"]
-  }},
-  "...": {{
-    "breakfast": ["recipe_name from reference"],
-    "lunch": ["recipe_name from reference"],
-    "dinner": ["recipe_name from reference"]
-  }},
-  "{dates[-1]}": {{
-    "breakfast": ["recipe_name from reference"],
-    "lunch": ["recipe_name from reference"],
-    "dinner": ["recipe_name from reference"]
-  }}
-}}
+Use this exact structure, selecting exact recipe names from the reference:
+{json.dumps(example_structure, indent=2)}
 """.strip()
 
 
@@ -149,7 +143,7 @@ def _prompt(
             "dietary_goals": context.dietary_goals,
             "dietary_exclusions": context.dietary_exclusions,
             "recipe_reference_rule": "Every meal must be selected exactly from the supplied recipe reference.",
-            "available_recipe_names": [recipe["recipe_name"] for recipe in recipe_reference],
+            "available_recipe_names": recipe_reference,
         },
         ensure_ascii=False,
     )
@@ -227,8 +221,11 @@ async def generate_meal_plan(context: MealPlanningContext, start_date: date) -> 
     if not settings.grokapi or not settings.llm_model:
         raise RuntimeError("Groq provider is not configured.")
 
-    recipe_reference = await _load_recipe_reference()
-    recipe_names = {recipe["recipe_name"] for recipe in recipe_reference}
+    dietary_preference = context.dietary_preference
+    recipe_reference = await _load_recipe_reference(dietary_preference)
+    breakfast_recipes = [r.get("recipe_name") for r in recipe_reference if r.get("category") == "breakfast"]
+    main_course = [r.get("recipe_name") for r in recipe_reference if r.get("category") == "main_course"]
+    recipes = {'breakfast': breakfast_recipes, 'main_course': main_course}
 
     client = Groq(
         api_key=settings.grokapi,
@@ -240,22 +237,24 @@ async def generate_meal_plan(context: MealPlanningContext, start_date: date) -> 
         completion = client.chat.completions.create(
             model=settings.llm_model,
             messages=[
-                {"role": "system", "content": _build_system_prompt(start_date, recipe_reference)},
-                {"role": "user", "content": _prompt(context, start_date, recipe_reference)},
+                {"role": "system", "content": _build_system_prompt(start_date, recipes)},
+                {"role": "user", "content": _prompt(context, start_date, recipes)},
             ],
             temperature=settings.llm_temperature,
-            max_tokens=2048,
-            response_format={"type": "json_object"},
+            max_completion_tokens=4096,
+            reasoning_effort="low",
         )
     except Exception as exc:
         raise RuntimeError(f"Groq request failed: {exc}") from exc
 
     content = completion.choices[0].message.content
+    print(f"Groq response preview: {content}")
     if not content:
         raise RuntimeError("Groq returned an empty meal plan response.")
 
     try:
         parsed = _extract_json(content)
+        recipe_names = {recipe["recipe_name"] for recipe in recipe_reference}
         return _validate_plan(parsed, start_date, recipe_names)
     except Exception as exc:
         preview = content[:1500].replace("\n", " ")
