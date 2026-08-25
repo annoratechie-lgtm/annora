@@ -3,7 +3,7 @@ from datetime import date
 import httpx
 
 from app.core.config import settings
-from app.schemas.meal_plan import GeneratedMealPlan
+# from app.schemas.meal_plan import GeneratedMealPlan
 
 
 class MealPlanRepositoryError(RuntimeError):
@@ -31,10 +31,10 @@ def _raise_supabase_error(action: str, response: httpx.Response) -> None:
         )
 
 
-async def save_meal_plan(user_id: str, start_date: date, plan: GeneratedMealPlan) -> str:
+async def save_meal_plan(user_id: str, start_date: date, plan) -> str:
     headers = _headers()
     base_url = settings.supabase_url.rstrip("/")
-    end_date = max(plan.days)
+    end_date = max(plan.keys())
 
     async with httpx.AsyncClient(timeout=20) as client:
         plan_response = await client.post(
@@ -43,7 +43,7 @@ async def save_meal_plan(user_id: str, start_date: date, plan: GeneratedMealPlan
             json={
                 "user_id": user_id,
                 "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat(),
+                "end_date": date.fromisoformat(end_date).isoformat(),
                 "status": "active",
                 "generation_source": "llm",
             },
@@ -56,14 +56,14 @@ async def save_meal_plan(user_id: str, start_date: date, plan: GeneratedMealPlan
         plan_id = plan_rows[0]["id"]
 
         meal_rows = []
-        for meal_date, meals in sorted(plan.days.items()):
+        for meal_date, meals in sorted(plan.items()):
             meal_rows.extend(
                 [
                     {
                         "meal_plan_id": plan_id,
-                        "meal_date": meal_date.isoformat(),
+                        "meal_date": date.fromisoformat(meal_date).isoformat(),
                         "meal_type": "breakfast",
-                        "name": meals.breakfast[0],
+                        "name": meals.get('breakfast', [None])[0],
                         "description": None,
                         "status": "planned",
                         "prep_time_minutes": None,
@@ -71,9 +71,9 @@ async def save_meal_plan(user_id: str, start_date: date, plan: GeneratedMealPlan
                     },
                     {
                         "meal_plan_id": plan_id,
-                        "meal_date": meal_date.isoformat(),
+                        "meal_date": date.fromisoformat(meal_date).isoformat(),
                         "meal_type": "lunch",
-                        "name": meals.lunch[0],
+                        "name": meals.get('lunch', [None])[0],
                         "description": None,
                         "status": "planned",
                         "prep_time_minutes": None,
@@ -81,9 +81,9 @@ async def save_meal_plan(user_id: str, start_date: date, plan: GeneratedMealPlan
                     },
                     {
                         "meal_plan_id": plan_id,
-                        "meal_date": meal_date.isoformat(),
+                        "meal_date": date.fromisoformat(meal_date).isoformat(),
                         "meal_type": "dinner",
-                        "name": meals.dinner[0],
+                        "name": meals.get('dinner', [None])[0],
                         "description": None,
                         "status": "planned",
                         "prep_time_minutes": None,

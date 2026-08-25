@@ -1,12 +1,10 @@
 from datetime import date
-
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
-
 from app.core.config import settings
-from app.schemas.meal_plan import GeneratedMealPlan, MealPlanningContext
+from app.schemas.meal_plan import MealPlanningContext
 from app.services.meal_plan_repository import MealPlanRepositoryError, save_meal_plan
 from app.services.meal_planner import generate_meal_plan as run_llm_meal_plan
 
@@ -17,7 +15,8 @@ bearer_scheme = HTTPBearer(auto_error=False)
 class GenerateMealPlanRequest(BaseModel):
     user_id: str
     start_date: date | None = None
-
+    
+GeneratedMealPlan = dict[str, dict[str, str | list[str]]]
 
 class GenerateMealPlanResponse(BaseModel):
     status: str
