@@ -99,7 +99,7 @@ HARD RECIPE RULES — FOLLOW EXACTLY:
 OUTPUT RULES:
 
 1. Return exactly 7 meal-plan records.
-2. The dates MUST be exactly:
+2. The dates MUST be exactly Format: YYYY-MM-DD exactly:
    {", ".join(dates)}
 3. Each record must contain:
    - meal_date
@@ -144,6 +144,7 @@ async def generate_meal_plan(context: MealPlanningContext, start_date: date):
         raise RuntimeError(f"Groq request failed: {exc}") from exc
     content = json.loads(response.model_dump_json(indent=2))
     content = format_meal_plan_output(content)
+
   
     if not content:
         raise RuntimeError("Groq returned an empty meal plan response.")

@@ -40,7 +40,7 @@ async def generate_meal_plan_ingredients(meal_plan_id: str, user_id: str):
             meals_response = await client.get(
                 f"{base_url}/rest/v1/meals",
                 params={
-                    "select": "id,meal_date,meal_type,name,description",
+                    "select": "meal_plan_id,meal_date,meal_type,source_recipe_code,description",
                     "meal_plan_id": f"eq.{meal_plan_id}",
                     "order": "meal_date.asc,meal_type.asc",
                 },
@@ -55,21 +55,24 @@ async def generate_meal_plan_ingredients(meal_plan_id: str, user_id: str):
                     status_code=422,
                     detail=f"Expected 21 meals for a 7-day plan, found {len(meals)}.",
                 )
-
-            generated = await generate_ingredients(meals)
-
-            meal_ids = {str(meal["id"]) for meal in meals}
+            
+            generated = await generate_ingredients(meal_plan_id)
+            
+            meal_ids = {str(meal["meal_plan_id"]) for meal in meals}
             rows = []
-            for meal_entry in generated["meals"]:
-                if meal_entry["meal_id"] not in meal_ids:
+            for meal_entry in generated:
+                if meal_entry["meal_plan_id"] not in meal_ids:
                     raise HTTPException(status_code=422, detail="Ingredient response contains an unknown meal_id.")
-                for ingredient in meal_entry["ingredients"]:
-                    rows.append({
-                        "meal_id": meal_entry["meal_id"],
-                        "ingredient_name": ingredient["ingredient_name"],
-                        "quantity": ingredient["quantity"],
-                        "unit": ingredient["unit"],
-                    })
+                
+                rows.append({
+                    "meal_id": meal_entry["meal_plan_id"],
+                    "meal_type": meal_entry["meal_type"],
+                    "source_recipe_code": meal_entry["source_recipe_code"],
+                    "food_code_org": meal_entry["food_code_org"],
+                    "food_name": meal_entry["food_name"],
+                    "amount": meal_entry["amount"],
+                    "unit": meal_entry["unit"],
+                })
 
             # Make the endpoint repeatable: replace existing ingredients for these meals.
             delete_response = await client.delete(
