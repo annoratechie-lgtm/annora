@@ -1,16 +1,14 @@
 from fastapi import APIRouter, HTTPException, status
 import httpx
-
 from app.core.config import settings
 from app.schemas.ingredients import GeneratedIngredients
 from app.services.ingredient_planner import IngredientPlannerError, generate_ingredients
 
 router = APIRouter(prefix="/meal-plans", tags=["meal-plan-ingredients"])
 
-
-@router.post("/{meal_plan_id}/ingredients", response_model=GeneratedIngredients)
-async def generate_meal_plan_ingredients(meal_plan_id: str, user_id: str):
-    """Generate ingredients with Llama and persist them to meal_ingredients."""
+@router.post("/{meal_id}/ingredients", response_model=GeneratedIngredients)
+async def generate_meal_plan_ingredients(meal_id: str, user_id: str):
+    
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -28,8 +26,8 @@ async def generate_meal_plan_ingredients(meal_plan_id: str, user_id: str):
     try:
         async with httpx.AsyncClient(timeout=20) as client:
             plan_response = await client.get(
-                f"{base_url}/rest/v1/meal_plans",
-                params={"select": "id", "id": f"eq.{meal_plan_id}", "user_id": f"eq.{user_id}", "limit": "1"},
+                f"{base_url}/rest/v1/meal",
+                params={"select": "id", "id": f"eq.{meal_id}", "user_id": f"eq.{user_id}", "limit": "1"},
                 headers=headers,
             )
             if plan_response.status_code != 200:
@@ -38,10 +36,10 @@ async def generate_meal_plan_ingredients(meal_plan_id: str, user_id: str):
                 raise HTTPException(status_code=404, detail="Meal plan not found for this user.")
 
             meals_response = await client.get(
-                f"{base_url}/rest/v1/meals",
+                f"{base_url}/rest/v1/meal_plan",
                 params={
-                    "select": "meal_plan_id,meal_date,meal_type,source_recipe_code,description",
-                    "meal_plan_id": f"eq.{meal_plan_id}",
+                    "select": "meal_id,meal_date,meal_type,source_recipe_code,description",
+                    "meal_id": f"eq.{meal_id}",
                     "order": "meal_date.asc,meal_type.asc",
                 },
                 headers=headers,
@@ -56,16 +54,16 @@ async def generate_meal_plan_ingredients(meal_plan_id: str, user_id: str):
                     detail=f"Expected 21 meals for a 7-day plan, found {len(meals)}.",
                 )
             
-            generated = await generate_ingredients(meal_plan_id)
+            generated = await generate_ingredients(meal_id)
             
-            meal_ids = {str(meal["meal_plan_id"]) for meal in meals}
+            meal_ids = {str(meal["meal_id"]) for meal in meals}
             rows = []
             for meal_entry in generated:
-                if meal_entry["meal_plan_id"] not in meal_ids:
+                if meal_entry["meal_id"] not in meal_ids:
                     raise HTTPException(status_code=422, detail="Ingredient response contains an unknown meal_id.")
                 
                 rows.append({
-                    "meal_id": meal_entry["meal_plan_id"],
+                    "meal_id": meal_entry["meal_id"],
                     "meal_type": meal_entry["meal_type"],
                     "source_recipe_code": meal_entry["source_recipe_code"],
                     "food_code_org": meal_entry["food_code_org"],

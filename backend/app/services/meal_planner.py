@@ -86,7 +86,7 @@ Create a practical 7-day meal plan for the household context provided.
 HARD RECIPE RULES — FOLLOW EXACTLY:
 
 1. Every breakfast, lunch, and dinner MUST be selected from the input JSON RECIPE REFERENCE.
-2. Use the exact `recipe_name` value from the RECIPE REFERENCE.
+2. Use the exact `source_recipe_code` value from the RECIPE REFERENCE.
 3. Do not invent, rename, paraphrase, combine, modify, or derive recipe names.
 4. If a recipe does not exist in the RECIPE REFERENCE, you MUST NOT use it.
 5. Dietary preferences, goals, exclusions, family size, and budget are filters over
@@ -94,12 +94,12 @@ HARD RECIPE RULES — FOLLOW EXACTLY:
 6. Do not repeat the same recipe for breakfast, lunch, or dinner on consecutive days.
 7. If a main course is a curry, add exactly one staple (Roti or Rice) to the meal.
 8. If the main course is not a curry, do not add a staple.
-9. Every recipe name must exactly match a `recipe_name` from the input reference.
+9. Every recipe name must exactly match a `source_recipe_code` from the input reference.
 
 OUTPUT RULES:
 
 1. Return exactly 7 meal-plan records.
-2. The dates MUST be exactly Format: YYYY-MM-DD exactly:
+2. The dates MUST be exactly (Format: YYYY-MM-DD):
    {", ".join(dates)}
 3. Each record must contain:
    - meal_date
@@ -144,7 +144,7 @@ async def generate_meal_plan(context: MealPlanningContext, start_date: date):
         raise RuntimeError(f"Groq request failed: {exc}") from exc
     content = json.loads(response.model_dump_json(indent=2))
     content = format_meal_plan_output(content)
-
+    # print(json.dumps(content, indent=2))
   
     if not content:
         raise RuntimeError("Groq returned an empty meal plan response.")

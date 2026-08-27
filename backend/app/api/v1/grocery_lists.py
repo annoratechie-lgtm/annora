@@ -7,8 +7,8 @@ from app.services.grocery_list_service import GroceryListError, aggregate_ingred
 router = APIRouter(prefix="/meal-plans", tags=["grocery-lists"])
 
 
-@router.post("/{meal_plan_id}/grocery-list")
-async def generate_grocery_list(meal_plan_id: str, user_id: str):
+@router.post("/{meal_id}/grocery-list")
+async def generate_grocery_list(meal_id: str, user_id: str):
     """Aggregate saved meal ingredients in Python and save one grocery list."""
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Supabase backend configuration is missing.")
@@ -23,30 +23,12 @@ async def generate_grocery_list(meal_plan_id: str, user_id: str):
 
     try:
         async with httpx.AsyncClient(timeout=20) as client:
-            plan_response = await client.get(
-                f"{base_url}/rest/v1/meal_plans",
-                params={"select": "id,start_date,end_date", "id": f"eq.{meal_plan_id}", "user_id": f"eq.{user_id}", "limit": "1"},
-                headers=headers,
-            )
-            if plan_response.status_code != 200:
-                raise HTTPException(status_code=502, detail="Could not load meal plan from Supabase.")
-            plans = plan_response.json()
-            if not plans:
-                raise HTTPException(status_code=404, detail="Meal plan not found for this user.")
 
             ingredients_response = await client.get(
                 f"{base_url}/rest/v1/meal_ingredients",
                 params={
-                    "select": "meal_id,ingredient_name,quantity,unit",
-                    "meal_id": "in.(" + ",".join(
-                        str(row["id"]) for row in (
-                            await client.get(
-                                f"{base_url}/rest/v1/meals",
-                                params={"select": "id", "meal_plan_id": f"eq.{meal_plan_id}"},
-                                headers=headers,
-                            )
-                        ).json()
-                    ) + ")",
+                    "select": "meal_id,food_code_org,food_name,amount,unit",
+                    "meal_id": f"eq.{meal_id}"
                 },
                 headers=headers,
             )
@@ -59,7 +41,7 @@ async def generate_grocery_list(meal_plan_id: str, user_id: str):
 
             existing_response = await client.get(
                 f"{base_url}/rest/v1/grocery_lists",
-                params={"select": "id", "meal_plan_id": f"eq.{meal_plan_id}", "limit": "1"},
+                params={"select": "id", "meal_id": f"eq.{meal_id}", "limit": "1"},
                 headers=headers,
             )
             if existing_response.status_code != 200:
@@ -75,15 +57,15 @@ async def generate_grocery_list(meal_plan_id: str, user_id: str):
                 )
                 if delete_response.status_code not in (200, 204):
                     raise HTTPException(status_code=502, detail=f"Could not clear existing grocery items: {delete_response.text}")
-            else:
-                create_list = await client.post(
-                    f"{base_url}/rest/v1/grocery_lists",
-                    json={"user_id": user_id, "meal_plan_id": meal_plan_id, "status": "active"},
-                    headers=headers,
-                )
-                if create_list.status_code not in (200, 201):
-                    raise HTTPException(status_code=502, detail=f"Could not create grocery list: {create_list.text}")
-                grocery_list_id = create_list.json()[0]["id"]
+
+            create_list = await client.post(
+                f"{base_url}/rest/v1/grocery_lists",
+                json={"user_id": user_id, "meal_id": meal_id, "status": "active"},
+                headers=headers,
+            )
+            if create_list.status_code not in (200, 201):
+                raise HTTPException(status_code=502, detail=f"Could not create grocery list: {create_list.text}")
+            grocery_list_id = create_list.json()[0]["id"]
 
             rows = [dict(item, grocery_list_id=grocery_list_id) for item in grocery_items]
             save_items = await client.post(
@@ -96,7 +78,7 @@ async def generate_grocery_list(meal_plan_id: str, user_id: str):
 
             return {
                 "grocery_list_id": grocery_list_id,
-                "meal_plan_id": meal_plan_id,
+                "meal_id": meal_id,
                 "item_count": len(grocery_items),
                 "items": grocery_items,
             }

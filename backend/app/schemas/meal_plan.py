@@ -15,10 +15,10 @@ class mealPlan(BaseModel):
     breakfast: str 
     lunch: list[str] = Field(..., 
                              description="Lunch meal name. Add Roti or Rice if the main course is a curry.",
-                             examples=[["Chicken Curry, Roti"], ["Paneer Butter Masala, Rice"]])
+                             examples=[["BFP208, ASC096"], ["ASC226, ASC113"]])
     dinner: list[str] = Field(..., 
                               description="Dinner meal name. Add Roti or Rice if the main course is a curry.",
-                              examples=[["Beef Curry, Roti"], ["Dal Tadka, Rice"]])
+                              examples=[["ASC224, ASC096"], ["OSR139, ASC113"]])
 
 class mealPlanResponse(BaseModel):
     recipes: list[mealPlan] = Field(..., description="Meal plan for the 7 days, with each day containing breakfast, lunch, and dinner meal names.")

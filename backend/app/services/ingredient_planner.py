@@ -10,7 +10,7 @@ class IngredientPlannerError(RuntimeError):
     pass
 
 
-async def generate_ingredients(meal_plan_id: str) -> dict:
+async def generate_ingredients(meal_id: str) -> dict:
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -29,12 +29,12 @@ async def generate_ingredients(meal_plan_id: str) -> dict:
             ingredient_response = await client.post(
                             f"{base_url}/rest/v1/rpc/get_meal_plan_ingredients",
                             json={
-                                "p_meal_plan_id": meal_plan_id},
+                                "p_meal_id": meal_id},
                             headers=headers,
                         )
         content = ingredient_response.json()
     except Exception as exc:
-        raise IngredientPlannerError(f"Could not reach Supabase to load meals for meal plan {meal_plan_id}.") from exc
+        raise IngredientPlannerError(f"Could not reach Supabase to load meals for meal plan {meal_id}.") from exc
 
     
     if not content:
