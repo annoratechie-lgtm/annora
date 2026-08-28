@@ -22,6 +22,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   int _selectedDay = 0;
   int _selectedTab = 0;
+  bool _generating = false;
   late Future<Map<String, dynamic>> _future;
 
   @override
@@ -31,10 +32,77 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   void _reload() {
-    final future = widget.api.fetchMealPlan();
     setState(() {
-      _future = future;
+      _future = widget.api.fetchMealPlan();
     });
+  }
+
+  Future<void> _generate() async {
+    setState(() => _generating = true);
+    try {
+      final result = await widget.api.generateMealPlan();
+      if (!mounted) return;
+      setState(() {
+        _future = Future.value({
+          'meal_plan': {
+            'id': result['meal_id'],
+            'status': result['status'],
+          },
+          'meals': _flattenGeneratedPlan(result['plan']),
+        });
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your 7-day meal plan is ready.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _generating = false);
+    }
+  }
+
+  List<Map<String, dynamic>> _flattenGeneratedPlan(dynamic rawPlan) {
+    if (rawPlan is! Map) return const [];
+    final rows = <Map<String, dynamic>>[];
+    for (final entry in rawPlan.entries) {
+      final date = entry.key.toString();
+      final meals = entry.value;
+      if (meals is! Map) continue;
+      for (final type in ['breakfast', 'lunch', 'dinner']) {
+        final raw = meals[type];
+        String? name;
+        String? recipeCode;
+        if (raw is String) {
+          final parts = raw.split('-');
+          name = parts.first.trim();
+          if (parts.length > 1) recipeCode = parts.sublist(1).join('-').trim();
+        } else if (raw is List && raw.isNotEmpty) {
+          final value = raw.first?.toString() ?? '';
+          final parts = value.split('-');
+          name = parts.first.trim();
+          if (parts.length > 1) recipeCode = parts.sublist(1).join('-').trim();
+        }
+        if (name == null || name.isEmpty) continue;
+        rows.add({
+          'meal_date': date,
+          'meal_type': type,
+          'name': name,
+          'source_recipe_code': recipeCode,
+          'status': 'planned',
+          'description': null,
+          'nutrition': <String, dynamic>{},
+        });
+      }
+    }
+    rows.sort((a, b) {
+      final dateCompare = a['meal_date'].toString().compareTo(b['meal_date'].toString());
+      if (dateCompare != 0) return dateCompare;
+      return a['meal_type'].toString().compareTo(b['meal_type'].toString());
+    });
+    return rows;
   }
 
   @override
@@ -45,11 +113,16 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         child: FutureBuilder<Map<String, dynamic>>(
           future: _future,
           builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
+            if (snapshot.connectionState != ConnectionState.done || _generating) {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError) {
-              return _ErrorState(message: snapshot.error.toString(), onRetry: _reload);
+              return _ErrorState(
+                message: snapshot.error.toString(),
+                onRetry: _reload,
+                actionLabel: 'Generate plan',
+                onAction: _generate,
+              );
             }
             return _buildContent(snapshot.data ?? const <String, dynamic>{});
           },
@@ -60,8 +133,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   Widget _buildContent(Map<String, dynamic> data) {
     final plan = Map<String, dynamic>.from(data['meal_plan'] ?? {});
-    final rawMeals = (data['meals'] as List? ?? const []);
-    final meals = rawMeals.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    final rawMeals = data['meals'] as List? ?? const [];
+    final meals = rawMeals
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
     final dates = meals
         .map((e) => e['meal_date']?.toString())
         .whereType<String>()
@@ -70,7 +146,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       ..sort();
 
     if (dates.isEmpty) {
-      return _ErrorState(message: 'No meals are available for this plan yet.', onRetry: _reload);
+      return _ErrorState(
+        message: 'No meals are available for this plan yet.',
+        onRetry: _reload,
+        actionLabel: 'Generate plan',
+        onAction: _generate,
+      );
     }
 
     final safeDay = _selectedDay.clamp(0, dates.length - 1).toInt();
@@ -98,9 +179,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 if (_selectedTab == 0) ...[
                   for (final meal in dayMeals) _buildMealCard(meal),
                   const SizedBox(height: 12),
-                  _buildNutritionSummary(),
+                  _buildNutritionSummary(dayMeals),
                 ] else if (_selectedTab == 1)
-                  _buildNutritionTab()
+                  _buildNutritionTab(dayMeals)
                 else if (_selectedTab == 2)
                   _buildPantryTab()
                 else
@@ -196,9 +277,13 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   Widget _buildMealCard(Map<String, dynamic> meal) {
     final type = meal['meal_type']?.toString() ?? 'meal';
     final name = meal['name']?.toString() ?? 'Meal';
-    final icon = type == 'breakfast' ? '🌞' : type == 'lunch' ? '🍲' : '🌙';
+    final description = meal['description']?.toString();
+    final recipeCode = meal['source_recipe_code']?.toString();
+    final icon = type == 'breakfast' ? '🌞' : type == 'lunch' ? '🍲' : type == 'dinner' ? '🌙' : '🍽️';
     final color = type == 'breakfast' ? _orange : type == 'lunch' ? _green : _blue;
-    final cooked = meal['status']?.toString() == 'cooked';
+    final status = meal['status']?.toString() ?? 'planned';
+    final statusLabel = status == 'cooked' ? '✓ Cooked' : status == 'skipped' ? 'Skipped' : 'Planned';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), boxShadow: const [BoxShadow(color: Color(0x10000000), blurRadius: 10, offset: Offset(0, 4))]),
@@ -208,21 +293,22 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           Row(children: [
             Text('$icon ${type.toUpperCase()}', style: TextStyle(fontSize: 10, letterSpacing: 1.1, color: color, fontWeight: FontWeight.w600)),
             const Spacer(),
-            _pill(cooked ? '✓ Done' : '⏰ Upcoming', cooked ? const Color(0xFFE5F4ED) : const Color(0xFFFFF1D9), cooked ? const Color(0xFF2D9070) : const Color(0xFFB96A14)),
+            _pill(statusLabel, status == 'cooked' ? const Color(0xFFE5F4ED) : const Color(0xFFFFF1D9), status == 'cooked' ? const Color(0xFF2D9070) : const Color(0xFFB96A14)),
           ]),
           const Divider(height: 18, color: _border),
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Container(width: 46, height: 46, decoration: BoxDecoration(color: color.withOpacity(.18), borderRadius: BorderRadius.circular(14)), child: Center(child: Text(type == 'breakfast' ? '🥣' : type == 'lunch' ? '🍛' : '🍽️', style: const TextStyle(fontSize: 24)))),
+            Container(width: 46, height: 46, decoration: BoxDecoration(color: color.withOpacity(.18), borderRadius: BorderRadius.circular(14)), child: Center(child: Text(icon, style: const TextStyle(fontSize: 24)))),
             const SizedBox(width: 11),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _text)),
-              const SizedBox(height: 4),
-              const Text('Planned for your household', style: TextStyle(fontSize: 10.5, color: _muted)),
-              const SizedBox(height: 7),
-              Wrap(spacing: 6, children: [
-                _pill('🌿 Veg', const Color(0xFFE5F4ED), const Color(0xFF2D9070)),
-                _pill('✦ AI suggested', const Color(0xFFF0E9FF), const Color(0xFF8057D8)),
-              ]),
+              if (description != null && description.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(description, style: const TextStyle(fontSize: 10.5, color: _muted, height: 1.3)),
+              ],
+              if (recipeCode != null && recipeCode.isNotEmpty) ...[
+                const SizedBox(height: 7),
+                _pill('Recipe: $recipeCode', const Color(0xFFF0E9FF), const Color(0xFF8057D8)),
+              ],
             ])),
           ]),
         ]),
@@ -230,36 +316,24 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     );
   }
 
-  Widget _buildNutritionSummary() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 13, 14, 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), boxShadow: const [BoxShadow(color: Color(0x10000000), blurRadius: 10, offset: Offset(0, 4))]),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text("📊 Today's nutrition summary", style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: _text)),
-        const SizedBox(height: 11),
-        _progressRow('Calories', 0.84, '1,680/2,000', _orange),
-        _progressRow('Protein', 0.55, '44/80g', _blue),
-        _progressRow('Carbs', 0.80, '200/250g', const Color(0xFFF3B72D)),
-        _progressRow('Fat', 0.52, '32/70g', const Color(0xFFF1A05B)),
-      ]),
+  Widget _buildNutritionSummary(List<Map<String, dynamic>> meals) {
+    final hasNutrition = meals.any((meal) {
+      final nutrition = meal['nutrition'];
+      return nutrition is Map && nutrition.isNotEmpty;
+    });
+    return _simpleCard(
+      '📊 Today\'s nutrition summary',
+      hasNutrition
+          ? 'Nutrition data is available for this day.'
+          : 'Nutrition values are not populated by the current meal-planning API yet.',
     );
   }
 
-  Widget _progressRow(String label, double value, String text, Color color) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(children: [
-        SizedBox(width: 55, child: Text(label, style: const TextStyle(fontSize: 10.5, color: _text))),
-        Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(5), child: LinearProgressIndicator(value: value, minHeight: 7, backgroundColor: const Color(0xFFEDE8DF), valueColor: AlwaysStoppedAnimation(color)))),
-        const SizedBox(width: 9),
-        SizedBox(width: 66, child: Text(text, textAlign: TextAlign.right, style: const TextStyle(fontSize: 9.5, color: _muted))),
-      ]),
-    );
-  }
+  Widget _buildNutritionTab(List<Map<String, dynamic>> meals) => _buildNutritionSummary(meals);
 
-  Widget _buildNutritionTab() => _simpleCard('📊 Nutrition', 'Nutrition values will appear here once the meal nutrition data is populated.');
-  Widget _buildPantryTab() => _simpleCard('🌿 From Pantry', 'Pantry matching will appear here when pantry inventory is connected.');
-  Widget _buildAssistTab() => _simpleCard('⚡ Annora Assist', 'Ask Annora for swaps and meal suggestions in a future iteration.');
+  Widget _buildPantryTab() => _simpleCard('🌿 From Pantry', 'Pantry matching is not part of the current meal-planning API contract.');
+
+  Widget _buildAssistTab() => _simpleCard('⚡ Annora Assist', 'Meal swaps and AI assistance are not part of the current meal-planning API contract.');
 
   Widget _simpleCard(String title, String body) {
     return Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _text)), const SizedBox(height: 8), Text(body, style: const TextStyle(fontSize: 11, color: _muted, height: 1.4))]));
@@ -293,7 +367,31 @@ class _NavItem extends StatelessWidget {
 class _ErrorState extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
-  const _ErrorState({required this.message, required this.onRetry});
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  const _ErrorState({
+    required this.message,
+    required this.onRetry,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
   @override
-  Widget build(BuildContext context) => Center(child: Padding(padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, children: [const Text('🍽️', style: TextStyle(fontSize: 38)), const SizedBox(height: 10), Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF6E6259))), const SizedBox(height: 12), FilledButton(onPressed: onRetry, child: const Text('Retry'))])));
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('🍽️', style: TextStyle(fontSize: 38)),
+              const SizedBox(height: 10),
+              Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF6E6259))),
+              const SizedBox(height: 12),
+              FilledButton(onPressed: onAction, child: Text(actionLabel)),
+              TextButton(onPressed: onRetry, child: const Text('Retry')),
+            ],
+          ),
+        ),
+      );
 }
