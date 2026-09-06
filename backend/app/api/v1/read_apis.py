@@ -85,7 +85,7 @@ async def get_user_meal_plan(user_id: str):
 
 @router.get("/{meal_plan_id}/ingredients", response_model=GeneratedIngredients)
 async def get_meal_plan_ingredients(meal_plan_id: str, user_id: str):
-    """Return saved ingredients for a meal plan in the same shape as generation."""
+    """Return ingredient rows from the same authoritative RPC used by generation."""
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(status_code=503, detail="Supabase backend configuration is missing.")
 
@@ -100,46 +100,25 @@ async def get_meal_plan_ingredients(meal_plan_id: str, user_id: str):
             if not plans:
                 raise HTTPException(status_code=404, detail="Meal plan not found for this user.")
 
-            ingredients = await _get(client, "meal_ingredients", {
-                "select": "meal_id,meal_type,source_recipe_code,food_code_org,food_name,amount,unit",
-                "meal_id": f"eq.{meal_plan_id}",
-                "order": "meal_type.asc,source_recipe_code.asc,food_name.asc",
-            })
-            if not ingredients:
+            response = await client.post(
+                f"{settings.supabase_url.rstrip('/')}/rest/v1/rpc/get_meal_plan_ingredients",
+                json={"p_meal_plan_id": meal_plan_id},
+                headers={**_headers(), "Content-Type": "application/json", "Accept": "application/json"},
+            )
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail=f"Supabase ingredient RPC failed ({response.status_code}): {response.text}",
+                )
+
+            ingredients = response.json()
+            if not isinstance(ingredients, list) or not ingredients:
                 raise HTTPException(status_code=404, detail="No ingredients found for this meal plan.")
-
-            dates = await _get(client, "meal_plan", {
-                "select": "meal_date,meal_type,source_recipe_code",
-                "meal_id": f"eq.{meal_plan_id}",
-                "order": "meal_date.asc,meal_type.asc",
-            })
-            date_lookup = {
-                (row["meal_type"], row.get("source_recipe_code")): row["meal_date"]
-                for row in dates
-            }
-
-            normalized = []
-            for ingredient in ingredients:
-                normalized.append({
-                    "meal_plan_id": ingredient["meal_id"],
-                    "meal_date": date_lookup.get(
-                        (ingredient["meal_type"], ingredient.get("source_recipe_code"))
-                    ),
-                    "meal_type": ingredient["meal_type"],
-                    "source_recipe_code": ingredient["source_recipe_code"],
-                    "food_code_org": ingredient["food_code_org"],
-                    "food_name": ingredient["food_name"],
-                    "amount": ingredient["amount"],
-                    "unit": ingredient["unit"],
-                })
-
-            if any(item["meal_date"] is None for item in normalized):
-                raise HTTPException(status_code=502, detail="Saved ingredients could not be matched to meal dates.")
 
             return {
                 "meal_plan_id": meal_plan_id,
-                "item_count": len(normalized),
-                "ingredients": normalized,
+                "item_count": len(ingredients),
+                "ingredients": ingredients,
             }
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=503, detail="Could not reach Supabase.") from exc
