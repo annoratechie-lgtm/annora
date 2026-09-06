@@ -1,13 +1,11 @@
 from datetime import date
 from decimal import Decimal
 from uuid import UUID
-
 from pydantic import BaseModel, Field
 
 
 class IngredientItem(BaseModel):
-    meal_plan_id: UUID
-    meal_date: date
+    meal_id: UUID
     meal_type: str = Field(min_length=1)
     source_recipe_code: str = Field(min_length=1)
     food_code_org: str = Field(min_length=1)
@@ -17,6 +15,4 @@ class IngredientItem(BaseModel):
 
 
 class GeneratedIngredients(BaseModel):
-    meal_plan_id: UUID
-    item_count: int = Field(ge=0)
     ingredients: list[IngredientItem]

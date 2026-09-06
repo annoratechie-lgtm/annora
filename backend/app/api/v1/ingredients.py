@@ -95,7 +95,8 @@ async def generate_meal_plan_ingredients(meal_id: str, user_id: str):
                     detail=f"Could not save meal ingredients: {save_response.text}",
                 )
 
-            return generated
+            
+            return {"ingredients": generated}
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=503, detail="Could not reach Supabase.") from exc
     except IngredientPlannerError as exc:

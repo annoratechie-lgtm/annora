@@ -5,6 +5,7 @@
 **/.env
 **/.env.*
 !**/.env.example
+test_user.txt
 
 # Python
 __pycache__/

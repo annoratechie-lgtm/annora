@@ -1,7 +1,6 @@
 import json
 import httpx
 from fastapi import APIRouter, HTTPException, status
-from groq import Groq
 
 from app.core.config import settings
 

@@ -25,8 +25,8 @@ async def test_grocery_list_api(meal_id=meal_id, user_id=user_id):
     grocery_list = await generate_grocery_list(meal_id, user_id)
     return grocery_list
 
-# response = asyncio.run(test_meal_api(user_id))
+response = asyncio.run(test_meal_api(user_id))
 # recipe = asyncio.run(test_recipe_database(dietary_preference))
-response = asyncio.run(test_ingredients_api(meal_id, user_id))
+# response = asyncio.run(test_ingredients_api(meal_id, user_id))
 # response = asyncio.run(test_grocery_list_api(meal_id, user_id))
 print(response)
