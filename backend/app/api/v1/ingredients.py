@@ -48,7 +48,7 @@ async def generate_meal_plan_ingredients(meal_id: str, user_id: str):
                 raise HTTPException(status_code=502, detail="Could not load meals from Supabase.")
 
             meals = meals_response.json()
-            if len(meals) != 21:
+            if len(meals) < 21:
                 raise HTTPException(
                     status_code=422,
                     detail=f"Expected 21 meals for a 7-day plan, found {len(meals)}.",

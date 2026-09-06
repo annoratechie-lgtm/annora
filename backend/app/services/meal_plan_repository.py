@@ -9,6 +9,18 @@ from app.core.config import settings
 class MealPlanRepositoryError(RuntimeError):
     pass
 
+def fetch_meal_plan(plan) -> list[str]:
+    recipe_code = []
+    for meal_date, meals in sorted(plan.items()):
+        for meal_time, code in meals.items():
+            if meal_time in ['breakfast']:
+                recipe_code.append(code)
+            else:
+                for code_ in code:
+                    recipe_code.append(code_)
+    return recipe_code
+
+
 
 def _headers() -> dict[str, str]:
     if not settings.supabase_url or not settings.supabase_service_role_key:
@@ -34,7 +46,7 @@ def _raise_supabase_error(action: str, response: httpx.Response) -> None:
 async def save_meal_plan(user_id: str, start_date: date, plan) -> str:
     headers = _headers()
     base_url = settings.supabase_url.rstrip("/")
-    end_date = max(plan.keys())
+    end_date = list(plan.keys())[-1]  # The last date in the plan is the end date
 
     if len(plan) != 7:
         raise MealPlanRepositoryError(f"Expected 7-day plan, found {len(plan)}.")
@@ -86,45 +98,60 @@ async def save_meal_plan(user_id: str, start_date: date, plan) -> str:
                 raise MealPlanRepositoryError("Supabase did not return the created meal plan.")
             
             plan_id = plan_rows[0]["id"]
+            ## Fetching meal code for plan
+            codes = fetch_meal_plan(plan)
+            recipe_mapping = await client.get(
+                            f"{base_url}/rest/v1/recipes",
+                            params={
+                                "select": "source_recipe_code,recipe_name",
+                                "source_recipe_code": f"in.({','.join(codes)})",
+                                "status": "eq.active",
+                            },
+                            headers=headers,
+                        )
+            recipes = recipe_mapping.json()
+            recipes = {r["source_recipe_code"]: r["recipe_name"] for r in recipes if "source_recipe_code" in r and "recipe_name" in r}
             meal_rows = []
             for meal_date, meals in sorted(plan.items()):
-                meal_rows.extend(
-                    [
-                        {
+                current_date = date.fromisoformat(meal_date).isoformat()
+                # Breakfast
+                breakfast = meals.get("breakfast")
+                if breakfast:
+                    name = recipes.get(breakfast,"NA")
+
+                    meal_rows.append({
+                        "meal_id": plan_id,
+                        "meal_date": current_date,
+                        "meal_type": "breakfast",
+                        "name": name.strip(),
+                        "source_recipe_code": breakfast,
+                        "description": None,
+                        "status": "planned",
+                        "prep_time_minutes": None,
+                        "nutrition": {},
+                    })
+
+                # Lunch + Dinner
+                for meal_type in ["lunch", "dinner"]:
+                    for meal_ in meals.get(meal_type, []):
+                        if not meal_:
+                            continue
+
+                        name = recipes.get(meal_,"NA")
+                        source_recipe_code = meal_
+
+                        meal_rows.append({
                             "meal_id": plan_id,
-                            "meal_date": date.fromisoformat(meal_date).isoformat(),
-                            "meal_type": "breakfast",
-                            "name": meals.get('breakfast', '').split('-')[0] if '-' in meals.get('breakfast', '') else None,
-                            "source_recipe_code": meals.get('breakfast', '').split('-')[1] if '-' in meals.get('breakfast', '') else None,
+                            "meal_date": current_date,
+                            "meal_type": meal_type,
+                            "name": name,
+                            "source_recipe_code": source_recipe_code,
                             "description": None,
                             "status": "planned",
                             "prep_time_minutes": None,
                             "nutrition": {},
-                        },
-                        {
-                            "meal_id": plan_id,
-                            "meal_date": date.fromisoformat(meal_date).isoformat(),
-                            "meal_type": "lunch",
-                            "name": meals.get('lunch', [None])[0].split('-')[0] if '-' in meals.get('lunch', [None])[0] else None,
-                            "source_recipe_code": meals.get('lunch', [None])[0].split('-')[1] if '-' in meals.get('lunch', [None])[0] else None,
-                            "description": None,
-                            "status": "planned",
-                            "prep_time_minutes": None,
-                            "nutrition": {},
-                        },
-                        {
-                            "meal_id": plan_id,
-                            "meal_date": date.fromisoformat(meal_date).isoformat(),
-                            "meal_type": "dinner",
-                            "name": meals.get('dinner', [None])[0].split('-')[0] if '-' in meals.get('dinner', [None])[0] else None,
-                            "source_recipe_code": meals.get('dinner', [None])[0].split('-')[1] if '-' in meals.get('dinner', [None])[0] else None,
-                            "description": None,
-                            "status": "planned",
-                            "prep_time_minutes": None,
-                            "nutrition": {},
-                        },
-                    ]
-                )
+                        })      
+            print("Meal Rows to be saved:", meal_rows)
 
             meal_response = await client.post(
                 f"{base_url}/rest/v1/meal_plan",
@@ -134,7 +161,7 @@ async def save_meal_plan(user_id: str, start_date: date, plan) -> str:
             _raise_supabase_error("Saving generated meals", meal_response)
 
             saved_meals = meal_response.json()
-            if len(saved_meals) != len(meal_rows):
+            if len(saved_meals) < len(meal_rows):
                 raise MealPlanRepositoryError("Supabase returned an unexpected meal count.")
 
     return plan_id

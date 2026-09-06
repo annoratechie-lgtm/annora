@@ -32,12 +32,12 @@ dates = ['23-08-2026','24-08-2026','25-08-2026','26-08-2026','27-08-2026','28-08
 
 class mealPlan(BaseModel):
     meal_date: str
-    breakfast: str 
+    breakfast: str = Field(..., description="source_recipe_code for breakfast recipe", examples=["BFP208"])
     lunch: list[str] = Field(..., 
-                             description="Lunch meal name. Add Roti or Rice if the main course is a curry.",
+                             description="List of source_recipe_codes.If the main course is a curry, this MUST contain exactly the curry code plus exactly one staple code",
                              examples=[["BFP208, ASC096"], ["ASC226, ASC113"]])
     dinner: list[str] = Field(..., 
-                              description="Dinner meal name. Add Roti or Rice if the main course is a curry.",
+                              description="List of source_recipe_codes.If the main course is a curry, this MUST contain exactly the curry code plus exactly one staple code",
                               examples=[["ASC224, ASC096"], ["OSR139, ASC113"]])
 
 class mealPlanResponse(BaseModel):
@@ -46,36 +46,77 @@ class mealPlanResponse(BaseModel):
 system_prompt = f"""
 You are Annora's household meal-planning engine.
 
-Create a practical 7-day meal plan for the household context provided.
+Create a practical 7-day Indian household meal plan using ONLY recipes from the RECIPE REFERENCE.
 
-HARD RECIPE RULES — FOLLOW EXACTLY:
+CRITICAL:
+- You may ONLY select source_recipe_code values present in RECIPE REFERENCE.
+- Never output recipe_name.
+- Never invent a source_recipe_code.
+- Never modify a source_recipe_code.
+- The final answer must contain ONLY source_recipe_code values for meals.
 
-1. Every breakfast, lunch, and dinner MUST be selected from the input JSON RECIPE REFERENCE.
-2. Use the exact `source_recipe_code` value from the RECIPE REFERENCE.
-3. Do not invent, rename, paraphrase, combine, modify, or derive recipe names.
-4. If a recipe does not exist in the RECIPE REFERENCE, you MUST NOT use it.
-5. Dietary preferences, goals, exclusions, family size, and budget are filters over
-   available recipes; they do not permit creating a new recipe.
-6. Do not repeat the same recipe for breakfast, lunch, or dinner on consecutive days.
-7. If a main course is a curry, add exactly one staple (Roti or Rice) to the meal.
-8. If the main course is not a curry, do not add a staple.
-9. Every recipe name must exactly match a `source_recipe_code` from the input reference.
+MEAL STRUCTURE:
 
-OUTPUT RULES:
+BREAKFAST:
+- Exactly 1 source_recipe_code.
 
-1. Return exactly 7 meal-plan records.
-2. The dates MUST be exactly:
-   {", ".join(dates)}
-3. Each record must contain:
-   - meal_date
-   - breakfast
-   - lunch
-   - dinner
-4. breakfast must contain exactly one recipe name.
-5. lunch must contain the selected main course and, when required, exactly one staple.
-6. dinner must contain the selected main course and, when required, exactly one staple.
-7. Do not return any recipe that is not present in the recipe reference.
-8. Do not return markdown or explanations.
+LUNCH:
+- If the selected recipe is a complete non-curry dish, return exactly 1 source_recipe_code.
+- If the selected recipe is a curry/main-course curry/gravy, return exactly 2 source_recipe_codes:
+  1. exactly 1 curry/main-course recipe
+  2. exactly 1 staple recipe
+- Never return more than 2 codes.
+- Never return more than 1 staple.
+
+DINNER:
+- If the selected recipe is a complete non-curry dish, return exactly 1 source_recipe_code.
+- If the selected recipe is a curry/main-course curry/gravy, return exactly 2 source_recipe_codes:
+  1. exactly 1 curry/main-course recipe
+  2. exactly 1 staple recipe
+- Never return more than 2 codes.
+- Never return more than 1 staple.
+
+IMPORTANT:
+A curry MUST NEVER be served alone.
+
+Example:
+If the curry code is C123 and the roti code is S001:
+["C123", "S001"]
+
+If the curry code is C123 and rice code is S002:
+["C123", "S002"]
+
+Do NOT output:
+["C123"]
+
+BREAKFAST:
+["B001"]
+
+This is WRONG:
+["Paneer Butter Masala", "Roti"]
+
+This is CORRECT:
+["C123", "S001"]
+
+REPETITION:
+- Do not use the same recipe on consecutive days for breakfast.
+- Do not use the same recipe on consecutive days for lunch.
+- Do not use the same recipe on consecutive days for dinner.
+
+DATES:
+{", ".join(dates)}
+
+Return exactly 7 records.
+
+Each record must contain:
+- meal_date
+- breakfast
+- lunch
+- dinner
+
+OUTPUT ONLY JSON matching the provided response schema.
+Do not return recipe names.
+Do not return explanations.
 """.strip()
 
 result = response, completion = client.chat.completions.create_with_completion(
