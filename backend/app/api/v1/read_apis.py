@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException, status
 import httpx
 
 from app.core.config import settings
+from app.schemas.grocery import GroceryListResponse
+from app.schemas.ingredients import GeneratedIngredients
 
 router = APIRouter(prefix="/meal-plans", tags=["meal-plan-reads"])
 
@@ -81,9 +83,9 @@ async def get_user_meal_plan(user_id: str):
         raise HTTPException(status_code=503, detail="Could not reach Supabase.") from exc
 
 
-@router.get("/{meal_plan_id}/ingredients")
+@router.get("/{meal_plan_id}/ingredients", response_model=GeneratedIngredients)
 async def get_meal_plan_ingredients(meal_plan_id: str, user_id: str):
-    """Return saved ingredients grouped by the meal type/recipe in the plan."""
+    """Return saved ingredients for a meal plan in the same shape as generation."""
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(status_code=503, detail="Supabase backend configuration is missing.")
 
@@ -98,43 +100,52 @@ async def get_meal_plan_ingredients(meal_plan_id: str, user_id: str):
             if not plans:
                 raise HTTPException(status_code=404, detail="Meal plan not found for this user.")
 
-            meals = await _get(client, "meal_plan", {
-                "select": "id,meal_id,meal_date,meal_type,source_recipe_code,name",
+            ingredients = await _get(client, "meal_ingredients", {
+                "select": "meal_id,meal_type,source_recipe_code,food_code_org,food_name,amount,unit",
+                "meal_id": f"eq.{meal_plan_id}",
+                "order": "meal_type.asc,source_recipe_code.asc,food_name.asc",
+            })
+            if not ingredients:
+                raise HTTPException(status_code=404, detail="No ingredients found for this meal plan.")
+
+            dates = await _get(client, "meal_plan", {
+                "select": "meal_date,meal_type,source_recipe_code",
                 "meal_id": f"eq.{meal_plan_id}",
                 "order": "meal_date.asc,meal_type.asc",
             })
-            ingredients = await _get(client, "meal_ingredients", {
-                "select": "id,meal_id,meal_type,source_recipe_code,food_code_org,food_name,amount,unit,created_at",
-                "meal_id": f"eq.{meal_plan_id}",
-                "order": "created_at.asc",
-            })
+            date_lookup = {
+                (row["meal_type"], row.get("source_recipe_code")): row["meal_date"]
+                for row in dates
+            }
 
-            grouped = []
-            for meal in meals:
-                meal_ingredients = [
-                    item for item in ingredients
-                    if item.get("meal_type") == meal.get("meal_type")
-                    and (
-                        not meal.get("source_recipe_code")
-                        or not item.get("source_recipe_code")
-                        or item.get("source_recipe_code") == meal.get("source_recipe_code")
-                    )
-                ]
-                grouped.append({
-                    "id": meal["id"],
-                    "meal_plan_id": meal["meal_id"],
-                    "meal_date": meal["meal_date"],
-                    "meal_type": meal["meal_type"],
-                    "source_recipe_code": meal.get("source_recipe_code"),
-                    "name": meal["name"],
-                    "ingredients": meal_ingredients,
+            normalized = []
+            for ingredient in ingredients:
+                normalized.append({
+                    "meal_plan_id": ingredient["meal_id"],
+                    "meal_date": date_lookup.get(
+                        (ingredient["meal_type"], ingredient.get("source_recipe_code"))
+                    ),
+                    "meal_type": ingredient["meal_type"],
+                    "source_recipe_code": ingredient["source_recipe_code"],
+                    "food_code_org": ingredient["food_code_org"],
+                    "food_name": ingredient["food_name"],
+                    "amount": ingredient["amount"],
+                    "unit": ingredient["unit"],
                 })
-            return {"meal_plan_id": meal_plan_id, "meals": grouped}
+
+            if any(item["meal_date"] is None for item in normalized):
+                raise HTTPException(status_code=502, detail="Saved ingredients could not be matched to meal dates.")
+
+            return {
+                "meal_plan_id": meal_plan_id,
+                "item_count": len(normalized),
+                "ingredients": normalized,
+            }
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=503, detail="Could not reach Supabase.") from exc
 
 
-@router.get("/{meal_plan_id}/grocery-list")
+@router.get("/{meal_plan_id}/grocery-list", response_model=GroceryListResponse)
 async def get_meal_plan_grocery_list(meal_plan_id: str, user_id: str):
     """Return the saved grocery list and its items for a meal plan."""
     if not settings.supabase_url or not settings.supabase_service_role_key:
@@ -167,6 +178,11 @@ async def get_meal_plan_grocery_list(meal_plan_id: str, user_id: str):
                 "grocery_list_id": f"eq.{grocery_list['id']}",
                 "order": "ingredient_name.asc",
             })
-            return {"grocery_list": grocery_list, "items": items}
+            return {
+                "grocery_list_id": grocery_list["id"],
+                "meal_id": meal_plan_id,
+                "item_count": len(items),
+                "items": items,
+            }
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=503, detail="Could not reach Supabase.") from exc
