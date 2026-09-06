@@ -2,8 +2,6 @@ from fastapi import APIRouter, HTTPException, status
 import httpx
 
 from app.core.config import settings
-from app.schemas.grocery import GroceryListResponse
-from app.schemas.ingredients import GeneratedIngredients
 
 router = APIRouter(prefix="/meal-plans", tags=["meal-plan-reads"])
 
@@ -83,9 +81,9 @@ async def get_user_meal_plan(user_id: str):
         raise HTTPException(status_code=503, detail="Could not reach Supabase.") from exc
 
 
-@router.get("/{meal_plan_id}/ingredients", response_model=GeneratedIngredients)
+@router.get("/{meal_plan_id}/ingredients")
 async def get_meal_plan_ingredients(meal_plan_id: str, user_id: str):
-    """Return ingredient rows from the same authoritative RPC used by generation."""
+    """Return saved ingredients grouped by the meal type/recipe in the plan."""
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(status_code=503, detail="Supabase backend configuration is missing.")
 
@@ -100,31 +98,43 @@ async def get_meal_plan_ingredients(meal_plan_id: str, user_id: str):
             if not plans:
                 raise HTTPException(status_code=404, detail="Meal plan not found for this user.")
 
-            response = await client.post(
-                f"{settings.supabase_url.rstrip('/')}/rest/v1/rpc/get_meal_plan_ingredients",
-                json={"p_meal_plan_id": meal_plan_id},
-                headers={**_headers(), "Content-Type": "application/json", "Accept": "application/json"},
-            )
-            if response.status_code != 200:
-                raise HTTPException(
-                    status_code=status.HTTP_502_BAD_GATEWAY,
-                    detail=f"Supabase ingredient RPC failed ({response.status_code}): {response.text}",
-                )
+            meals = await _get(client, "meal_plan", {
+                "select": "id,meal_id,meal_date,meal_type,source_recipe_code,name",
+                "meal_id": f"eq.{meal_plan_id}",
+                "order": "meal_date.asc,meal_type.asc",
+            })
+            ingredients = await _get(client, "meal_ingredients", {
+                "select": "id,meal_id,meal_type,source_recipe_code,food_code_org,food_name,amount,unit,created_at",
+                "meal_id": f"eq.{meal_plan_id}",
+                "order": "created_at.asc",
+            })
 
-            ingredients = response.json()
-            if not isinstance(ingredients, list) or not ingredients:
-                raise HTTPException(status_code=404, detail="No ingredients found for this meal plan.")
-
-            return {
-                "meal_plan_id": meal_plan_id,
-                "item_count": len(ingredients),
-                "ingredients": ingredients,
-            }
+            grouped = []
+            for meal in meals:
+                meal_ingredients = [
+                    item for item in ingredients
+                    if item.get("meal_type") == meal.get("meal_type")
+                    and (
+                        not meal.get("source_recipe_code")
+                        or not item.get("source_recipe_code")
+                        or item.get("source_recipe_code") == meal.get("source_recipe_code")
+                    )
+                ]
+                grouped.append({
+                    "id": meal["id"],
+                    "meal_plan_id": meal["meal_id"],
+                    "meal_date": meal["meal_date"],
+                    "meal_type": meal["meal_type"],
+                    "source_recipe_code": meal.get("source_recipe_code"),
+                    "name": meal["name"],
+                    "ingredients": meal_ingredients,
+                })
+            return {"meal_plan_id": meal_plan_id, "meals": grouped}
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=503, detail="Could not reach Supabase.") from exc
 
 
-@router.get("/{meal_plan_id}/grocery-list", response_model=GroceryListResponse)
+@router.get("/{meal_plan_id}/grocery-list")
 async def get_meal_plan_grocery_list(meal_plan_id: str, user_id: str):
     """Return the saved grocery list and its items for a meal plan."""
     if not settings.supabase_url or not settings.supabase_service_role_key:
@@ -157,11 +167,6 @@ async def get_meal_plan_grocery_list(meal_plan_id: str, user_id: str):
                 "grocery_list_id": f"eq.{grocery_list['id']}",
                 "order": "ingredient_name.asc",
             })
-            return {
-                "grocery_list_id": grocery_list["id"],
-                "meal_id": meal_plan_id,
-                "item_count": len(items),
-                "items": items,
-            }
+            return {"grocery_list": grocery_list, "items": items}
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=503, detail="Could not reach Supabase.") from exc
