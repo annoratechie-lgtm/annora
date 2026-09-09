@@ -29,7 +29,7 @@ async def _get(client: httpx.AsyncClient, path: str, params: dict):
 
 @router.get("/{user_id}")
 async def get_user_meal_plan(user_id: str):
-    """Return the active meal plan and its meals for a user."""
+    """Return the active meal plan stored in the current meal/meal_plan schema."""
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(status_code=503, detail="Supabase backend configuration is missing.")
 
@@ -37,9 +37,9 @@ async def get_user_meal_plan(user_id: str):
         async with httpx.AsyncClient(timeout=20) as client:
             plans = await _get(
                 client,
-                "meal_plans",
+                "meal",
                 {
-                    "select": "id,user_id,start_date,end_date,status,created_at",
+                    "select": "id,user_id,start_date,end_date,status,generation_source,created_at,updated_at",
                     "user_id": f"eq.{user_id}",
                     "status": "eq.active",
                     "order": "created_at.desc",
@@ -50,70 +50,101 @@ async def get_user_meal_plan(user_id: str):
                 raise HTTPException(status_code=404, detail="No active meal plan found for this user.")
 
             plan = plans[0]
-            meals = await _get(
+            rows = await _get(
                 client,
-                "meals",
+                "meal_plan",
                 {
-                    "select": "id,meal_plan_id,meal_date,meal_type,name,description,created_at",
-                    "meal_plan_id": f"eq.{plan['id']}",
+                    "select": "id,meal_id,meal_date,meal_type,source_recipe_code,name,description,status,prep_time_minutes,nutrition,created_at,updated_at",
+                    "meal_id": f"eq.{plan['id']}",
                     "order": "meal_date.asc,meal_type.asc",
                 },
             )
+            meals = [
+                {
+                    "id": row["id"],
+                    "meal_plan_id": row["meal_id"],
+                    "meal_date": row["meal_date"],
+                    "meal_type": row["meal_type"],
+                    "source_recipe_code": row.get("source_recipe_code"),
+                    "name": row["name"],
+                    "description": row.get("description"),
+                    "status": row.get("status", "planned"),
+                    "prep_time_minutes": row.get("prep_time_minutes"),
+                    "nutrition": row.get("nutrition") or {},
+                    "created_at": row.get("created_at"),
+                    "updated_at": row.get("updated_at"),
+                }
+                for row in rows
+            ]
             return {"meal_plan": plan, "meals": meals}
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=503, detail="Could not reach Supabase.") from exc
 
 
 @router.get("/{meal_plan_id}/ingredients")
-async def get_meal_plan_ingredients(meal_plan_id: str, user_id: str):
-    """Return all saved ingredients grouped by meal."""
+async def get_meal_plan_ingredients(meal_id: str, user_id: str):
+    """Return saved ingredients grouped by the meal type/recipe in the plan."""
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(status_code=503, detail="Supabase backend configuration is missing.")
 
     try:
         async with httpx.AsyncClient(timeout=20) as client:
-            plans = await _get(client, "meal_plans", {
+            plans = await _get(client, "meal", {
                 "select": "id",
-                "id": f"eq.{meal_plan_id}",
+                "id": f"eq.{meal_id}",
                 "user_id": f"eq.{user_id}",
                 "limit": "1",
             })
             if not plans:
                 raise HTTPException(status_code=404, detail="Meal plan not found for this user.")
 
-            meals = await _get(client, "meals", {
-                "select": "id,meal_date,meal_type,name",
-                "meal_plan_id": f"eq.{meal_plan_id}",
+            meals = await _get(client, "meal_plan", {
+                "select": "id,meal_id,meal_date,meal_type,source_recipe_code,name",
+                "meal_id": f"eq.{meal_id}",
                 "order": "meal_date.asc,meal_type.asc",
             })
             ingredients = await _get(client, "meal_ingredients", {
-                "select": "id,meal_id,ingredient_name,quantity,unit,created_at",
-                "meal_id": "in.(" + ",".join(str(m["id"]) for m in meals) + ")",
+                "select": "id,meal_id,meal_type,source_recipe_code,food_code_org,food_name,amount,unit,created_at",
+                "meal_id": f"eq.{meal_id}",
                 "order": "created_at.asc",
-            }) if meals else []
-
+            })
+            print(meals)
             grouped = []
-            by_meal = {str(m["id"]): [] for m in meals}
-            for item in ingredients:
-                by_meal.setdefault(str(item["meal_id"]), []).append(item)
             for meal in meals:
-                grouped.append({**meal, "ingredients": by_meal.get(str(meal["id"]), [])})
-            return {"meal_plan_id": meal_plan_id, "meals": grouped}
+                meal_ingredients = [
+                    item for item in ingredients
+                    if item.get("meal_type") == meal.get("meal_type")
+                    and (
+                        not meal.get("source_recipe_code")
+                        or not item.get("source_recipe_code")
+                        or item.get("source_recipe_code") == meal.get("source_recipe_code")
+                    )
+                ]
+                grouped.append({
+                    "id": meal["id"],
+                    "meal_plan_id": meal["meal_id"],
+                    "meal_date": meal["meal_date"],
+                    "meal_type": meal["meal_type"],
+                    "source_recipe_code": meal.get("source_recipe_code"),
+                    "name": meal["name"],
+                    "ingredients": meal_ingredients,
+                })
+            return {"meal_plan_id": meal_id, "meals": grouped}
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=503, detail="Could not reach Supabase.") from exc
 
 
-@router.get("/{meal_plan_id}/grocery-list")
-async def get_meal_plan_grocery_list(meal_plan_id: str, user_id: str):
-    """Return the saved grocery list and its items."""
+@router.get("/{meal_id}/grocery-list")
+async def get_meal_plan_grocery_list(meal_id: str, user_id: str):
+    """Return the saved grocery list and its items for a meal plan."""
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(status_code=503, detail="Supabase backend configuration is missing.")
 
     try:
         async with httpx.AsyncClient(timeout=20) as client:
-            plans = await _get(client, "meal_plans", {
+            plans = await _get(client, "meal", {
                 "select": "id",
-                "id": f"eq.{meal_plan_id}",
+                "id": f"eq.{meal_id}",
                 "user_id": f"eq.{user_id}",
                 "limit": "1",
             })
@@ -121,8 +152,8 @@ async def get_meal_plan_grocery_list(meal_plan_id: str, user_id: str):
                 raise HTTPException(status_code=404, detail="Meal plan not found for this user.")
 
             lists = await _get(client, "grocery_lists", {
-                "select": "id,user_id,meal_plan_id,status,created_at,updated_at",
-                "meal_plan_id": f"eq.{meal_plan_id}",
+                "select": "id,user_id,meal_id,status,created_at,updated_at",
+                "meal_id": f"eq.{meal_id}",
                 "user_id": f"eq.{user_id}",
                 "order": "created_at.desc",
                 "limit": "1",

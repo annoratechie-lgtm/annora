@@ -1,5 +1,4 @@
 from datetime import date
-
 from pydantic import BaseModel, Field
 
 
@@ -11,18 +10,15 @@ class MealPlanningContext(BaseModel):
     dietary_goals: list[str] = Field(default_factory=list)
     dietary_exclusions: list[str] = Field(default_factory=list)
 
+class mealPlan(BaseModel):
+    meal_date: str
+    breakfast: str = Field(..., description="source_recipe_code for breakfast recipe", examples=["BFP208"])
+    lunch: list[str] = Field(..., 
+                             description="List of source_recipe_codes.If the main course is a curry, this MUST contain exactly the curry code plus exactly one staple code",
+                             examples=[["BFP208, ASC096"], ["ASC226, ASC113"]])
+    dinner: list[str] = Field(..., 
+                              description="List of source_recipe_codes.If the main course is a curry, this MUST contain exactly the curry code plus exactly one staple code",
+                              examples=[["ASC224, ASC096"], ["OSR139, ASC113"]])
 
-class DailyMeals(BaseModel):
-    # The API/LLM contract uses arrays, while the current database schema
-    # permits one meal per meal type per date.
-    breakfast: list[str] = Field(min_length=1, max_length=1)
-    lunch: list[str] = Field(min_length=1, max_length=1)
-    dinner: list[str] = Field(min_length=1, max_length=1)
-
-
-class GeneratedMealPlan(BaseModel):
-    days: dict[date, DailyMeals]
-
-    @property
-    def sorted_dates(self) -> list[date]:
-        return sorted(self.days)
+class mealPlanResponse(BaseModel):
+    recipes: list[mealPlan] = Field(..., description="Meal plan for the 7 days, with each day containing breakfast, lunch, and dinner meal names.")

@@ -15,9 +15,9 @@ def aggregate_ingredients(ingredients: list[dict]) -> list[dict]:
     totals: dict[tuple[str, str], dict] = {}
 
     for row in ingredients:
-        name = str(row["ingredient_name"]).strip()
+        name = str(row["food_name"]).strip()
         unit = str(row["unit"]).strip()
-        quantity = Decimal(str(row["quantity"]))
+        quantity = Decimal(str(row["amount"]))
         if not name or not unit or quantity <= 0:
             raise GroceryListError("Invalid ingredient quantity, name, or unit.")
 

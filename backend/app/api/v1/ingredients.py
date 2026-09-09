@@ -1,16 +1,14 @@
 from fastapi import APIRouter, HTTPException, status
 import httpx
-
 from app.core.config import settings
 from app.schemas.ingredients import GeneratedIngredients
 from app.services.ingredient_planner import IngredientPlannerError, generate_ingredients
 
 router = APIRouter(prefix="/meal-plans", tags=["meal-plan-ingredients"])
 
-
-@router.post("/{meal_plan_id}/ingredients", response_model=GeneratedIngredients)
-async def generate_meal_plan_ingredients(meal_plan_id: str, user_id: str):
-    """Generate ingredients with Llama and persist them to meal_ingredients."""
+@router.post("/{meal_id}/ingredients", response_model=GeneratedIngredients)
+async def generate_meal_plan_ingredients(meal_id: str, user_id: str):
+    
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -28,8 +26,8 @@ async def generate_meal_plan_ingredients(meal_plan_id: str, user_id: str):
     try:
         async with httpx.AsyncClient(timeout=20) as client:
             plan_response = await client.get(
-                f"{base_url}/rest/v1/meal_plans",
-                params={"select": "id", "id": f"eq.{meal_plan_id}", "user_id": f"eq.{user_id}", "limit": "1"},
+                f"{base_url}/rest/v1/meal",
+                params={"select": "id", "id": f"eq.{meal_id}", "user_id": f"eq.{user_id}", "limit": "1"},
                 headers=headers,
             )
             if plan_response.status_code != 200:
@@ -38,10 +36,10 @@ async def generate_meal_plan_ingredients(meal_plan_id: str, user_id: str):
                 raise HTTPException(status_code=404, detail="Meal plan not found for this user.")
 
             meals_response = await client.get(
-                f"{base_url}/rest/v1/meals",
+                f"{base_url}/rest/v1/meal_plan",
                 params={
-                    "select": "id,meal_date,meal_type,name,description",
-                    "meal_plan_id": f"eq.{meal_plan_id}",
+                    "select": "meal_id,meal_date,meal_type,source_recipe_code,description",
+                    "meal_id": f"eq.{meal_id}",
                     "order": "meal_date.asc,meal_type.asc",
                 },
                 headers=headers,
@@ -50,26 +48,29 @@ async def generate_meal_plan_ingredients(meal_plan_id: str, user_id: str):
                 raise HTTPException(status_code=502, detail="Could not load meals from Supabase.")
 
             meals = meals_response.json()
-            if len(meals) != 21:
+            if len(meals) < 21:
                 raise HTTPException(
                     status_code=422,
                     detail=f"Expected 21 meals for a 7-day plan, found {len(meals)}.",
                 )
-
-            generated = await generate_ingredients(meals)
-
-            meal_ids = {str(meal["id"]) for meal in meals}
+            
+            generated = await generate_ingredients(meal_id)
+            
+            meal_ids = {str(meal["meal_id"]) for meal in meals}
             rows = []
-            for meal_entry in generated["meals"]:
+            for meal_entry in generated:
                 if meal_entry["meal_id"] not in meal_ids:
                     raise HTTPException(status_code=422, detail="Ingredient response contains an unknown meal_id.")
-                for ingredient in meal_entry["ingredients"]:
-                    rows.append({
-                        "meal_id": meal_entry["meal_id"],
-                        "ingredient_name": ingredient["ingredient_name"],
-                        "quantity": ingredient["quantity"],
-                        "unit": ingredient["unit"],
-                    })
+                
+                rows.append({
+                    "meal_id": meal_entry["meal_id"],
+                    "meal_type": meal_entry["meal_type"],
+                    "source_recipe_code": meal_entry["source_recipe_code"],
+                    "food_code_org": meal_entry["food_code_org"],
+                    "food_name": meal_entry["food_name"],
+                    "amount": meal_entry["amount"],
+                    "unit": meal_entry["unit"],
+                })
 
             # Make the endpoint repeatable: replace existing ingredients for these meals.
             delete_response = await client.delete(
@@ -94,7 +95,8 @@ async def generate_meal_plan_ingredients(meal_plan_id: str, user_id: str):
                     detail=f"Could not save meal ingredients: {save_response.text}",
                 )
 
-            return generated
+            
+            return {"ingredients": generated}
     except httpx.HTTPError as exc:
         raise HTTPException(status_code=503, detail="Could not reach Supabase.") from exc
     except IngredientPlannerError as exc:
