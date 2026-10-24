@@ -70,23 +70,66 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     }).toList();
   }
 
+  List<Map<String, dynamic>> _groupMealsForCards(
+    List<Map<String, dynamic>> meals,
+  ) {
+    final sortedMeals = [...meals]..sort((a, b) {
+      final dateCompare = (a['meal_date']?.toString() ?? '')
+          .compareTo(b['meal_date']?.toString() ?? '');
+      if (dateCompare != 0) return dateCompare;
+      return _mealTypeOrder(a['meal_type']?.toString())
+          .compareTo(_mealTypeOrder(b['meal_type']?.toString()));
+    });
+
+    final groups = <String, Map<String, dynamic>>{};
+    for (final meal in sortedMeals) {
+      final date = meal['meal_date']?.toString() ?? '';
+      final type = meal['meal_type']?.toString() ?? 'meal';
+      final key = '$date|$type';
+      final code = meal['source_recipe_code']?.toString();
+      final savedName = meal['name']?.toString();
+      final embeddedName = code == null ? null : _recipeNameFromCode(code);
+      final name = savedName == null || savedName.isEmpty || savedName == 'NA'
+          ? (embeddedName ?? 'Meal')
+          : savedName;
+      final rawNutrition = meal['nutrition'];
+      final recipe = <String, dynamic>{
+        'source_recipe_code': code,
+        'name': name,
+        'nutrition': rawNutrition is Map
+            ? Map<String, dynamic>.from(rawNutrition)
+            : <String, dynamic>{},
+      };
+
+      final group = groups.putIfAbsent(key, () => {
+            ...meal,
+            'recipes': <Map<String, dynamic>>[],
+          });
+      (group['recipes'] as List<Map<String, dynamic>>).add(recipe);
+      group['name'] = (group['recipes'] as List<Map<String, dynamic>>)
+          .map((item) => item['name'].toString())
+          .join(', ');
+    }
+
+    return groups.values.toList();
+  }
+
+  int _mealTypeOrder(String? type) => switch (type) {
+        'breakfast' => 0,
+        'lunch' => 1,
+        'dinner' => 2,
+        'snack' => 3,
+        _ => 4,
+      };
+
   Future<void> _generate() async {
     setState(() => _generating = true);
     try {
-      final result = await widget.api.generateMealPlan();
-      if (!mounted) return;
-      final meals = await _withRecipeNames(
-        _flattenGeneratedPlan(result['plan']),
-      );
+      await widget.api.generateMealPlan();
       if (!mounted) return;
       setState(() {
-        _future = Future.value({
-          'meal_plan': {
-            'id': result['meal_id'],
-            'status': result['status'],
-          },
-          'meals': meals,
-        });
+        // Reload the saved plan so each meal includes its persisted nutrition.
+        _future = _fetchMealPlanWithRecipeNames();
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Your 7-day meal plan is ready.')),
@@ -99,57 +142,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     } finally {
       if (mounted) setState(() => _generating = false);
     }
-  }
-
-  List<Map<String, dynamic>> _flattenGeneratedPlan(dynamic rawPlan) {
-    if (rawPlan is! Map) return const [];
-    final rows = <Map<String, dynamic>>[];
-    for (final entry in rawPlan.entries) {
-      final date = entry.key.toString();
-      final meals = entry.value;
-      if (meals is! Map) continue;
-      for (final type in ['breakfast', 'lunch', 'dinner']) {
-        final raw = meals[type];
-        String? name;
-        String? recipeCode;
-        if (raw is String) {
-          final parts = raw.split('-');
-          if (parts.length > 1) {
-            name = parts.first.trim();
-            recipeCode = parts.sublist(1).join('-').trim();
-          } else {
-            name = 'NA';
-            recipeCode = raw.trim();
-          }
-        } else if (raw is List && raw.isNotEmpty) {
-          final value = raw.first?.toString() ?? '';
-          final parts = value.split('-');
-          if (parts.length > 1) {
-            name = parts.first.trim();
-            recipeCode = parts.sublist(1).join('-').trim();
-          } else {
-            name = 'NA';
-            recipeCode = value.trim();
-          }
-        }
-        if (name == null || name.isEmpty) continue;
-        rows.add({
-          'meal_date': date,
-          'meal_type': type,
-          'name': name,
-          'source_recipe_code': recipeCode,
-          'status': 'planned',
-          'description': null,
-          'nutrition': <String, dynamic>{},
-        });
-      }
-    }
-    rows.sort((a, b) {
-      final dateCompare = a['meal_date'].toString().compareTo(b['meal_date'].toString());
-      if (dateCompare != 0) return dateCompare;
-      return a['meal_type'].toString().compareTo(b['meal_type'].toString());
-    });
-    return rows;
   }
 
   @override
@@ -209,7 +201,9 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     }
 
     final selectedDate = dates[safeDay];
-    final dayMeals = meals.where((e) => e['meal_date']?.toString() == selectedDate).toList();
+    final dayMeals = _groupMealsForCards(
+      meals.where((e) => e['meal_date']?.toString() == selectedDate).toList(),
+    );
 
     return Column(
       children: [
@@ -225,8 +219,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 const SizedBox(height: 10),
                 if (_selectedTab == 0) ...[
                   for (final meal in dayMeals) _buildMealCard(meal),
-                  const SizedBox(height: 12),
-                  _buildNutritionSummary(dayMeals),
                 ] else if (_selectedTab == 1)
                   _buildNutritionTab(dayMeals)
                 else if (_selectedTab == 2)
@@ -326,12 +318,27 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   Widget _buildMealCard(Map<String, dynamic> meal) {
     final type = meal['meal_type']?.toString() ?? 'meal';
-    final savedName = meal['name']?.toString();
-    final recipeCode = meal['source_recipe_code']?.toString();
-    final resolvedRecipeName = recipeCode == null ? null : _recipeNameFromCode(recipeCode);
-    final name = savedName == null || savedName.isEmpty || savedName == 'NA'
-        ? (resolvedRecipeName ?? 'Meal')
-        : savedName;
+    final rawRecipes = meal['recipes'];
+    final recipes = rawRecipes is List
+        ? rawRecipes
+            .whereType<Map>()
+            .map((recipe) => Map<String, dynamic>.from(recipe))
+            .toList()
+        : <Map<String, dynamic>>[meal];
+    final name = recipes
+        .map((recipe) => recipe['name']?.toString() ?? 'Meal')
+        .join(', ');
+    final nutritionLines = <String>[];
+    for (final recipe in recipes) {
+      final rawNutrition = recipe['nutrition'];
+      final label = _mealNutritionLabel(
+        rawNutrition is Map ? rawNutrition : const <String, dynamic>{},
+      );
+      if (label == null) continue;
+      nutritionLines.add(
+        recipes.length > 1 ? '${recipe['name']}: $label' : label,
+      );
+    }
     final description = meal['description']?.toString();
     final icon = type == 'breakfast' ? '🌞' : type == 'lunch' ? '🍲' : type == 'dinner' ? '🌙' : '🍽️';
     final color = type == 'breakfast' ? _orange : type == 'lunch' ? _green : _blue;
@@ -355,6 +362,35 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             const SizedBox(width: 11),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _text)),
+              if (nutritionLines.isNotEmpty) ...[
+                const SizedBox(height: 7),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2EAFE),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var index = 0; index < nutritionLines.length; index++)
+                        Padding(
+                          padding: EdgeInsets.only(
+                            bottom: index == nutritionLines.length - 1 ? 0 : 3,
+                          ),
+                          child: Text(
+                            nutritionLines[index],
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF7041A6),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
               if (description != null && description.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(description, style: const TextStyle(fontSize: 10.5, color: _muted, height: 1.3)),
@@ -367,18 +403,105 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   Widget _buildNutritionSummary(List<Map<String, dynamic>> meals) {
-    final hasNutrition = meals.any((meal) {
-      final nutrition = meal['nutrition'];
-      return nutrition is Map && nutrition.isNotEmpty;
-    });
-    return _simpleCard(
-      '📊 Today\'s nutrition summary',
-      hasNutrition
-          ? 'Nutrition data is available for this day.'
-          : 'Nutrition values are not populated by the current meal-planning API yet.',
+    const nutritionKeys = {
+      'energy': 'unit_serving_energy_kcal',
+      'protein': 'unit_serving_protein_g',
+      'carbs': 'unit_serving_carb_g',
+    };
+    final totals = {for (final key in nutritionKeys.keys) key: 0.0};
+    final availableCounts = {for (final key in nutritionKeys.keys) key: 0};
+    var recipeCount = 0;
+    var recipesWithNutrition = 0;
+
+    for (final meal in meals) {
+      final rawRecipes = meal['recipes'];
+      final recipes = rawRecipes is List
+          ? rawRecipes.whereType<Map>()
+          : <Map>[meal];
+      for (final recipe in recipes) {
+        recipeCount++;
+        final rawNutrition = recipe['nutrition'];
+        if (rawNutrition is! Map) continue;
+        var hasAnyValue = false;
+        for (final entry in nutritionKeys.entries) {
+          final value = double.tryParse(rawNutrition[entry.value]?.toString() ?? '');
+          if (value == null) continue;
+          totals[entry.key] = totals[entry.key]! + value;
+          availableCounts[entry.key] = availableCounts[entry.key]! + 1;
+          hasAnyValue = true;
+        }
+        if (hasAnyValue) recipesWithNutrition++;
+      }
+    }
+
+    String totalFor(String key, {int decimalPlaces = 1}) {
+      if (availableCounts[key] == 0) return '—';
+      return _formatNutritionNumber(totals[key], decimalPlaces: decimalPlaces);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: const [
+          BoxShadow(color: Color(0x10000000), blurRadius: 10, offset: Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '📊 Daily nutrition summary',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _text),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            recipesWithNutrition == 0
+                ? 'Nutrition data is not available for this day yet.'
+                : 'Per serving, summed across recipes · $recipesWithNutrition of $recipeCount recipes',
+            style: const TextStyle(fontSize: 10.5, color: _muted),
+          ),
+          const SizedBox(height: 13),
+          Row(
+            children: [
+              Expanded(child: _nutritionTotalTile('Energy', totalFor('energy', decimalPlaces: 0), 'kcal')),
+              const SizedBox(width: 8),
+              Expanded(child: _nutritionTotalTile('Protein', totalFor('protein'), 'g')),
+              const SizedBox(width: 8),
+              Expanded(child: _nutritionTotalTile('Carbs', totalFor('carbs'), 'g')),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
+  Widget _nutritionTotalTile(String label, String value, String unit) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4EBFF),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 10, color: _muted)),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '$value $unit',
+              maxLines: 1,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF7541B8)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
   Widget _buildNutritionTab(List<Map<String, dynamic>> meals) => _buildNutritionSummary(meals);
 
   Widget _buildPantryTab(String? planId, String selectedDate) {
@@ -523,6 +646,32 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     } finally {
       if (mounted) setState(() => _generatingPantry = false);
     }
+  }
+
+  String? _mealNutritionLabel(Map<dynamic, dynamic> nutrition) {
+    final values = <String>[];
+    final energy = _formatNutritionNumber(
+      nutrition['unit_serving_energy_kcal'],
+      decimalPlaces: 0,
+    );
+    final protein = _formatNutritionNumber(nutrition['unit_serving_protein_g']);
+    final carbs = _formatNutritionNumber(nutrition['unit_serving_carb_g']);
+
+    if (energy.isNotEmpty) values.add('$energy kcal');
+    if (protein.isNotEmpty) values.add('$protein g protein');
+    if (carbs.isNotEmpty) values.add('$carbs g carbs');
+    if (values.isEmpty) return null;
+    return 'Per serving  •  ${values.join('  •  ')}';
+  }
+
+  String _formatNutritionNumber(dynamic value, {int decimalPlaces = 1}) {
+    final number = double.tryParse(value?.toString() ?? '');
+    if (number == null) return '';
+    final formatted = number.toStringAsFixed(decimalPlaces);
+    if (decimalPlaces > 0 && formatted.endsWith('.0')) {
+      return formatted.substring(0, formatted.length - 2);
+    }
+    return formatted;
   }
 
   String _formatIngredientAmount(dynamic amount, dynamic unit) {

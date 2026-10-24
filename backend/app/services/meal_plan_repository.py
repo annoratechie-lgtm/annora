@@ -2,6 +2,7 @@ from datetime import date
 
 import httpx
 
+from app.api.v1.nutrition import NutritionFetchError, fetch_recipe_nutrition
 from app.core.config import settings
 # from app.schemas.meal_plan import GeneratedMealPlan
 
@@ -52,6 +53,12 @@ async def save_meal_plan(user_id: str, start_date: date, plan) -> str:
         raise MealPlanRepositoryError(f"Expected 7-day plan, found {len(plan)}.")
     else:
         async with httpx.AsyncClient(timeout=20) as client:
+            codes = fetch_meal_plan(plan)
+            try:
+                nutrition_by_code = await fetch_recipe_nutrition(codes, client=client)
+            except NutritionFetchError as exc:
+                raise MealPlanRepositoryError(str(exc)) from exc
+
             ## Fetching Active Meal Plan for the user
             active_meal_ids = await client.get(
                 f"{base_url}/rest/v1/meal",
@@ -99,7 +106,6 @@ async def save_meal_plan(user_id: str, start_date: date, plan) -> str:
             
             plan_id = plan_rows[0]["id"]
             ## Fetching meal code for plan
-            codes = fetch_meal_plan(plan)
             recipe_mapping = await client.get(
                             f"{base_url}/rest/v1/recipes",
                             params={
@@ -128,7 +134,7 @@ async def save_meal_plan(user_id: str, start_date: date, plan) -> str:
                         "description": None,
                         "status": "planned",
                         "prep_time_minutes": None,
-                        "nutrition": {},
+                        "nutrition": nutrition_by_code.get(breakfast.strip().upper(), {}),
                     })
 
                 # Lunch + Dinner
@@ -149,7 +155,7 @@ async def save_meal_plan(user_id: str, start_date: date, plan) -> str:
                             "description": None,
                             "status": "planned",
                             "prep_time_minutes": None,
-                            "nutrition": {},
+                            "nutrition": nutrition_by_code.get(source_recipe_code.strip().upper(), {}),
                         })      
             print("Meal Rows to be saved:", meal_rows)
 
