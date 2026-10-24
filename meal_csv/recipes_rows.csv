@@ -1,0 +1,1015 @@
+recipe_code,source_recipe_code,recipe_name,recipe_display_name,source,status,category,meal_type,preference
+ANN-000577,BFP161,LASAGNE WITH MEAT SAUCE,Lasagne with meat sauce,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000742,BFP428,EGG CUTLET,Egg cutlet (Anda cutlet),bfp_manual,active,starter,"[""snack""]",eggetarian
+ANN-000163,ASC167,Sambar,Sambar,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000468,ASC492,Stewed apple,Stewed apple,asc_manual,active,snack,"[""snack""]",vegetarian
+ANN-000319,ASC330,Stewed Apple with Custard,Stewed apple with custard,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000608,BFP208,PALAK MUSHROOM,Spinach mushroom (Palak mushroom),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000265,ASC273,Cucumber Raita,Cucumber raita (Kheere ka raita),asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000326,ASC337,Ghia Burfi,Bottle gourd burfi (Ghiya/Lauki burfi),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000172,ASC177,Brinjal Bhurtha,Brinjal bhartha (Baingan ka bhartha),asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000037,ASC038,Sweet open sandwich,Sweet open sandwich,asc_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000298,ASC309,Lemon Souffle,Lemon souffle,asc_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000658,BFP290,PARSLEY POTATO,Parsley potato,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000161,ASC164,Soyabean curry,Soyabean curry,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000073,ASC075,Egg Sauce,Egg sauce,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",eggetarian
+ANN-000598,BFP196,SHAHI KEEMA KOFTA CURRY,Shahi keema kofta curry,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000175,ASC180,Cauliflower with coconut,Cauliflower with coconut (Nariyal ke saath phoolgobhi),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000750,BFP443,MINT TOMATO CHUTNEY,Mint tomato chutney (Pudinay aur tamatar ki chutney),bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000768,BFP466,RIBBON SANDWICH,Ribbon sandwich,bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000227,ASC233,Chicken Yakhni,Chicken yakhni,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000938,OSR075,Gobi Manchurian,Cabbage manchurian (Pattagobhi manchurian),open_source_recipes,active,starter,"[""snack""]",vegetarian
+ANN-000502,BFP026,GINGO,Gingo,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000731,BFP406,ATTA BESAN LADDOO,Wheat and gram flour ladoo (Atta besan ladoo),bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000801,BFP516,JELLY BISCUIT,Jelly biscuit,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000519,BFP055,PUFFY OMELETTE,Puffy omelette/omlet,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000048,ASC050,Oatmeal Porridge,Oatmeal Porridge,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000213,ASC219,Avial,Avial,asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000427,ASC446,Pin Wheel Biscuit,Pin wheel biscuit,asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000940,OSR077,Paneer Lababdar,Paneer lababdar,open_source_recipes,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000923,OSR060,Potato pickle,Potato pickle (Aloo ka achaar),open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000034,ASC035,Salami sandwich ,Salami sandwich,asc_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000692,BFP348,STRAWBERRY ICE CREAM,Strawberry ice cream,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000661,BFP293,CAULIFLOWER AU GRATIN,Cauliflower au gratin,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000106,ASC108,Spinach poories,Spinach poori (Palak poori),asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000917,OSR054,Sweet peach pickle,Sweet peach pickle (Aadoo ka achaar),open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000997,OSR137,Lemon coriander soup,Lemon coriander soup,open_source_recipes,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000982,OSR122,Carrot cake,Carrot cake (Gajar ka cake),open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000487,ASC513,Raw Mango Chutney,Raw mango chutney (Kachhe aam/Kairi ki chutney),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000942,OSR079,Sauteed Radishes with Green Beans,Sauteed radishes with green beans,open_source_recipes,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000825,BFP552,CEREAL PULSE MIX WITH AMYLASE RICE FLOUR,Cereal pulse mix with amylase rice flour,bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000986,OSR126,Almond cardamom cake,Almond cardamom cake (Badam elaichi cake),open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000134,ASC136,Cheese noodle ring,Cheese noodle ring,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",eggetarian
+ANN-000871,OSR007,Apple oats chia seed smoothie,Apple oats chia seed smoothie,open_source_recipes,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000991,OSR131,Baked potato soup,Baked potato soup,open_source_recipes,active,soup,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000926,OSR063,Fish orly,Fish orly,open_source_recipes,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000778,BFP480,JAM FILLING,Jam filling,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000440,ASC459,Peanut Burfi,Peanut burfi (Moongfali ki burfi),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000306,ASC317,Orange and Pineapple Cream,Orange and pineapple cream,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000747,BFP439,KHAMAN (DHOKLA),Khaman (dhokla),bfp_manual,active,snack,"[""snack""]",non_vegetarian
+ANN-000795,BFP508,CHRISTMAS BISCUITS,Christmas biscuit,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000495,BFP007,Kashmiri Tea (Kehwa),Kashmiri tea (Kehwa),bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000116,ASC118,Paneer Pulao,Paneer pulao,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000191,ASC197,Gravy for Kofta,Gravy for kofta,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000841,BFP570,BESAN BAHTHUA CHEELA,Besan bathua chilla/cheela,bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000809,BFP529,APPLE BANANA PIE,Apple banana pie,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000885,OSR021,Amaranth ladoo,Amaranth ladoo (Rajgira ladoo),open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000860,BFP604,STUFFED KARELA (DRY),Stuffed bittergourd (dry) (Bharwa karela),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000396,ASC414,Hot Potato Souffle,Hot potato souffle,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000856,BFP598,SWEET AND SOUR TOMATO PICKLE,Sweet and sour tomato pickle (Khatta meetha tamatar ka achaar),bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000311,ASC322,Steamed Orange Pudding,Steamed orange pudding,asc_manual,active,beverage,"[""breakfast"", ""snack""]",eggetarian
+ANN-000625,BFP234,FISH SOUFFLE,Fish souffle,bfp_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000118,ASC120,Navratan Pulao,Navratan pulao,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000715,BFP373,PAVLOVA,Pavlova,bfp_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000439,ASC458,Soyabean Namakparas,Soyabean namak paras,asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000017,ASC018,Pineapple Milkshake,Pineapple milkshake (Ananas milkshake),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000141,ASC143,BHATURA,Bhatura,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000798,BFP511,CHRISTMAS STAR BISCUIT,Christmas star biscuit,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000303,ASC314,Apple Mousse,Apple mousse,asc_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000685,BFP329,GRAPES RAITA,Grapes raita (Angoor ka raita),bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000927,OSR064,Hariyali fish tikka,Hariyali Fish Tikka,open_source_recipes,active,starter,"[""snack""]",non_vegetarian
+ANN-000058,ASC060,Baked Egg,Baked egg ,asc_manual,active,breakfast,"[""breakfast""]",eggetarian
+ANN-000206,ASC212,Shepherd's Pie,Shepherd's pie (vegetarian),asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000060,ASC062,Stuffed Egg Omelette,Stuffed egg omelette/omlet,asc_manual,active,breakfast,"[""breakfast""]",non_vegetarian
+ANN-000562,BFP141,MUTTON PULAO,Mutton pulao,bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",non_vegetarian
+ANN-000430,ASC449,Ice Box Cookies,Ice box cookies,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000448,ASC467,Sweet Channa Dal Roti,Sweet split chickpea roti (Sweet channa dal roti/Puranpoli),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000420,ASC439,Chocolate Walnut Cookies,Chocolate walnut cookies (Chocolate aur akhrot ke cookies),asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000018,ASC019,Orange Milkshake ,Orange milkshake (Narangi milkshake),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000756,BFP450,DESSICATED COCONUT CHUTNEY,Dessicated coconut chutney (Sookhe kase nariyal ki chutney) ,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000886,OSR022,Chhena poda,Chhena poda,open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000819,BFP545,VEGETABLE PATTIES,Vegetable patties ,bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000223,ASC229,Pea Keema Curry,Pea keema curry (Matar keema ki sabzi),asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000784,BFP491,DUNDEE CAKE,Dundee cake,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000630,BFP246,POTATO KOFTA CURRY,Potato kofta curry (Aloo kofta curry),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",eggetarian
+ANN-000305,ASC316,Mango Mousse,Mango mousse,asc_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000328,ASC339,Kaju Burfi,Cashewnut burfi (Kaju burfi/Kaju katli),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000851,BFP583,APPLE JELLY,Apple jelly (Seb ki jelly),bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000452,ASC471,Paushtik Ladoo,Paushtik ladoo,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000314,ASC325,Chocolate Pudding,Chocolate pudding,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000222,ASC228,Palak Mutton,Spinach mutton (Palak mutton),asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000214,ASC220,Ala Yakhani,Al yakhani,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000382,ASC400,Cheese and Mushroom Tart,Cheese and mushroom tart,asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000363,ASC376,Cheese Pizza,Cheese pizza,asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000967,OSR105,Puttu,Rice puttu (Ari puttu),open_source_recipes,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000295,ASC305,Mango Ice Cream,Mango ice cream,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000483,ASC507,Mango Pickle (1),Mango pickle (Aam ka achaar),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000103,ASC105,Paneer Parantha,Paneer parantha/paratha,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000813,BFP535,SAVOURY PUFFS,Savoury puffs,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000707,BFP365,CREAMY CHOCOLATE MOUSSE,Creamy chocolate mousse,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000104,ASC106,Besan and Spinach Parantha,Besan and spinach parantha/paratha (Besan aur palak ka parantha/paratha),asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000755,BFP448,GUN POWDER CHUTNEY,Gun powder chutney,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000259,ASC267,Low Calorie Quick Mayonnaise,Low calorie quick mayonnaise,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",eggetarian
+ANN-000603,BFP203,NUTRINUGGET SWEET AND SOUR,Soya chunks sweet and sour (Nutrinugget sweet and sour),bfp_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000019,ASC020,Egg Nog,Egg nog,asc_manual,active,breakfast,"[""breakfast""]",eggetarian
+ANN-000256,ASC264,Coleslaw,Coleslaw,asc_manual,active,salad,"[""lunch"", ""dinner""]",vegetarian
+ANN-000700,BFP358,PEACH MELBA ICE CREAM,Peach melba ice cream,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000507,BFP036,VERMICELLI PORRIDGE,Vermicelli porridge (Semiya/Seviyan porridge),bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000040,ASC041,Pea Potato toasted sandwich ,Pea potato sandwich (toasted) (Matar aloo ka sandwich),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000542,BFP095,TARTARE SAUCE,Tartare sauce,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000615,BFP220,GINGER CHICKEN,Ginger chicken,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000404,ASC422,Fruit Loaf,Fruit Loaf ,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000674,BFP312,MAYONNAISE WITHOUT EGGS,Mayonnaise without eggs,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",eggetarian
+ANN-000855,BFP597,BRINJAL PICKLE,Brinjal pickle (Baingan ka achaar),bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000202,ASC208,Baked Vegetables,Baked vegetables,asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000925,OSR062,Afghani chicken,Afghani chicken,open_source_recipes,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000394,ASC412,Cheese Patties,Cheese patties,asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000534,BFP079,CREAM OF CARROT SOUP,Cream of carrot soup,bfp_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000347,ASC358,Bread Pakoras,Bread pakora/pakoda,asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000333,ASC344,Til Ladoo,Sesame ladoo (Til ke ladoo),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000360,ASC371,Spinach Channa Dal Cutlet,Spinach chickpeas cutlet (Palak channa dal cutlet),asc_manual,active,starter,"[""snack""]",eggetarian
+ANN-000344,ASC355,Spinach Pakoras,Spinach pakora/pakoda (Palak pakoda),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000244,ASC252,Tandoori Fish,Tandoori fish,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000372,ASC385,Peanut Chutney,Peanut chutney (Mungfali ki chutney),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000912,OSR049,Gooseberry pickle,Gooseberry pickle (Amla ka achaar),open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000702,BFP360,HOT CHERRY SAUCE,Hot cherry sauce,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000125,ASC127,Tamarind Rice,Tamarind rice (Chintapandu pulihora/Puliyodharai/Puli sadam/Huli anna),asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000402,ASC420,Chocolate cake,Chocolate cake,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000160,ASC163,Lobia curry,Lobia curry,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000296,ASC307,Fruit Ice Cream,Fruit Ice cream (Phalon ka Ice cream),asc_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000158,ASC161,Black channa curry,Black channa curry/Bengal gram curry (Kale chane ki curry),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000186,ASC192,Pea Mushroom curry,Pea mushroom curry (Matar mushroom),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000391,ASC409,Cheese Balls,Cheese balls,asc_manual,active,main_course,"[""lunch"", ""dinner""]",eggetarian
+ANN-000891,OSR027,Prawn sandwich,Prawn sandwich,open_source_recipes,active,starter,"[""snack""]",non_vegetarian
+ANN-000532,BFP075,CHEESE SOUP,Cheese soup,bfp_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000169,ASC173,Cabbage and peas,Cabbage and peas (Pattagobhi aur matar),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000557,BFP133,KASHMIRI 'TAHAR',Kashmiri 'tahar',bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000864,BFP608,(Pineapple) MILKSHAKE WITH ICE CREAM,Pineapple milkshake with ice cream (Ananas milkshake ice cream ke saath),bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000592,BFP178,GREEN GRAM WHOLE,Green gram whole with baghar (Sabut moong dal with tadka),bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000829,BFP556,SPINACH KHICHRI,Spinach khichri (Palak khichri/khichdi),bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000355,ASC366,Vegetable Cutlet,Vegetable cutlet,asc_manual,active,starter,"[""snack""]",eggetarian
+ANN-000653,BFP284,STUFFED VEGETABLE GOURD/GHIA,Stuffed bottle gourd (Stuffed ghiya/lauki),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000631,BFP249,YAM KOFTA,Yam kofta curry (Zimikand/Suran kofta curry),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",eggetarian
+ANN-000361,ASC372,Cheese Toast,Cheese toast,asc_manual,active,starter,"[""snack""]",eggetarian
+ANN-000428,ASC447,Kesar Biscuit,Saffron biscuit (Kesar biscuit),asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000845,BFP575,SOYA ROTI,Soya roti,bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000796,BFP509,CHRISTMAS WREATH BISCUIT,Christmas wreath biscuit,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000204,ASC210,Baked Vegetable with spinach,Baked vegetables with spinach ,asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000472,ASC496,Mango squash,Mango squash (Aam ka squash),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000898,OSR034,Sweet potato biscuits,Sweet potato biscuit (Shakarkand ke biscuit),open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000622,BFP231,BAKED STUFFED FISH,Baked stuffed fish,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000799,BFP512,CHRISTMAS TREE BISCUIT,Christmas tree biscuit,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000836,BFP564,BAJRA MATHRI,Pearl millet mathri (Bajra mathri),bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000821,BFP547,SAJINA,Sajina,bfp_manual,active,review,"[""review""]",vegetarian
+ANN-000162,ASC165,Rajmah curry,Kidney bean curry (Rajmah curry),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000975,OSR114,Bhel puri,Bhel puri ,open_source_recipes,active,starter,"[""snack""]",vegetarian
+ANN-000013,ASC014,Hot cocoa,Hot cocoa,asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000494,BFP005,Sambar Powder,Sambar powder (Sambar masala),bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000415,ASC433,Pineapple Cake,Pineapple cake ,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000748,BFP440,INSTANT DHOKLA,Instant dhokla,bfp_manual,active,snack,"[""snack""]",vegetarian
+ANN-000489,ASC515,Tomato Puree,Tomato puree,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000816,BFP541,CREAM HORNS,Cream horns,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000138,ASC140,Chicken lasagne,Chicken lasagne,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000148,ASC151,Washed Moong dal ,Washed moong dal (Dhuli moong ki dal),asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000626,BFP239,POTATO CURRY,Potato curry (Aloo ki sabzi),bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000697,BFP354,COFFEE ICE CREAM,Coffee ice cream,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-001012,OSR155,Maa chaane ki dal,Maa chaane ki dal,open_source_recipes,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000312,ASC323,Meringue and Rice Pudding,Meringue and rice pudding,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000803,BFP518,CHEESE STRAWS,Cheese straws,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000217,ASC223,Methi Malai Paneer,Methi malai paneer,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000689,BFP345,CARAMEL CUSTARD,Caramel custard (baked),bfp_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000826,BFP553,BANANA GROUNDNUT FOOD,Banana groundnut paste/puree,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000730,BFP404,KHOA LADDOO,Khoa ladoo,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000572,BFP154,BEANS AND MACARONI,Beans and macaroni,bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000131,ASC133,Macroni cheese pie,Macroni cheese pie,asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000956,OSR094,Masala Soufflé,Masala souffle ,open_source_recipes,active,dessert,"[""anytime""]",eggetarian
+ANN-000384,ASC402,Minced Meat Pie,Minced meat pie,asc_manual,active,bakery,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000713,BFP371,STEWED FRUIT,Stewed fruit (with pear),bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000209,ASC215,Palak Paneer,Spinach paneer (Palak paneer),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000638,BFP263,DRY ARBI,Dry arbi (Sookhi arbi),bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000935,OSR072,Corn Omelet,Corn omelette/omlet,open_source_recipes,active,breakfast,"[""breakfast""]",eggetarian
+ANN-000313,ASC324,Cheese Pudding,Cheese pudding,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000496,BFP008,Steeped Hot Coffee,Steeped hot coffee,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000757,BFP451,CURD MINT DIP,Curd mint dip ,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000343,ASC354,Mixed Vegetable Pakoras,Mixed vegetable pakora/pakoda,asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000613,BFP217,CREAMY CHICKEN,Creamy chicken,bfp_manual,active,snack,"[""snack""]",non_vegetarian
+ANN-000329,ASC340,Besan Burfi,Gram flour burfi (Besan burfi),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000168,ASC172,Aloo capsicum,Potato capsicum (Shimla mirch aloo),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000318,ASC329,Date and Nut Pie,Date and nut pie,asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000178,ASC183,Raw papaya with coconut,Raw papaya with coconut (Papaya thoran),asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000463,ASC485,Potato With Curd,Potato with curd,asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000096,ASC098,Potato Parantha,Potato parantha/paratha (Aloo ka parantha/paratha),asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000120,ASC122,Mutton Biryani,Mutton biryani/biriyani,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",non_vegetarian
+ANN-000827,BFP554,RICE DAL PORRIDGE,Rice dal porridge (Chawal dal ki khichdi/khichri),bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000454,ASC473,Suji Carrot Vadas,Semolina carrot vada (Suji gajar vada),asc_manual,active,snack,"[""snack""]",vegetarian
+ANN-000220,ASC226,Kadai Paneer,Kadhai Paneer,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000272,ASC280,Gunjia,Gunjia,asc_manual,active,snack,"[""snack""]",vegetarian
+ANN-000504,BFP029,CANJEE,Canjee,bfp_manual,active,snack,"[""snack""]",vegetarian
+ANN-000115,ASC117,Sprouted Moong Pulao,Sprouted moong pulao,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000459,ASC479,Spinach Soup in Milk,Spinach soup in milk ,asc_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000154,ASC157,Whole Masoor,Whole masoor (Masoor ki dal),asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000820,BFP546,BAJRA INFANT FOOD,Pearl millet infant food (Bajra shishu aahaar),bfp_manual,active,infant_food,"[""breakfast"", ""snack""]",vegetarian
+ANN-000604,BFP204,NUTRINUGGET KORMA,Soya chunks korma (Nutrinugget korma),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000693,BFP350,CHOCOCHIP ICE CREAM,Chocochip ice cream,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000588,BFP172,ARHAR WITH SPINACH,Arhar with spinach (Arhar dal aur palak),bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000482,ASC506,Ginger Candy,Ginger candy (Adrak ki candy),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000176,ASC181,Carrot and cabbage with coconut,Carrot and cabbage with coconut (Nariyal ke saath pattagobhi aur gajar),asc_manual,active,snack,"[""snack""]",vegetarian
+ANN-000879,OSR015,Putharekulu,Putharekulu,open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000752,BFP445,AMLA CHUTNEY,Gooseberry chutney (Amla chutney),bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000913,OSR050,Lotus stem pickle,Lotus stem pickle (Kamal kakdi ka achar),open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000527,BFP066,CONSOMME AU JULIENNE,Consomme au julienne,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000899,OSR035,Raspberry Shortbread Cookies,Raspberry shortbread cookies,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000515,BFP046,MOONG DAL STUFFED CHEELA,Moong dal stuffed cheela/chilla (Moong dal ka cheela/chilla),bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000656,BFP288,STUFFED BAKED POTATOES,Stuffed baked potatoes ,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",eggetarian
+ANN-000814,BFP536,CHOUX SWANS,Choux swans,bfp_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000582,BFP166,DAL MOONG,Dal moong,bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000775,BFP476,CHOCOLATE SPONGE,Chocolate sponge cake,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000398,ASC416,Hot Spinach Souffle,Hot spinach souffle,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000282,ASC291,Moong Dal Kheer,Moong dal kheer,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000597,BFP194,MUTTON KORMA,Mutton korma,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000070,ASC072,White sauce (Medium),White sauce (medium),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000199,ASC205,Ghiya Kofta Curry,Ghiya/Lauki Kofta Curry,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000345,ASC356,Methi Pakoras,Methi pakora/pakoda (Methi ke pakode),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000164,ASC168,Kadhi,Besan kadhi with pakodies,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000401,ASC419,Marble Cake,Marble cake,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000388,ASC406,Choux Pastry,Choux pastry,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000353,ASC364,Mathri,Mathri,asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000173,ASC178,Dry Aloo,Dry potato (Sookhe aloo),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000108,ASC110,Dal stuffed poories,Dal stuffed poori,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000392,ASC410,Flaky Pastry,Flaky pastry,asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000643,BFP272,BEANS FOOGATH,Beans foogath,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000559,BFP136,PEAS PULAO,Peas pulao (Matar pulao),bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000145,ASC148,Onion tomato Uttapam,Onion tomato uttapam,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000010,ASC010,Zeera Pani,Cumin infused water (Jeere/Zeere ka pani),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000818,BFP544,PANEER PATTIES,Paneer patties,bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000416,ASC434,Glace Icing,Glace icing,asc_manual,active,snack,"[""snack""]",vegetarian
+ANN-000676,BFP316,CARROT RAITA,Carrot raita (Gajar ka raita),bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000338,ASC349,Mal Pura,Mal pua,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000224,ASC230,Keema Kofta Curry,Keema kofta curry,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000808,BFP527,FRUIT PUREE TARTS,Fruit puree tart,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000028,ASC029,Peanut and Tomato sandwich ,Peanut and tomato sandwich (Moongfali aur tamatar ka sandwich),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000287,ASC296,Egg Halwa,Egg halwa (Ande ka halwa),asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000728,BFP401,SEMOLINA BURFI,Semolina burfi (Suji/Rava burfi),bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000435,ASC454,Melting Moments,Melting moments,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000753,BFP446,WALNUT CHUTNEY,Walnut chutney (Akhrot ki chutney),bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000616,BFP221,CHICKEN SWEET AND SOUR,Chicken sweet and sour,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000150,ASC153,Channa dal with ghia,Split bengal gram with bottle gourd (Channa dal with ghiya/lauki),asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000481,ASC505,Amla Murabba,Gooseberry marmalade (Amla murabba),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000649,BFP278,VEGETABLES STIR FRY,Vegetables stir fry ,bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000968,OSR106,Khura (buckwheat pancake),Buckwheat pancake (Khura),open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000691,BFP347,VANILLA ICE CREAM WITH EGG,Vanilla ice cream with egg,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000817,BFP542,SAVOURY CHEESE HORNS,Savoury cheese horns,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000723,BFP391,RAJBOGHS,Rajbogh,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000890,OSR026,Besan halwa,Gram flour halwa (Besan halwa),open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000831,BFP558,DAL WHEAT PORRIDGE,Lentils and wheat porridge (Dal wheat porridge/daliya ),bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000500,BFP019,FLAVOURED MILKSHAKE,Flavoured milkshake,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000335,ASC346,Milk Cake,Milk cake,asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000358,ASC369,Fish Cutlet,Fish cutlet (Machli ka cutlet),asc_manual,active,starter,"[""snack""]",eggetarian
+ANN-000484,ASC509,Mixed Vegetable Pickle (1),Mixed vegetable pickle (Sabziyoon ka achaar),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000892,OSR028,Watercress sandwich,Watercress sandwich,open_source_recipes,active,starter,"[""snack""]",vegetarian
+ANN-000907,OSR043,Olive biscuits,Olive biscuit,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000225,ASC231,Gushtaba (Kashmiri Mutton Koftas),Kashmiri mutton koftas (Gushtaba),asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000634,BFP258,MOOLI BHUJIA,Mooli bhujia,bfp_manual,active,snack,"[""snack""]",vegetarian
+ANN-000965,OSR103,Pesarattu (Moong bean dosa),Moong bean dosa (Pesarattu),open_source_recipes,active,breakfast,"[""breakfast""]",vegetarian
+ANN-001005,OSR146,Gujarati handvo ,Gujarati handvo ,open_source_recipes,active,review,"[""review""]",vegetarian
+ANN-000015,ASC016,Banana Milkshake ,Banana milkshake (Kele milkshake),asc_manual,active,beverage,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000322,ASC333,Hot Chocolate Souffle,Hot chocolate souffle,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000872,OSR008,Nannari sharbat,Nannari sharbat,open_source_recipes,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000971,OSR110,Banana Appam,Banana appam,open_source_recipes,active,breakfast,"[""breakfast""]",non_vegetarian
+ANN-000455,ASC474,Dhokla,Dhokla,asc_manual,active,snack,"[""snack""]",vegetarian
+ANN-000586,BFP170,SOUR LENTILS,Sour lentils (Khatti dal),bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000446,ASC465,Wheat Flour and Dal Burfi,Wheat flour and moong dal burfi (Atta aur moong dal ki burfi),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000177,ASC182,Raw turnip with coconut,Raw turnip with coconut ,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000646,BFP275,Zimikand/Yam (DRY),Yam fried (Zimikand/Suran fried),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000114,ASC116,Mushroom Pulao,Mushroom pulao,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000137,ASC139,Pasta hot pot,Pasta hot pot,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",non_vegetarian
+ANN-000844,BFP574,ATTA DAL BURFI,Atta dal burfi ,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000210,ASC216,Methi Chaman,Methi chaman,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000246,ASC254,Russian Salad,Russian salad,asc_manual,active,salad,"[""lunch"", ""dinner""]",eggetarian
+ANN-000062,ASC064,Keema Pancake layer,Keema pancake,asc_manual,active,bakery,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000153,ASC156,Whole Moong,Whole moong (Moong ki dal),asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000910,OSR047,Pear preserves,Pear preserves (Naashpati ka murabba),open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000038,ASC039,Mushroom and cheese toast sandwich ,Mushroom and cheese sandwich (toasted),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000701,BFP359,VANILLA ICE CREAM WITH APPLES IN HOT CHERRY SAUCE,Vanilla ice cream with apples in hot cherry sauce,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000189,ASC195,Paneer Curry,Paneer curry,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000503,BFP027,MINTADE,Mintade,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000054,ASC056,Boiled Egg,Boiled egg (Ubla anda),asc_manual,active,breakfast,"[""breakfast""]",eggetarian
+ANN-000904,OSR040,Hazelnut cookies,Hazelnut cookies,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000740,BFP425,SAGO CUTLET/VADAS,Sago cutlet/vadas (Sabudana cutlet/vadas),bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000003,ASC003,Espreso coffee,Espreso coffee,asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000781,BFP484,ORANGE GATEAU,Orange gateau,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",eggetarian
+ANN-000260,ASC268,Thousand Island Dressing,Thousand island dressing,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000117,ASC119,Peanut Pulao,Peanut pulao ,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000810,BFP531,LEMON CHIFFON PIE,Lemon chiffon pie,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000569,BFP151,MASALA DOSA PANEER FILLINGS,Masala dosa paneer fillings,bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000640,BFP266,MATAR BAINGAN BHARTA,Peas brinjal bhartha (Matar baingan bhartha),bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000501,BFP024,JAL JEERA,Jal jeera,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000107,ASC109,Methi poories,Methi poori,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000789,BFP499,BUTTER ICING,Butter icing,bfp_manual,active,snack,"[""snack""]",vegetarian
+ANN-000660,BFP292,FRICASSEE OF MUSHROOM,Fricassee of Mushroom,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000992,OSR132,Pumpkin soup,Pumpkin soup,open_source_recipes,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000919,OSR056,Small onion pickle,Small onion pickle ,open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000245,ASC253,"Paneer, Apple and Pineapple Salad","Paneer, apple and pineapple salad",asc_manual,active,salad,"[""lunch"", ""dinner""]",vegetarian
+ANN-000285,ASC294,Shahi Suji Halwa,Shahi suji halwa,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000403,ASC421,Orange Cake,Orange cake,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000229,ASC236,Mutton Chops,Mutton chops,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000633,BFP257,PALAK ALOO,Spinach and potato (Palak aloo),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000958,OSR096,Tamarind chutney,Tamarind chutney (Chintapandu pachadi/Puli chutney),open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000436,ASC455,Ginger Biscuit,Ginger biscuit (Adarak ke biscuit),asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000783,BFP489,LEMON CAKE,Lemon cake,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000112,ASC114,Plain Pulao,Plain pulao,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000758,BFP452,CURD VEGETABLE DIP,Curd vegetable dip,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000278,ASC287,Paneer Kheer,Paneer kheer,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000251,ASC259,Sprouted Moong salad,Sprouted moong salad ,asc_manual,active,salad,"[""lunch"", ""dinner""]",vegetarian
+ANN-000848,BFP578,SPROUTS UPMA,Sprouts upma ,bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000252,ASC260,Tossed Salad,Tossed salad,asc_manual,active,salad,"[""lunch"", ""dinner""]",vegetarian
+ANN-000671,BFP307,TOMATO ASPIC,Tomato aspic,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000735,BFP415,MASALA ONION PAKORAS,Masala onion pakora/pakoda (Pyaaz ke pakode),bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000385,ASC403,Apple Cinnamon Pie,Apple cinnamon pie,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000903,OSR039,Cardamom cookies,Cardamom cookies (Elaichi cookies),open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000880,OSR016,Mango malpua,Mango malpua,open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000380,ASC398,Orange Cream Tart,Orange cream tart,asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000476,ASC500,Plum Jam,Plum jam (Aloo bukhara jam),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000706,BFP364,FRUIT DELIGHT,Fruit delight,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000584,BFP168,ONION TOMATO BAGHAR,Onion tomato baghar (Pyaaz tamatar ka tadka),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000983,OSR123,Rava cake,Semolina cake (Suji/Rava cake),open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000668,BFP303,CUCUMBER AND YOGURT SALAD,Cucumber and yogurt salad (Kheere aur dahi ka salad),bfp_manual,active,salad,"[""lunch"", ""dinner""]",vegetarian
+ANN-000478,ASC502,Guava Jelly,Guava jelly (Amrood ki jelly),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000059,ASC061,Plain Omelette,Plain omelette/omlet,asc_manual,active,breakfast,"[""breakfast""]",eggetarian
+ANN-000859,BFP602,TOMATO KETCHUP,Tomato ketchup,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000710,BFP368,COLD PINEAPPLE SOUFFLE,Cold pineapple souffle,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000843,BFP573,BESAN SUJI DHOKLA,Gram flour and semolina dhokla (Besan suji dhokla),bfp_manual,active,snack,"[""snack""]",vegetarian
+ANN-000284,ASC293,Suji Halwa,Semolina halwa (Suji ka halwa),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000946,OSR083,Vengaya Chutney/ onion chutney,Onion chutney (Pyaaz ki chutney/Vengaya chutney),open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000709,BFP367,COLD ORANGE SOUFFLE,Cold orange souffle,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000419,ASC438,Gum Icing,Gum icing,asc_manual,active,snack,"[""snack""]",non_vegetarian
+ANN-000703,BFP361,GRAPE AND ORANGE WHIP,Grape and orange whip,bfp_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000618,BFP223,BENGAL FISH CURRY,Bengal fish curry (Bengali machli curry),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000390,ASC408,Chocolate Eclairs,Chocolate eclairs,asc_manual,active,beverage,"[""breakfast"", ""snack""]",eggetarian
+ANN-000677,BFP318,PUMPKIN RAITA,Pumpkin raita (Kaddu ka raita),bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000370,ASC383,Spring Roll,Spring roll,asc_manual,active,snack,"[""snack""]",eggetarian
+ANN-000648,BFP277,VEGETABLE JALFREZI,Vegetable jalfrezi,bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000800,BFP513,CHOCOLATE CREAM SHELLS,Chocolate cream shells,bfp_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000682,BFP326,BANANA RAITA,Banana raita (Kele ka raita),bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000460,ASC480,Vegetable Soup,Vegetable soup,asc_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000304,ASC315,Rich Chocolate Mousse,Rich chocolate mousse,asc_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000011,ASC011,Coco pine cooler,Coco pine cooler,asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000185,ASC191,Pea Paneer curry,Pea paneer curry (Matar paneer),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000770,BFP468,SUBMARINE SANDWICHES,Submarine sandwich,bfp_manual,active,starter,"[""snack""]",eggetarian
+ANN-000340,ASC351,Potato Pakoda,Potato pakora/pakoda (Aloo pakoda),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000406,ASC424,Chocolate Chiffon Cake,Chocolate chiffon cake,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000190,ASC196,Kamal kakdi curry,Lotus stem curry (Kamal kakdi curry),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000641,BFP269,BHINDI SABZI (LADY'S FINGERS),Okra/Lady's fingers fry (Bhindi sabzi/sabji/subji),bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000614,BFP218,BROCCOLI CHICKEN ALA KING,Broccoli chicken ala king,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000737,BFP420,CHICKEN PAKORAS,Chicken pakora/pakoda,bfp_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000332,ASC343,Besan Ladoo,Gram flour ladoo (Besan ladoo),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000980,OSR120,Wheat cake,Wheat cake,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000254,ASC262,Potato Salad,Potato salad (Aloo ka salaad),asc_manual,active,salad,"[""lunch"", ""dinner""]",vegetarian
+ANN-001004,OSR145,Dal dhokli,Dal dhokli,open_source_recipes,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000084,ASC086,Cream of Mushroom soup,Cream of mushroom soup,asc_manual,active,soup,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000662,BFP294,VEGETABLE AND CHEESE PIE,Vegetable and cheese pie,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000950,OSR088,Cabbage raita,Cabbage raita (Pattagobhi raita),open_source_recipes,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000589,BFP174,MOONG DAL WITH VADI,Moong dal with vadi,bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000628,BFP241,VEGETABLE CURRY WITH COCONUT,Vegetable curry with coconut ,bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000866,OSR001,Wood apple juice,Woodapple juice (Bel ka sharbat),open_source_recipes,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000049,ASC051,Cornflakes,Cornflakes with milk,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000025,ASC026,Cheese and Pineapple sandwich,Cheese and pineapple sandwich (Cheese aur ananas ka sandwich),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000431,ASC450,Ginger Bread Man,Ginger bread man,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000902,OSR038,Sunflower cookies,Sunflower cookies,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000135,ASC137,Spaghetti and cheese balls in tomato sauce,Spaghetti and cheese balls in tomato sauce,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000471,ASC495,Lichi squash,Lichi squash,asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000933,OSR070,Egg in a Pepper,Egg in a pepper,open_source_recipes,active,review,"[""review""]",eggetarian
+ANN-000275,ASC283,Makhana Kheer,Makhana kheer,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000005,ASC005,Raw Mango Panna ,Raw mango drink (Aam panna),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000302,ASC313,Pineapple Souffle,Pineapple souffle ,asc_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000505,BFP030,CAULIFLOWER CANJEE,Cauliflower canjee (Phoolgobhi ki canjee),bfp_manual,active,snack,"[""snack""]",vegetarian
+ANN-000632,BFP250,JACK FRUIT KOFTA,Jackfruit kofta curry (Kathal ka kofta curry),bfp_manual,active,snack,"[""snack""]",eggetarian
+ANN-000549,BFP116,BEETROOT POORIS,Beetroot poori (Chukandar ki poori),bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000522,BFP058,SPANISH OMELETTE,Spanish omelette/omlet,bfp_manual,active,breakfast,"[""breakfast""]",non_vegetarian
+ANN-000607,BFP207,VEGETABLE YAKANI,Vegetable yakhni,bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000537,BFP087,ALMOND SOUP,Almond soup (Badam ka soup),bfp_manual,active,soup,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000538,BFP088,COLD CUCUMBER CREAM SOUP,Cold cucumber cream soup ,bfp_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000966,OSR104,Methi thepla,Methi thepla,open_source_recipes,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000090,ASC092,Hot and Sour soup,Hot and sour soup,asc_manual,active,soup,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000647,BFP276,"CAULIFLOWER, PEA AND POTATO Bhujia","Cauliflower, pea and potato bhujia (Phoolgobhi, matar aur aloo bhujia)",bfp_manual,active,snack,"[""snack""]",vegetarian
+ANN-000207,ASC213,Baked brinjal in tomato sauce,Baked brinjal in tomato sauce,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000905,OSR041,Milk cookies,Milk cookies,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000289,ASC298,Pumpkin Halwa,Pumpkin halwa (Kaddu ka halwa),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000033,ASC034,Carrot Apple sandwich,Carrot apple sandwich (Gajar aur seb ka sandwich),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000299,ASC310,Orange Souffle,Orange souffle,asc_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000456,ASC475,Channa Murmura Premix,Channa murmura premix,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000193,ASC199,Spinach kofta curry,Spinach kofta curry (Palak kofta curry),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000704,BFP362,HONEY BANANA CREAM,Honey banana cream,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000854,BFP595,LEMON GREEN CHILLI PICKLE,Lemon green chilli pickle (Nimboo aur hari mirch ka achaar),bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000074,ASC076,Mushroom sauce,Mushroom sauce,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000491,BFP002,Chat Masala,Chat masala,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000558,BFP134,ZEERA PULAO,Cumin pulao (Jeera/Zeera pulao),bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000473,ASC497,Pineapple squash,Pineapple squash (Ananas ka squash),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000413,ASC431,Black Forest Pastry,Black forest pastry,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000075,ASC077,Mustard Sauce,Mustard sauce,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000421,ASC440,Chocolate Chip Cookies,Chocolate chip cookies,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000974,OSR113,Rice murukku,Rice murukku,open_source_recipes,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000698,BFP355,COFFEE PEAR ALASKA,Coffee pear alaska,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000738,BFP421,FISH PAKORAS,Fish pakora/pakoda,bfp_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000972,OSR111,Veg Manchurian,Veg manchurian,open_source_recipes,active,starter,"[""snack""]",vegetarian
+ANN-000924,OSR061,Mango murabba candy,Mango murabba candy,open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000174,ASC179,Beans with coconut,Beans with coconut (Nariyal aur sem/phali; Beans thoran),asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000520,BFP056,ORANGE OMELETTE,Orange omelette/omlet,bfp_manual,active,breakfast,"[""breakfast""]",eggetarian
+ANN-000533,BFP076,MULLIGATAWNY SOUP,Mulligatawny soup,bfp_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000201,ASC207,Vegetarian Egg Kofta Curry,Vegetarian egg kofta curry,asc_manual,active,main_course,"[""lunch"", ""dinner""]",eggetarian
+ANN-000906,OSR042,Cranberry cookies,Cranberry cookies,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000238,ASC246,Fish Curry,Fish curry (Machli curry),asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000035,ASC036,Vegetable and mayonnaise sandwich,Vegetable and mayonnaise sandwich,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000094,ASC096,Chapatis,Chapati/Roti,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000477,ASC501,Pineapple Jam,Pineapple jam ,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000359,ASC370,Paneer Potato Cutlet,Paneer potato cutlet (Paneer aloo cutlet),asc_manual,active,starter,"[""snack""]",eggetarian
+ANN-000976,OSR115,Rava dhokla,Semolina dhokla (Suji/Rava dhokla),open_source_recipes,active,snack,"[""snack""]",vegetarian
+ANN-000699,BFP356,CRUNCHY BUTTERSCOTCH,Crunchy butterscotch,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000732,BFP407,SUJI LADDOO WITH NUTS,Semolina ladoo with nuts (Suji/Rava ladoo with nuts),bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000794,BFP507,COFFEE DROPS,Coffee drops,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",eggetarian
+ANN-000581,BFP165,HOME MADE EGG NOODLES,Home made egg noodles,bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",eggetarian
+ANN-000276,ASC285,Vermicelli Kheer,Vermicelli kheer (Semiya/Seviyan ki kheer),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000424,ASC443,Coconut Biscuit,Coconut biscuit (Nariyal ke biscuit),asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000157,ASC160,Moti Mahal Dal,Moti mahal dal (Urad rajmah mix dal),asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000568,BFP150,MASALA DOSA MIXED VEGETABLE FILLINGS,Masala dosa mixed vegetable fillings,bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000868,OSR004,Apple and Honey Sorbet,Apple and honey sorbet (Seb aur shehad ka sharbat),open_source_recipes,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000349,ASC360,Potato Bonda,Potato bonda (Aloo bonda),asc_manual,active,snack,"[""snack""]",vegetarian
+ANN-000078,ASC080,Lentil Soup,Lentil soup,asc_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000109,ASC111,Potato stuffed poories,Potato stuffed poori (Aloo ki poori),asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000776,BFP478,CHOCOLATE SWISS ROLL,Chocolate swiss roll,bfp_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000235,ASC243,Chicken Kabab,Chicken kebab,asc_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000383,ASC401,Cottage Cheese Pie,Cottage cheese pie,asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000023,ASC024,Egg Sandwich,Egg sandwich (Ande ka sandwich),asc_manual,active,starter,"[""snack""]",eggetarian
+ANN-000031,ASC032,Vegetarian club sandwich ,Vegetarian club sandwich,asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000908,OSR045,Tutti frutti biscuits,Tutti fruitti biscuit,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000567,BFP148,PLAIN DOSA,Plain dosa,bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000237,ASC245,Fried Chicken with Tomato Sauce,Fried chicken with tomato sauce (Fried chicken tamatar ki chutney kay saath),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000524,BFP060,MEAT STOCK,Meat stock,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000669,BFP305,CHICKEN AND TOMATO TOWERS,Chicken and tomato towers,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000352,ASC363,Samosa - Paneer and Pea Filling,Paneer and pea samosa (Paneer matar ka samosa),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000071,ASC073,White sauce (Thick),White sauce (thick),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000934,OSR071,Spinach-Mushroom Scrambled Eggs,Spinach mushroom scrambled egg (Palak mushroom bhurji),open_source_recipes,active,breakfast,"[""breakfast""]",eggetarian
+ANN-000690,BFP346,VANILLA ICE CREAM WITHOUT EGG,Vanilla ice cream without egg,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000883,OSR019,Oats burfi,Oats burfi,open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000325,ASC336,Coconut Burfi,Coconut burfi (Nariyal ki burfi),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000243,ASC251,Fish Tikka,Fish tikka,asc_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000788,BFP498,CHOCOLATE GLACE ICING,Chocolate glace icing,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000458,ASC477,Rice Flakes and Roasted Channa,Rice flakes and roasted channa ,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000444,ASC463,Channa Dal Sweet Rice,Split bengal gram sweet rice (Channa dal sweet rice),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000786,BFP495,CHOCOLATE EGGLESS CAKE,Chocolate eggless cake,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000911,OSR048,Starfruit preserves,Starfruit preserves ,open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000270,ASC278,Sweet Raita,Sweet raita (Meetha raita),asc_manual,active,side_dish,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000027,ASC028,Chicken sandwich,Chicken sandwich,asc_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000029,ASC030,Rainbow sandwich,Rainbow sandwich,asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000395,ASC413,Hot Cheese Souffle,Hot cheese souffle,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000016,ASC017,Mango Milkshake ,Mango milkshake (Aam milkshake),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000762,BFP457,FRENCH TOASTED SANDWICHES,French sandwich (toasted),bfp_manual,active,starter,"[""snack""]",eggetarian
+ANN-000498,BFP013,COLD COFFEE (WITH CREAM),Cold coffee (with cream),bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000170,ASC174,Gajar methi,Carrot and fenugreek leaves (Gajar methi),asc_manual,active,snack,"[""snack""]",vegetarian
+ANN-000167,ASC171,Aloo Gobhi,Potato cauliflower (Aloo gobhi),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000438,ASC457,Soyabean Tikki,Soyabean tikki,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-001014,ASC239,Shepherd's pie,Shepherd's pie (with minced meat),asc_manual,active,bakery,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000766,BFP461,CHICKEN WALNUT SANDWICHES,Chicken walnut sandwich (Chicken aur akhrot ke sandwich),bfp_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000408,ASC426,Strawberry and Vanilla Cake with Butter Icing,Strawberry and vanilla cake with butter icing,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000718,BFP382,HOT LEMON SOUFFLE,Hot lemon souffle,bfp_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000041,ASC042,Paneer pea toasted sandwich,Paneer pea sandwich (toasted) (Paneer matar ka sandwich),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000679,BFP321,SPINACH RAITA,Spinach raita (Palak ka raita),bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000042,ASC043,Chicken toasted sandwich,Chicken sandwich (toasted),asc_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000218,ASC224,Chilli paneer,Chilli paneer,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000081,ASC083,Cream of green peas,Cream of green peas soup,asc_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000560,BFP137,CHANNA DAL AND VEGETABLE PULAO,Split bengal gram dal and vegetable pulao (Channa dal and vegetable pulao),bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000132,ASC134,Vegetable Chowmein,Vegetable chowmein,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000561,BFP138,BLACK CHANNA PULAO,Black channa pulao/ Bengal gram pulao (Kale chane ka pulao),bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000528,BFP067,CONSOMME AU VERMICELLI,Consomme au vermicelli,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000464,ASC486,Sweet Dalia,Sweet wheat porridge (Sweet dalia),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000807,BFP523,ORANGE CREAM FLAN,Orange cream flan,bfp_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000183,ASC189,Stuffed Tomatoes,Stuffed tomatoes (Bharwa tamatar),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-001010,OSR153,Soya seekh kabab,Soya seekh kebab,open_source_recipes,active,starter,"[""snack""]",vegetarian
+ANN-000749,BFP442,TOMATO GINGER CHUTNEY,Tomato ginger chutney (Tamatar adarak ki chutney),bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000492,BFP003,Kashmiri Masala,Kashmiri masala,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000182,ASC187,Stuffed Brinjal,Stuffed brinjal (Bharwa baingan),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000863,BFP607,(Mango) MILKSHAKE WITH ICE CREAM,Mango milkshake with ice cream (Aam milkshake ice cream ke saath),bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000184,ASC190,Pea Potato Curry,Pea potato curry (Aloo matar),asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000830,BFP557,VEGETABLE MIX,Vegetable mix,bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000877,OSR013,Apple sago payasam,Apple sago payasam (Seb aur sabudana ki kheer),open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000369,ASC382,Peanut Brittle,Peanut brittle (Moongfali ki chikki),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000741,BFP427,POUSHTIK CUTLET,Poshtik cutlet,bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000433,ASC452,Short Bread Cookies,Short bread cookies,asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000083,ASC085,Cream of Mixed vegetable soup,Cream of mixed vegetable soup,asc_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000373,ASC386,Coconut Chutney,Coconut chutney (Nariyal ki chutney),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000248,ASC256,Devilled Egg,Deviled egg,asc_manual,active,main_course,"[""lunch"", ""dinner""]",eggetarian
+ANN-000575,BFP158,SPAGHETTI WITH MEAT BALLS AND TOMATO SAUCE,Spaghetti with meat balls and tomato sauce,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000397,ASC415,Hot Fish Souffle,Hot fish souffle,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000267,ASC275,Mint Raita,Mint raita (Pudinay ka raita),asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000617,BFP222,CHICKEN KORMA,Chicken korma,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000026,ASC027,Cheese and Tomato sandwich ,Cheese and tomato sandwich (Cheese aur tamatar ke sandwich),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000079,ASC081,Chicken consomme (Clear chicken soup),Chicken consomme (Clear chicken soup),asc_manual,active,soup,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000098,ASC100,Cauliflower Parantha,Cauliflower parantha/paratha (Phoolgobhi ka parantha/paratha),asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000944,OSR081,Schezwan chutney,Schezwan chutney,open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000493,BFP004,Rasam Powder,Rasam powder (Rasam masala),bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000122,ASC124,Lemon Rice,"Lemon rice (Pulihora, Elumichai sadam, Chitranna)",asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000578,BFP162,LASAGNE WITH VEGETABLES,Lasagne with vegetables,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000510,BFP041,RICE UPMA,Rice upma,bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000171,ASC175,Alu Methi,Potato fenugreek (Aloo methi),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000563,BFP142,CHICKEN PULAO,Chicken pulao,bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",non_vegetarian
+ANN-000590,BFP176,RASAM WITH TAMARIND,Rasam with tamarind (Puli rasam/ Chintapandu rasam/ Charu/Saaru),bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000930,OSR067,Lemon chicken,Lemon chicken,open_source_recipes,active,snack,"[""snack""]",non_vegetarian
+ANN-000852,BFP585,MARMALADES,Marmalade (Murabba),bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000526,BFP065,MEAT CONSOMME,Meat consomme (with mutton),bfp_manual,active,beverage,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000812,BFP534,CREAM BUNS,Cream buns,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000642,BFP270,CRISPY BHINDI (LADY'S FINGERS),Crispy okra/Crispy lady's fingers (Karare bhindi),bfp_manual,active,snack,"[""snack""]",vegetarian
+ANN-000497,BFP011,HOT CHOCOLATE,Hot chocolate,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000050,ASC052,Rice Flakes,Rice flakes (Chiwda/Aval),asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000858,BFP601,TOMATO CHUTNEY,Tomato chutney (Tamatar ki chutney),bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000564,BFP143,MEXICAN RICE,Mexican rice,bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",non_vegetarian
+ANN-000250,ASC258,Mixed Pulse and vegetable salad,Mixed pulse and vegetable salad,asc_manual,active,salad,"[""lunch"", ""dinner""]",vegetarian
+ANN-000020,ASC021,Lassi (Sweet),Sweet Lassi (Meethi lassi),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000610,BFP212,ROAST CHICKEN,Roast chicken,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000822,BFP548,CEREAL MIX,Cereal mix ,bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000553,BFP124,BACON AND MUSHROOM PANCAKES,Bacon and mushroom pancake,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000008,ASC008,Lemonade,Lemonade,asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000546,BFP110,METHI PARATHA,Methi parantha/paratha,bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000920,OSR057,Green tomato pickle,Green tomato pickle (Haray tamatar ka achaar),open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000389,ASC407,Cream Puffs,Cream puffs,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000513,BFP044,Poha,Poha,bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000937,OSR074,Paaner do pyaza,Paaner do pyaza,open_source_recipes,active,review,"[""review""]",vegetarian
+ANN-000321,ASC332,Hot Orange Souffle,Hot orange souffle,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000514,BFP045,VEGETABLE POHA,Vegetable poha,bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000644,BFP273,STUFFED KARELA (WET),Stuffed bittergourd (wet) (Bharwa karele),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000445,ASC464,Sweet Poori,Sweet poori (Meethi poori),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000833,BFP560,SPINACH PEANUT BURFI,Spinach peanut burfi (Palak aur mungfali ki burfi),bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000554,BFP125,CHEESE AND TOMATO PANCAKES,Cheese and tomato pancake,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000540,BFP090,CHICKEN STEW,Chicken stew,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000878,OSR014,Kesari bath,Kesari bath,open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000036,ASC037,Egg and tomato sandwich ,Egg and tomato sandwich (Ande aur tamatar ka sandwich),asc_manual,active,starter,"[""snack""]",eggetarian
+ANN-000998,OSR138,Garlic soup,Garlic soup,open_source_recipes,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000952,OSR090,Onion raita,Onion raita (Pyaaz ka raita),open_source_recipes,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000451,ASC470,Bajra Ladoo,Pearl millet ladoo (Bajra ladoo),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000292,ASC301,Baked Custard,Baked custard,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000802,BFP517,CHERRY AND WALNUT COOKIES,Cherry and walnut cookies,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000804,BFP519,BUTTERFLY BISCUITS,Butterfly biscuit,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000339,ASC350,Shahi Tukre,Shahi tukre,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000273,ASC281,Saunth,Saunth/Sonth chutney with tamarind/imli,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000277,ASC286,Semolina Kheer,Semolina kheer (Suji/Rava kheer),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000188,ASC194,Pea Vadi curry,Pea vadi curry,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000488,ASC514,Tomato Sauce,Tomato sauce,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000790,BFP500,CHOCOLATE BUTTER ICING,Chocolate butter icing,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000412,ASC430,Pineapple Pastry,Pineapple pastry ,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000529,BFP072,GREEN PEA SOUP,Green pea soup (Matar ka soup),bfp_manual,active,soup,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000726,BFP396,KHOA COCONUT BURFI,Khoa coconut burfi,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000051,ASC053,Wheat Flakes,Wheat flakes,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000525,BFP062,WHITE STOCK,White stock,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000039,ASC040,Tomato and cheese toasted sandwich ,Cheese and tomato sandwich (toasted) (Cheese aur tamatar ke sandwich (toasted)),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000744,BFP431,VEGETABLE SAMOSAS,Vegetable samosa,bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000543,BFP096,BARBEQUE SAUCE,Barbeque sauce,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000350,ASC361,Samosa - Potato Filling,Potato samosa (Aloo ka samosa),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000583,BFP167,CUMIN SEEDS BAGHAR,Cumin seeds baghar (Jeera baghar/tadka),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000745,BFP436,PLAIN URAD DAL VADA,Plain urad dal vada (Uzunne vada/Minapa garelu/Ulundu vadai/Medu vada),bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000579,BFP163,GREEN CHILLI SAUCE,Green chilli sauce,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000411,ASC429,Swiss Roll,Swiss roll,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000239,ASC247,Fried Fish (Indian Style),Fried fish (Indian style) (Tali hui machli),asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000887,OSR023,Sweet couscous dessert,Sweet couscous dessert,open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000539,BFP089,COLD TOMATO SOUP,Cold tomato soup,bfp_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000805,BFP521,FLAN PASTRY,Flan pastry,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000194,ASC200,Paneer kofta curry,Paneer kofta curry,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000574,BFP157,MEAT AND MACARONI CASSEROLE,Meat and macaroni casserole,bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",non_vegetarian
+ANN-000523,BFP059,MIXED STOCK,Mixed stock,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000203,ASC209,Gobhi Musallam,Cauliflower musallam (Phoolgobhi musallam),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000211,ASC217,Sarson Ka Saag,Sarson ka saag,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000681,BFP325,PINEAPPLE RAITA,Pineapple raita (Ananas ka raita),bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000102,ASC104,Keema Parantha,Keema parantha/paratha,asc_manual,active,breakfast,"[""breakfast""]",non_vegetarian
+ANN-000763,BFP458,PEANUT BUTTER CUCUMBER SANDWICHES,Peanut butter cucumber sandwich,bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000849,BFP579,SUJI IDLI,Semolina idli (Suji/Rava idli),bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000684,BFP328,GUAVA RAITA,Guava raita (Amarood ka raita),bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000736,BFP416,MASALA GREEN CHILLI PAKORAS,Masala green chilli pakora/pakoda (Hari mirch kay pakode),bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000348,ASC359,Paneer Pakoras,Paneer pakora/pakoda,asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000249,ASC257,Hawain Salad,Hawain salad,asc_manual,active,salad,"[""lunch"", ""dinner""]",vegetarian
+ANN-000434,ASC453,Coffee Biscuit,Coffee biscuit,asc_manual,active,beverage,"[""breakfast"", ""snack""]",eggetarian
+ANN-000290,ASC299,Moong Dal Halwa,Moong dal halwa,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000236,ASC244,Chilli Chicken,Chilli chicken,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000712,BFP370,COLD CHOCOLATE SOUFFLE,Cold chocolate souffle,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000480,ASC504,Carrot Murabba,Carrot murabba (Gajar ka murabba),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000271,ASC279,Dahi Vadas,Dahi vadas/Dahi bhalla,asc_manual,active,snack,"[""snack""]",vegetarian
+ANN-000155,ASC158,Whole Moth,Whole moth (Moth ki dal),asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000666,BFP301,TOSSED GREEN SALAD,Tossed green salad,bfp_manual,active,salad,"[""lunch"", ""dinner""]",vegetarian
+ANN-000973,OSR112,Pav bhaji,Pav bhaji,open_source_recipes,active,snack,"[""snack""]",non_vegetarian
+ANN-000294,ASC304,Chocolate Ice Cream,Chocolate ice cream,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000621,BFP230,PRAWN CURRY,Prawn curry (with coconut) (Jhinga curry),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000242,ASC250,Baked Fish with Cheese Sauce,Baked fish with cheese sauce,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000724,BFP392,RASGULLAS,Rasgulla,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000097,ASC099,Radish Parantha,Radish parantha/paratha (Mooli ka parantha/paratha),asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000556,BFP132,VANGI BHAT,Eggplant/Brinjal rice (Vangi bhat),bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",eggetarian
+ANN-000315,ASC326,Bread and Butter Pudding,Bread and butter pudding ,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000324,ASC335,Plain Burfi,Plain burfi (Burfi),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000418,ASC437,American Frosting,American frosting,asc_manual,active,snack,"[""snack""]",eggetarian
+ANN-000961,OSR099,Sabudana-khichdi,Sago khitchdi/khichri (Sabudana khitchdi/khichri),open_source_recipes,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000771,BFP470,CHEESE OPEN SANDWICHES,Cheese open sandwich,bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000606,BFP206,NUTRINUGGET MATAR,Soya chunks and peas (Nutrinugget matar),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000675,BFP313,CURD DRESSING,Curd dressing ,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000432,ASC451,Danish Cookies,Danish cookies,asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000320,ASC331,Apple Snowballs,Apple snowballs,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000993,OSR133,Sweet corn soup,Sweet corn soup,open_source_recipes,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000371,ASC384,Dry Mango Chutney,Dry mango chutney (Sookhe aam ki chutney),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000969,OSR107,Quinoa khichdi,Quinoa khichdi/khichri,open_source_recipes,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000696,BFP353,CHOCOLATE SAUCE,Chocolate sauce,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000461,ASC481,Mashed Banana with Milk,Mashed banana with milk,asc_manual,active,beverage,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000080,ASC082,Cream of tomato soup,Cream of tomato soup,asc_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000893,OSR029,Fish sandwich,Fish sandwich ,open_source_recipes,active,starter,"[""snack""]",non_vegetarian
+ANN-000990,OSR130,Lauki soup (Bottle gourd soup),Bottle gourd soup (Ghiya/Lauki soup),open_source_recipes,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000410,ASC428,Sponge Cake,Sponge cake ,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000508,BFP039,SEMOLINA (SUJI) UPMA,Semolina upma (Suji/Rava upma),bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000110,ASC112,Tandoori Parantha,Tandoori parantha/paratha,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000234,ASC242,Butter Chicken,Butter chicken,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000441,ASC460,Spinach Peanut Namakpara,Spinach peanut namak paras (Palak moongfali namak paras),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000266,ASC274,Carrot and Spinach Raita,Carrot and spinach raita (Gajar aur palak ka raita),asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000769,BFP467,CHECKER BOARD SANDWICH,Checker board sandwich,bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000791,BFP502,ALMOND BISCCUIT,Almond biscuit (Badam ke biscuit),bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000330,ASC341,Suji Ladoo with Khoya,Semolina ladoo with khoya (Suji/Rava aur khoye ke ladoo ),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000364,ASC377,Vegetable Seekh Kebab,Vegetable seekh kebab,asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000943,OSR080,Garlic chutney /poondu chutney,Garlic chutney/Poondu chutney (Lahasun ki chutney),open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000022,ASC023,Cheese and Chilli sandwich ,Cheese and chilli sandwich ,asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000198,ASC204,Cabbage Kofta Curry,Cabbage kofta curry (Pattagobhi kofta curry),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000655,BFP287,ROAST POTATOES,Roast potatoes ,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000915,OSR052,Garlic pickle,Garlic pickle (Lahasun ka achar),open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000865,BFP609,(Orange) MILKSHAKE WITH ICE CREAM,Orange milkshake with ice cream (Narangi milkshake ice cream ke saath),bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000274,ASC282,Rice Kheer,Rice kheer (Chawal ki kheer),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000140,ASC142,Naan,Naan,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000857,BFP599,JHATPAT ACHAR,Jhatpat achar with carrot (Jhatpat achaar gajar ke saath),bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000280,ASC289,Carrot Kheer,Carrot kheer (Gajar ki kheer),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000232,ASC240,Chicken Curry,Chicken curry,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000664,BFP299,BEETROOT AND EGG SALAD,Beetroot and egg salad (Chukandar aur ande ka salad),bfp_manual,active,salad,"[""lunch"", ""dinner""]",eggetarian
+ANN-000517,BFP052,EGG BHUJIA,Indian style egg bhujia (Anda bhujia (Indian style)),bfp_manual,active,snack,"[""snack""]",eggetarian
+ANN-000377,ASC395,Custard Tart,Custard tart,asc_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000057,ASC059,Scrambled Egg,Scrambled egg (Ande ki bhurji),asc_manual,active,breakfast,"[""breakfast""]",eggetarian
+ANN-000351,ASC362,Samosa - Keema Filling,Minced meat samosa (Keema ka samosa),asc_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000006,ASC006,Fruit Punch ( with fresh juices ),Fruit Punch (with fresh juices),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000399,ASC417,Plain Cream Cake,Plain cream cake,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000743,BFP430,MINCED MEAT CUTLET,Minced meat cutlet,bfp_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000001,ASC001,Hot Tea,Hot tea (Garam Chai),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000470,ASC494,Orange squash,Orange squash (Santre ka squash),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000007,ASC007,Fruit Punch ( with squashes ),Fruit Punch (with squashes),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000552,BFP122,PIZZA,Pizza,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000366,ASC379,Peanut Sago Vadas,Peanut sago vada (Sabudana mungfali vada),asc_manual,active,snack,"[""snack""]",vegetarian
+ANN-000426,ASC445,Peanut Biscuit,Peanut biscuit,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000100,ASC102,Sprouted Dal Parantha,Sprouted moong parantha/paratha,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000876,OSR012,Coconut kheer,Coconut kheer (Nariyal ki kheer),open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000629,BFP242,DAHI ALOO,Curd with potatoes (Dahi aloo),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000874,OSR010,Kesariya doodh/ saffron milk,Saffron milk (Kesariya doodh),open_source_recipes,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000928,OSR065,Chicken Manchurian,Chicken manchurian,open_source_recipes,active,starter,"[""snack""]",non_vegetarian
+ANN-000043,ASC044,Pea keema toasted sandwich,Pea keema sandwich (toasted) (Matar aur keema ka sandwich),asc_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000279,ASC288,Cabbage Kheer,Cabbage kheer (Pattagobhi ki kheer),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000929,OSR066,Handi chicken,Handi chicken,open_source_recipes,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000530,BFP073,SPINACH SOUP,Spinach soup (Palak ka soup),bfp_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000310,ASC321,Kulfi,Kulfi,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000665,BFP300,SOUR CREAM POTATO SALAD,Sour cream potato salad,bfp_manual,active,salad,"[""lunch"", ""dinner""]",eggetarian
+ANN-000600,BFP198,BOTI KEBAB,Boti kebab,bfp_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000067,ASC069,Vegetable stock,Vegetable stock,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000792,BFP505,ORANGE BISCUITS,Orange biscuit,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000466,ASC489,Moong Dal Mixture,Moong dal mixture,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000374,ASC387,Mint and Coriander Chutney,Mint and coriander chutney (Pudinay aur dhaniye ki chutney),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000695,BFP352,PEAR CHOCOLATE SUNDAY,Pear chocholate sunday,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000708,BFP366,COLD LEMON SOUFFLE,Cold lemon souffle,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000093,ASC095,Cold summer garden soup,Cold summer garden soup,asc_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000939,OSR076,Gobi 65,Gobi 65,open_source_recipes,active,review,"[""review""]",vegetarian
+ANN-000181,ASC186,Stuffed Capsicum,Stuffed capsicum (Bharwa shimla mirch),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000091,ASC093,Talaumein soup,Talaumein soup,asc_manual,active,soup,"[""lunch"", ""dinner""]",eggetarian
+ANN-001011,OSR154,Classic seasoned black beans,Classic seasoned black beans,open_source_recipes,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000076,ASC078,Brown Sauce,Brown sauce,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000686,BFP334,LAUKI KHEER,Bottle gourd kheer (Ghiya/Lauki kheer),bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000143,ASC146,Masala Dosa,Masala dosa,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000570,BFP152,UTTAPAM,Uttapam,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000004,ASC004,Iced Tea,Iced tea,asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000486,ASC512,Plum Chutney,Plum chutney (Aloo bukhara ki chutney),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000547,BFP114,BATHUA POORIS,Bathua poori,bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000585,BFP169,MUSTARD SEED BAGHAR,Mustard seeds baghar (Mustard seed tadka),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000931,OSR068,Lemon butter fish,Lemon butter fish,open_source_recipes,active,snack,"[""snack""]",non_vegetarian
+ANN-000219,ASC225,Paneer Makhana korma,Paneer makhana korma,asc_manual,active,snack,"[""snack""]",vegetarian
+ANN-000672,BFP308,FROZEN FROSTY FRUIT SALAD,Frozen frosty fruit salad (Phalon ka salaad),bfp_manual,active,salad,"[""lunch"", ""dinner""]",eggetarian
+ANN-000474,ASC498,Lemon and Ginger squash,Lemon and ginger squash (Nimbu aur adrak ka squash),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000316,ASC327,Queen Of Pudding,Queen of pudding,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000365,ASC378,Masala Vada,Masala vada,asc_manual,active,snack,"[""snack""]",vegetarian
+ANN-001000,OSR141,Dalma,Dalma,open_source_recipes,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000407,ASC425,Christmas Cake,Christmas cake,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000475,ASC499,Apple Jam,Apple jam (Seb ka murabba),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000654,BFP286,DUCHEESE POTATO,Ducheese potato,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",eggetarian
+ANN-000375,ASC388,Curd Dip -1,Curd dip,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000873,OSR009,Thari kanji,Semolina milk drink (Thari kanji),open_source_recipes,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000212,ASC218,Kathal sabzi,Jackfruit sabzi (Kathal ki sabzi),asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000962,OSR100,Besan Chilla,Gram flour chilla/cheela (Besan chilla/cheela),open_source_recipes,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000725,BFP393,RASMALAI,Rasmalai,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000032,ASC033,Pin Wheel sandwich ,Pin wheel sandwich,asc_manual,active,starter,"[""snack""]",eggetarian
+ANN-000881,OSR017,Mango vanilla custard,Mango vanilla custard,open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000954,OSR092,Kale Salad,Kale salad,open_source_recipes,active,salad,"[""lunch"", ""dinner""]",vegetarian
+ANN-000152,ASC155,Mixed Dal,Mixed dal,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000286,ASC295,Carrot Halwa,Carrot halwa (Gajar ka halwa),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000281,ASC290,Cauliflower Kheer,Cauliflower kheer (Phoolgobhi ki kheer),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000283,ASC292,Phirni,Phirni,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000850,BFP580,PAUSHTIK CHEELA,Poshtik chilla/cheela,bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000200,ASC206,Spinach Paneer Kofta Curry,Spinach paneer kofta curry (Palak paneer kofta curry),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000994,OSR134,Paneer soup,Paneer soup,open_source_recipes,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000205,ASC211,Baked potato with skin,Baked potato with skin ,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000088,ASC090,Chinese cabbage and meat ball soup,Chinese cabbage and meat ball soup,asc_manual,active,soup,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000793,BFP506,GINGERMAN BISCUIT,Gingerman biscuit,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000126,ASC128,Spanish Rice,Spanish rice,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000823,BFP549,PULSE MIX,Pulse mix,bfp_manual,active,review,"[""review""]",vegetarian
+ANN-000593,BFP179,URAD SABUT SPECIAL,Urad sabut special,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-001001,OSR142,Chana Dal,Split bengal gram dal (Channa dal),open_source_recipes,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000591,BFP177,RASAM WITH LEMON,Rasam with lemon (Nimmakaya rasam/Nimmakaya charu/Elumichai rasam/Nimbe hannina saaru),bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000127,ASC129,Chinese fried rice,Chinese fried rice,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",eggetarian
+ANN-000450,ASC469,Sprouted Moong Poha,Sprouted moong poha ,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000601,BFP199,MUTTON SEEKH KEBAB,Mutton seekh kebab,bfp_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000417,ASC436,Royal Icing,Royal icing,asc_manual,active,snack,"[""snack""]",eggetarian
+ANN-000806,BFP522,FRUIT FLAN,Fruit flan,bfp_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000900,OSR036,Pumpkin cookies,Pumpkin cookies ,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000447,ASC466,Spinach Burfi,Spinach burfi (Palak burfi),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000356,ASC367,Chirwa Cutlet,Flattened rice cutlet (Chirwa cutlet/Chivda cutlet/Poha cutlet),asc_manual,active,starter,"[""snack""]",eggetarian
+ANN-000400,ASC418,Apple cake,Apple cake (Seb ka cake),asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000490,BFP001,Garam Masala,Garam masala,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000301,ASC312,Chocolate Souffle,Chocolate souffle,asc_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000970,OSR108,Khakhra Chaat,Khakhra chaat,open_source_recipes,active,snack,"[""snack""]",vegetarian
+ANN-000797,BFP510,CHRISTMAS BELL BISCUITS,Christmas bell biscuit,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000536,BFP082,CREAM OF POTATO SOUP,Cream of potato soup,bfp_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000376,ASC394,Short Crust Pastry,Short crust pastry,asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000387,ASC405,Chocolate Meringue Pie,Chocolate meringue pie,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000815,BFP539,POTATO AIGRETTES,Potato aigrettes,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",eggetarian
+ANN-000611,BFP214,SHAHI CHICKEN MASALA,Shahi chicken masala,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000531,BFP074,MIXED VEGETABLE SOUP,Mixed vegetable soup,bfp_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000197,ASC203,Cauliflower Kofta Curry,Cauliflower kofta curry (Phoolgobhi kofta curry),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000024,ASC025,Cucumber sandwich,Cucumber sandwich (Kheere ka sandwich),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000981,OSR121,Mango cheesecake,Mango cheesecake,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000258,ASC266,Mayonnaise,Mayonnaise,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",eggetarian
+ANN-000215,ASC221,Shahi Paneer,Shahi paneer,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000089,ASC091,French Onion soup,French onion soup,asc_manual,active,soup,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000595,BFP187,BESAN GATTE CURRY,Besan gatte curry,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000565,BFP144,PLAIN KHITCHDI,Plain khitchdi (Plain khichri/khichdi),bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000995,OSR135,Curried Cauliflower soup,Curried Cauliflower soup,open_source_recipes,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000609,BFP210,VEGETARIAN NARGISI KOFTA CURRY,Vegetarian nargisi kofta curry,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000963,OSR101,Vegetable Namkeen Jave,Vegetable namkeen jave,open_source_recipes,active,snack,"[""snack""]",vegetarian
+ANN-000746,BFP437,MASALA URAD DAL VADA,Masala urad dal vada,bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000323,ASC334,Hot Vanilla Souffle,Hot vanilla souffle,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000948,OSR086,Chicken salad,Chicken salad,open_source_recipes,active,salad,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000336,ASC347,Gujia/Lavang latika,Ghujia/Lavang latika,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000087,ASC089,Egg drop soup,Egg drop soup,asc_manual,active,soup,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000774,BFP473,CHICKEN AND CORN OPEN SANDWICHES,Chicken and corn open sandwich,bfp_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000922,OSR059,Coconut pickle,Coconut pickle (Nariyal ka aachar),open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000195,ASC201,Kamal kakri kofta curry,Lotus stem kofta curry (Kamal kakdi kofta curry),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000650,BFP279,BROCCOLI DELIGHT,Broccoli delight,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000123,ASC125,Sweet Rice,Sweet rice (Meethe chawal),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000386,ASC404,Lemon Meringue Pie,Lemon meringue pie,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000111,ASC113,BOILED RICE,Boiled rice (Uble chawal),asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000787,BFP496,ORANGE EGGLESS CAKE,Orange eggless cake,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000571,BFP153,APPAM,Appam,bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000785,BFP492,VICTORIAN SANDWICH CAKE,Victorian sandwich cake,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000587,BFP171,URAD SPECIAL DEHUSKED,Urad special dehusked,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-001009,OSR152,Bread roll,Bread roll,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000485,ASC511,Sweet Lemon Pickle,Sweet lemon pickle (Neembu ka meetha achaar),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000467,ASC490,Dalia Khichri,Cracked wheat khichri/khichdi (Dalia khichri/khichdi),asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000739,BFP424,PANEER CUTLET,Paneer cutlet,bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000045,ASC046,Sesame taost,Sesame toast,asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000839,BFP568,POSHTIK NAMAK PARAS,Poshtik namak paras,bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000548,BFP115,BESAN POORIS,Gram flour poori (Besan poori),bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000945,OSR082,Bengal 5 Spice Blend (Panch Phoran),Bengal 5 Spice Blend (Panch Phoran),open_source_recipes,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000596,BFP190,DRY MASALA CHOPS,Dry masala chops,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000056,ASC058,Poached Egg,Poached egg,asc_manual,active,breakfast,"[""breakfast""]",eggetarian
+ANN-000334,ASC345,Chenna Murki,Chenna murki,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000226,ASC232,Mutton Yakhni,Mutton yakhni,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000764,BFP459,MINT AND PEANUT SANDWICHES,Mint and peanut sandwich,bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000754,BFP447,SONTH CHUTNEY,Saunth/Sonth chutney with ginger,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000651,BFP280,DHANSAK,Dhansak (vegetarian),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000159,ASC162,White Channa curry,Chickpeas curry (Safed channa curry),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000688,BFP338,APPLE KHEER,Apple kheer (Seb ki kheer),bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000988,OSR128,Ham and Bean soup,Ham and Bean soup,open_source_recipes,active,soup,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000711,BFP369,COLD VANILLA SOUFFLE,Cold vanilla souffle,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000086,ASC088,Minestrone soup,Minestrone soup,asc_manual,active,soup,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000846,BFP576,POSHTIK KHICHRI,Poshtik khichdi/khichri,bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000429,ASC448,Masala Biscuit,Masala biscuit,asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000870,OSR006,Cucumber sharbat,Cucumber sharbat (Kheere ka sharbat),open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000331,ASC342,Suji Ladoo with Coconut,Semolina ladoo with coconut (Suji/Rava aur nariyal ke ladoo ),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000637,BFP262,CABBAGE ROLLS (Curried),Cabbage rolls (curry) ((Pattagobhi rolls)(curry)),bfp_manual,active,snack,"[""snack""]",non_vegetarian
+ANN-000985,OSR125,Honey cake,Honey cake,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000828,BFP555,DAL SUJI PORRIDGE,Lentils and semolina porridge (Dal suji porridge/daliya),bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000909,OSR046,Peach blueberry preserves,Peach blueberry preserves,open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000959,OSR097,Pav bhaji masala,Pav bhaji masala,open_source_recipes,active,snack,"[""snack""]",vegetarian
+ANN-000101,ASC103,Pea Parantha,Pea parantha/paratha (Matar ka parantha/paratha),asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000678,BFP320,MINT AND PEANUT RAITA,Mint and peanut raita (Pudinay aur moongfali ka raita),bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000014,ASC015,Cold coffee with Ice cream,Cold coffee with ice cream,asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000085,ASC087,Chicken sweet corn soup,Chicken sweet corn soup,asc_manual,active,soup,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000509,BFP040,VERMICELLI UPMA,Vermicelli upma (Semiya/Seviyan upma),bfp_manual,active,snack,"[""snack""]",vegetarian
+ANN-000307,ASC318,Charlotte Rousse,Charlotte rousse,asc_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000009,ASC009,Lem-o-gin,Lem-o-gin,asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000979,OSR119,Banana chips,Banana chips (Kele ke chips),open_source_recipes,active,snack,"[""snack""]",non_vegetarian
+ANN-000119,ASC121,Cholia Pulao,Green chickpeas pulao (Choliya pulao/Hare chane ka pulao),asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000832,BFP559,MAIZE PORRIDGE,Maize porridge,bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000166,ASC170,Sprouted pulse chat,Sprouted moong dal chat,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000367,ASC380,Vegetarian Scotch Egg,Vegeterian scotch egg,asc_manual,active,snack,"[""snack""]",eggetarian
+ANN-000165,ASC169,Khatta Channa,Khatta channa,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-001007,OSR148,Papdi,Papdi,open_source_recipes,active,snack,"[""snack""]",vegetarian
+ANN-000734,BFP413,MURMURA CHIKKI,Murmura chikki,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000180,ASC185,Stuffed Tinda,Stuffed round gourd (Bharwa tinde),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000099,ASC101,Dal Parantha,Dal parantha/paratha,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000977,OSR116,Spicy corn chaat,Spicy corn chaat ,open_source_recipes,active,snack,"[""snack""]",vegetarian
+ANN-000516,BFP047,PANEER STUFFED CHEELA,Paneer stuffed cheela/chilla,bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000337,ASC348,Gulab Jamun,Gulab Jamun with khoya,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000683,BFP327,MANGO RAITA,Mango raita (Aam ka raita),bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000414,ASC432,Coconut Finger,Coconut finger,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000765,BFP460,SPICY CHUTNEY SANDWICH,Spicy chutney sandwich,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000047,ASC048,Semolina Porridge,Semolina porridge (Suji/Rava daliya),asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000187,ASC193,Pea Curry,Pea curry (Matar ki sabzi),asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000179,ASC184,Stuffed bhindi,Stuffed okra (Bharwa bhindi),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000142,ASC144,Idli,Idli,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000729,BFP403,PUMPKIN COCONUT BURFI,Pumpkin coconut burfi (Kaddu aur nariyal ki burfi),bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000113,ASC115,Mixed vegetable Pulao,Mixed vegetable pulao,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000072,ASC074,Cheese Sauce,Cheese sauce,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000670,BFP306,JELLIED SUNSHINE FRUIT SALAD,Jellied sunshine fruit salad,bfp_manual,active,salad,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000875,OSR011,Chak-hao Kheer (black rice kheer),Black rice kheer (Chak-hao kheer),open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000077,ASC079,Clear Tomato Soup,Clear tomato soup (Tamatar ka soup),asc_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000139,ASC141,Fettuccine with spinach sauce,Fettuccine with spinach sauce,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000156,ASC159,Whole Urad,Whole urad (Urad ki dal),asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000124,ASC126,Curd Rice,Curd rice (Dahi bhaat/Dahi chawal/ Perugu annam/Daddojanam/Thayir saadam),asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000884,OSR020,Lotus seed halwa (kamal gatta),Lotus seed halwa (Kamal gattay ka halwa),open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000457,ASC476,Dalia Moong Dal Premix,Cracked wheat and green gram dal premix (Dalia moong dal premix),asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000605,BFP205,MUSHROOM MATAR,Mushroom matar,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000694,BFP351,CHOCONUT ICE CREAM,Choconut ice cream,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000449,ASC468,Sprouted Moong daliya,Sprouted moong daliya ,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000069,ASC071,White sauce ( Thin),White sauce (thin),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000357,ASC368,Peanut Cutlet,Peanut cutlet (Mungfali ke cutlet),asc_manual,active,starter,"[""snack""]",eggetarian
+ANN-000842,BFP571,ATTA NUTS LADOOS,Wheat flour and nuts ladoos (Atta nuts ladoos),bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000192,ASC198,Pea Kofta curry,Pea kofta curry (Matar kofta curry),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000308,ASC319,Triffle Pudding,Triffle pudding,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000772,BFP471,SUNSET AND SUNRISE OPEN SANDWICHES,Sunset and sunrise open sandwich,bfp_manual,active,starter,"[""snack""]",eggetarian
+ANN-000751,BFP444,CORIANDER TOMATO CHUTNEY,Coriander chutney (Hare dhaniye ki chutney),bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000068,ASC070,Chicken stock,Chicken stock,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000208,ASC214,Dum Aloo,Dum aloo,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000624,BFP233,CRISPY BAKED FISH,Crispy baked fish,bfp_manual,active,snack,"[""snack""]",non_vegetarian
+ANN-000221,ASC227,Roghan Josh,Roghan josh,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000228,ASC234,Mutton Do Piaza,Mutton do piaza,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000263,ASC271,Sprouted Moong Raita,Sprouted moong raita ,asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000297,ASC308,Caramel Ice Cream,Caramel ice cream,asc_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000714,BFP372,APRICOT FOOL,Apricot fool,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000518,BFP054,FRENCH OMELETTE,French omelette/omlet,bfp_manual,active,breakfast,"[""breakfast""]",eggetarian
+ANN-000984,OSR124,Ragi cake,Finger millet cake (Ragi cake),open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000300,ASC311,Vanilla Souffle,Vanilla souffle,asc_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000720,BFP388,CHUM CHUM,Chum chum,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-001003,OSR144,Panchmel dal,Panchmel dal,open_source_recipes,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000409,ASC427,Eggless Cake,Eggless cake,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000151,ASC154,Dry Washed Urad,Dry washed urad,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000378,ASC396,Lemon Tart,Lemon tart,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000916,OSR053,Mesu pickle,Fermented bamboo shoot pickle (Mesu pickle),open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000779,BFP482,CHOCOLATE PASTRY,Chocolate pastry,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000346,ASC357,Egg Pakoras,Egg pakora/pakoda (Ande ke pakode),asc_manual,active,starter,"[""snack""]",eggetarian
+ANN-000233,ASC241,Tandoori Chicken,Tandoori chicken,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000511,BFP042,BREAD UPMA,Bread upma,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000636,BFP261,CABBAGE ROLLS (Dry),Cabbage rolls (dry) ((Pattagobhi rolls) (dry)),bfp_manual,active,snack,"[""snack""]",non_vegetarian
+ANN-000261,ASC269,Tomato Onion Raita,Tomato onion raita (Tamatar aur pyaaz ka raita),asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000824,BFP550,SHISHU AHAR,Shishu ahar,bfp_manual,active,infant_food,"[""breakfast"", ""snack""]",vegetarian
+ANN-000721,BFP389,DIL BAHAR,Dil bahar,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000545,BFP108,ONION-GREEN CHILLI PARATHA,Onion-green chilli parantha/paratha (Pyaaz aur hari mirch ka parantha/paratha),bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000253,ASC261,Mixed Vegetable salad with Curd Sauce,Mixed vegetable salad with curd sauce,asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000105,ASC107,Poories,Poori,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000065,ASC067,Khoa and coconut pancake,Khoa and coconut pancake,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000423,ASC442,Chocolate Biscuit,Chocolate biscuit,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000987,OSR127,Tutti frutti cake,Tutti frutti cake,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000623,BFP232,FISH PIE,Fish pie,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000288,ASC297,Potato Halwa,Potato halwa (Aloo ka halwa),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000847,BFP577,NAMKEEN DALIYA,Namkeen daliya,bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000673,BFP310,FRENCH DRESSING,French dressing,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000727,BFP397,DANEDAR BURFI,Danedar burfi,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000837,BFP565,TIL BISCUITS,Sesame biscuit (Til ke biscuit),bfp_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000046,ASC047,Cracked Wheat porridge ,Cracked wheat porridge (Meetha daliya),asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000442,ASC461,Besan suji Cheela,Gram flour and semolina chilla/cheela/savory pancake (Besan suji chilla/cheela),asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000620,BFP229,FISH IN COCONUT MILK,Fish in coconut milk (Nariyal ke doodh ke saath machli),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000291,ASC300,Steamed Caramel Custard,Caramel custard (steamed),asc_manual,active,beverage,"[""breakfast"", ""snack""]",eggetarian
+ANN-000645,BFP274,KATHAL/JACKFRUIT (DRY),Jackfruit/Kathal (dry),bfp_manual,active,snack,"[""snack""]",vegetarian
+ANN-000064,ASC066,Jam and Fruit pancake,Jam and fruit pancake,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",eggetarian
+ANN-000149,ASC152,Washed Urad dal,Washed urad dal (Dhuli urad ki dal),asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000506,BFP031,POTATO CANJEE,Potato canjee (Aloo canjee),bfp_manual,active,snack,"[""snack""]",vegetarian
+ANN-000782,BFP485,BLACK FOREST GATEAU,Black forest gateau,bfp_manual,active,beverage,"[""breakfast"", ""snack""]",eggetarian
+ANN-000639,BFP264,MASALA ARBI,Masala arbi,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000247,ASC255,Pasta Salad,Pasta salad,asc_manual,active,salad,"[""lunch"", ""dinner""]",vegetarian
+ANN-000469,ASC493,Lemon squash,Lemon squash (Nimbu ka squash),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000255,ASC263,Waldroff Salad,Waldroff salad,asc_manual,active,salad,"[""lunch"", ""dinner""]",vegetarian
+ANN-000667,BFP302,SPRING BASKET SALAD,Spring basket salad,bfp_manual,active,salad,"[""lunch"", ""dinner""]",vegetarian
+ANN-000309,ASC320,Snow Flakes Pudding,Snow flakes pudding,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000462,ASC484,Poha With Curd,Poha with curd (Poha aur dahi),asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000092,ASC094,Cold cucumber soup,Cold cucumber soup (Thanda kheere ka soup),asc_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000759,BFP453,MAYONNAISE VEGETABLE DIP,Mayonnaise vegetable dip,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000551,BFP118,PEAS KACHORIS,Peas kachori (Matar kachori),bfp_manual,active,snack,"[""snack""]",vegetarian
+ANN-000955,OSR093,Spinach and Paneer Souffle,Spinach and paneer souffle ,open_source_recipes,active,dessert,"[""anytime""]",eggetarian
+ANN-000136,ASC138,Penne platter,Penne platter,asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000687,BFP336,PUMPKIN KHEER,Pumpkin kheer (Kaddu ki kheer),bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000780,BFP483,ASSORTED PASTRY,Assorted pastry,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000393,ASC411,Minced Meat Patties,Minced meat patties,asc_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000659,BFP291,CREAMED SPINACH AND MUSHROOMS,Creamed spinach and mushroom,bfp_manual,active,snack,"[""snack""]",vegetarian
+ANN-000240,ASC248,Fried Fish and Chips (English Style),Fried fish and Chips (English Style) (Tali hui machli aur chips),asc_manual,active,snack,"[""snack""]",eggetarian
+ANN-000894,OSR030,Kidney bean sandwich with cottage cheese,Kidney bean sandwich with cottage cheese,open_source_recipes,active,starter,"[""snack""]",vegetarian
+ANN-000130,ASC132,Pasta Cheese sauce,Pasta cheese sauce,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000953,OSR091,Green chilli raita,Green chilli raita (Hari mirch ka raita),open_source_recipes,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000861,BFP605,Cauliflower/ potato canjee,Cauliflower potato canjee,bfp_manual,active,snack,"[""snack""]",vegetarian
+ANN-000012,ASC012,Summer Cooler,Summer cooler,asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000230,ASC237,Shammi Kebab,Shammi kebab,asc_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000241,ASC249,Tomato Fish,Tomato fish,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000722,BFP390,RASBHARIS,Rasbhari,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-001002,OSR143,Horsegram Dal (Kulthi Dal) ,Horsegram dal (Kulthi dal) ,open_source_recipes,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000133,ASC135,Chicken Chowmein,Chicken chowmein,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000055,ASC057,Fried Egg,Fried Egg ,asc_manual,active,breakfast,"[""breakfast""]",eggetarian
+ANN-000381,ASC399,Pineapple Tart,Pineapple tart,asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000717,BFP380,STEAMED CAKE WITH CHOCOLATE SAUCE,Steamed cake with chocolate sauce,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",eggetarian
+ANN-000327,ASC338,Chocolate Burfi,Chocolate burfi,asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000811,BFP532,ORANGE CHIFFON PIE,Orange chiffon pie,bfp_manual,active,bakery,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000422,ASC441,Sweet Plain Biscuit,Sweet plain biscuit,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000052,ASC054,Murmura (puffed rice),Murmura (Puffed rice),asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000121,ASC123,Vegetable Biryani,Vegetable biryani/biriyani,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000733,BFP412,TIL AND CHANNA CHIKKI,Sesame chickpeas brittle (Til aur channe ki chikki),bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000716,BFP379,APPLE CRUMB PUDDING,Apple crumb pudding,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000030,ASC031,Club sandwich ,Club sandwich ,asc_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000128,ASC130,Classic italian pasta,Classic italian pasta,asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000499,BFP015,(Banana) MILKSHAKE WITH ICE CREAM,Banana milkshake with ice cream (Kele ka milkshake ice cream ke saath),bfp_manual,active,beverage,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000544,BFP097,BREAD SAUCE,Bread sauce,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000869,OSR005,Thandai,Thandai,open_source_recipes,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000663,BFP296,SPINACH SOUFFLE,Spinach souffle ,bfp_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000147,ASC150,Makki ki roti,Makki ki roti,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000705,BFP363,RASPBERRY BAVARIAN CREAM,Raspberry bavarian cream,bfp_manual,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000317,ASC328,Pineapple Upside Down Pudding,Pineapple upside down pudding,asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-001008,OSR151,Jowar dosa,Jowar dosa,open_source_recipes,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000550,BFP117,PEAS POORIS,Peas poori (Matar ki poori),bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000612,BFP216,TOMATO CHICKEN,Tomato chicken,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000368,ASC381,Paneer shaslik,Paneer shaslik/tikka,asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000512,BFP043,VEGETABLE UPMA,Vegetable upma,bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000889,OSR025,Rabri,Thickened sweetened milk (Rabri),open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000680,BFP322,BATHUA RAITA,Bathua raita,bfp_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000918,OSR055,Pickled mustard greens,Pickled mustard greens ,open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000627,BFP240,EGG CURRY,Egg curry (Anda curry),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",eggetarian
+ANN-000989,OSR129,Whey soup,Whey soup,open_source_recipes,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000262,ASC270,Peanut Raita,Peanut raita (Mungfali ka raita),asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000146,ASC149,Paneer kaathi Roll,Paneer kaathi roll,asc_manual,active,snack,"[""snack""]",eggetarian
+ANN-000657,BFP289,POTATO NESTS,Potato nests,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000129,ASC131,Pasta Spinach Sauce,Pasta spinach sauce,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000957,OSR095,Chicken and Cheese Souffle,Chicken and cheese souffle,open_source_recipes,active,dessert,"[""anytime""]",non_vegetarian
+ANN-000999,OSR139,Dal makhani,Dal makhani,open_source_recipes,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000652,BFP282,CAULIFLOWER BASKET,Cauliflower basket,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",eggetarian
+ANN-001013,OSR156,Garlic chickpea soup,Garlic chickpea soup (Lahasun aur chane ka shoraba),open_source_recipes,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000573,BFP155,SPAGHETTI BOLOGNESE,Spaghetti bolognese,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000914,OSR051,Date pickle,Date pickle (Khajoor ka achaar),open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000947,OSR085,Dates Chutney,Dates chutney (Khajoor ki chutney),open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000465,ASC487,Vegetable Khichri,Vegetable khichdi/khichri,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000341,ASC352,Onion Pakora,Onion pakora/pakoda (Pyaaz ke pakode),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000066,ASC068,Brown stock,Brown stock,asc_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000002,ASC002,Instant Coffee,Instant coffee,asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000599,BFP197,MINCED MEAT BALL CURRY,Minced meat ball curry,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000941,OSR078,Roasted Cauliflower Steak,Roasted cauliflower steak,open_source_recipes,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000896,OSR032,Buttermilk biscuits,Buttermilk biscuit,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000901,OSR037,Greenpea cookies,Greenpea cookies,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000196,ASC202,Raw Banana Kofta Curry,Raw banana kofta curry (Kela kofta curry),asc_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000760,BFP455,TOMATO AND CUCUMBER SANDWICHES,Tomato and cucumber sandwich (Tamatar aur kheere ka sandwich),bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000362,ASC375,Vegetable Burger,Vegetable burger,asc_manual,active,main_course,"[""lunch"", ""dinner""]",eggetarian
+ANN-000269,ASC277,Boondi Raita,Boondi raita,asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000619,BFP226,FISH FINGER,Fish finger,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",eggetarian
+ANN-000964,OSR102,Khakra,Khakhra,open_source_recipes,active,snack,"[""snack""]",vegetarian
+ANN-000862,BFP606,CREAMED SPINACH,Creamed spinach,bfp_manual,active,snack,"[""snack""]",eggetarian
+ANN-000443,ASC462,Rice Moong Dal Cheela,Rice moong dal cheela (Chawal aur moong dal ka cheela),asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000453,ASC472,Paushtik Roti,Paushtik roti,asc_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000044,ASC045,Classic club sandwich,Classic club sandwich,asc_manual,active,beverage,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000951,OSR089,Pomegranate raita,Pomegranate raita (Anaar ka raita),open_source_recipes,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000216,ASC222,Paneer in butter sauce,Paneer in butter sauce,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000555,BFP127,MINCED MEAT PANCAKES,Minced meat pancake (with chicken),bfp_manual,active,bakery,"[""breakfast"", ""snack""]",non_vegetarian
+ANN-000834,BFP561,CHANNA DAL BURFI,Split bengal gram burfi/fudge (Channa dal burfi),bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000342,ASC353,Cauliflower Pakoras,Cauliflower pakora/pakoda (Phoolgobhi ke pakode),asc_manual,active,starter,"[""snack""]",vegetarian
+ANN-000437,ASC456,Soyabean Muthias,Soyabean muthias,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000082,ASC084,Cream of spinach soup,Cream of spinach soup,asc_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000379,ASC397,Jam Tarts,Jam tart,asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000932,OSR069,Baked Eggs in Tomato Sauce,Baked eggs in tomato sauce,open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",eggetarian
+ANN-000777,BFP479,LEMON CURD FILLING,Lemon curd filling,bfp_manual,active,snack,"[""snack""]",eggetarian
+ANN-000888,OSR024,Shrikhand,Sweetened yogurt (Shrikhand),open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000576,BFP159,SPAGHETTI WITH PANEER BALLS AND TOMATO SAUCE,Spaghetti with paneer balls and tomato sauce,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000521,BFP057,CHEESE AND MUSHROOM OMELETTE,Cheese and mushroom omelette/omlet,bfp_manual,active,breakfast,"[""breakfast""]",eggetarian
+ANN-000761,BFP456,TOMATO GRILLED SANDWICHES,Tomato sandwich (grilled),bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000897,OSR033,Lemon cookies,Lemon cookies,open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000996,OSR136,Millet soup,Millet soup,open_source_recipes,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000021,ASC022,Lassi (Salted),Lassi (salted),asc_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000293,ASC302,Soft Custard (stirred),Soft Custard (stirred),asc_manual,active,dessert,"[""anytime""]",eggetarian
+ANN-000853,BFP589,PLUM SQUASH,Plum squash (Aloo bukhara squash),bfp_manual,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000840,BFP569,SOYA CHIKKI,Soya chikki,bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000882,OSR018,Kiwi granola pudding,Kiwi granola pudding,open_source_recipes,active,dessert,"[""anytime""]",vegetarian
+ANN-000405,ASC423,Banana Cake,Banana cake (Kele ka cake),asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000978,OSR118,Jackfruit fritters/ ponsa mulik,Jackfruit fritters (Ponsa mulik/Kathal ka pakora),open_source_recipes,active,starter,"[""snack""]",vegetarian
+ANN-000719,BFP386,GULAB JAMUN WITH MILK POWDER,Gulab jamun with milk powder,bfp_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000541,BFP091,VEG PANEER STEW,Veg paneer stew,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000960,OSR098,Green chutney,Green chutney,open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000264,ASC272,Lauki Raita,Bottle gourd raita (Ghiya/Lauki ka raita),asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000566,BFP147,INSTANT IDLI,Instant idli (with semolina),bfp_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000838,BFP566,FERMENTED BENGAL GRAM VADA,Fermented bengal gram vada (Khameerikrit/Ufna hua channa dal ka vada),bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",non_vegetarian
+ANN-000053,ASC055,Puffed Wheat,Puffed wheat (Murmure/Moori),asc_manual,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000063,ASC065,Vegetable pancake,Vegetable pancake,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000231,ASC238,Scotch Egg,Scotch egg,asc_manual,active,snack,"[""snack""]",non_vegetarian
+ANN-000144,ASC147,Rava Dosa,Semolina dosa (Suji/Rava dosa),asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000602,BFP201,NARGISI KOFTA,Indian lamb and egg curry (Nargisi kofta),bfp_manual,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000949,OSR087,Macaroni salad,Macaroni salad,open_source_recipes,active,salad,"[""lunch"", ""dinner""]",eggetarian
+ANN-001006,OSR147,Sev,Sev (Omapodi/Karapusa),open_source_recipes,active,snack,"[""snack""]",vegetarian
+ANN-000767,BFP463,ROLLED SANDWICHES,Rolled sandwich,bfp_manual,active,starter,"[""snack""]",vegetarian
+ANN-000635,BFP259,BATHUA BHUJIA,Bathua bhujia,bfp_manual,active,snack,"[""snack""]",vegetarian
+ANN-000425,ASC444,Sweet And Salty Biscuit,Sweet and salty biscuit (Meethay aur namkeen biscuit),asc_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000594,BFP185,KABULI CHANNA CURRY,Kabuli channa curry,bfp_manual,active,main_course,"[""lunch"", ""dinner""]",vegetarian
+ANN-000257,ASC265,Fruit Salad,Fruit salad (Phalon ka salaad),asc_manual,active,salad,"[""lunch"", ""dinner""]",non_vegetarian
+ANN-000895,OSR031,Ragi biscuits,Finger millet biscuit (Ragi biscuit),open_source_recipes,active,bakery,"[""breakfast"", ""snack""]",vegetarian
+ANN-000535,BFP080,CREAM OF BROCCOLI SOUP,Cream of broccoli soup,bfp_manual,active,soup,"[""lunch"", ""dinner""]",vegetarian
+ANN-000867,OSR002,Sattu drink,Sattu drink,open_source_recipes,active,beverage,"[""breakfast"", ""snack""]",vegetarian
+ANN-000479,ASC503,Orange Marmalade,Orange marmalade (Santray ka murabba),asc_manual,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000580,BFP164,HOME MADE PLAIN NOODLES,Home made plain noodles,bfp_manual,active,staple,"[""breakfast"", ""lunch"", ""dinner""]",vegetarian
+ANN-000835,BFP563,SWEET BESAN ROUNDS,Chickpea flour cookies (Sweet besan rounds/cookies),bfp_manual,active,dessert,"[""anytime""]",vegetarian
+ANN-000095,ASC097,Plain Parantha,Plain parantha/paratha,asc_manual,active,breakfast,"[""breakfast""]",vegetarian
+ANN-000268,ASC276,Potato Raita,Potato raita (Aloo ka raita),asc_manual,active,side_dish,"[""lunch"", ""dinner""]",vegetarian
+ANN-000061,ASC063,Pancakes,Pancake,asc_manual,active,bakery,"[""breakfast"", ""snack""]",eggetarian
+ANN-000354,ASC365,Khasta Kachori,Khasta kachori,asc_manual,active,snack,"[""snack""]",vegetarian
+ANN-000921,OSR058,Pickled cabbage,Pickled cabbage ,open_source_recipes,active,sauce_condiment,"[""lunch"", ""dinner""]",vegetarian
+ANN-000773,BFP472,DANISH LUNCHEON SANDWICHES,Danish luncheon sandwich,bfp_manual,active,starter,"[""snack""]",non_vegetarian
+ANN-000936,OSR073,Cajun Chicken,Cajun chicken,open_source_recipes,active,main_course,"[""lunch"", ""dinner""]",non_vegetarian

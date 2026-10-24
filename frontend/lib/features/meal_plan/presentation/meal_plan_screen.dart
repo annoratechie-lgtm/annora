@@ -22,16 +22,134 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   int _selectedDay = 0;
   int _selectedTab = 0;
+  bool _generating = false;
+  bool _generatingPantry = false;
   late Future<Map<String, dynamic>> _future;
+  final Map<String, Future<Map<String, dynamic>>> _ingredientsByPlan = {};
 
   @override
   void initState() {
     super.initState();
-    _future = widget.api.fetchMealPlan();
+    _future = _fetchMealPlanWithRecipeNames();
   }
 
   void _reload() {
-    setState(() => _future = widget.api.fetchMealPlan());
+    setState(() {
+      _ingredientsByPlan.clear();
+      _future = _fetchMealPlanWithRecipeNames();
+    });
+  }
+
+  Future<Map<String, dynamic>> _fetchMealPlanWithRecipeNames() async {
+    final result = await widget.api.fetchMealPlan();
+    final rawMeals = result['meals'];
+    if (rawMeals is List) {
+      result['meals'] = await _withRecipeNames(
+        rawMeals.whereType<Map>().map((meal) => Map<String, dynamic>.from(meal)).toList(),
+      );
+    }
+    return result;
+  }
+
+  String? _recipeNameFromCode(String value) {
+    final match = RegExp(r'^(.*)-([A-Z]{2,}\d+)$').firstMatch(value.trim());
+    return match?.group(1)?.trim();
+  }
+
+  Future<List<Map<String, dynamic>>> _withRecipeNames(
+    List<Map<String, dynamic>> meals,
+  ) async {
+    return meals.map((meal) {
+      final rawCode = meal['source_recipe_code']?.toString();
+      final name = meal['name']?.toString();
+      final embeddedName = rawCode == null ? null : _recipeNameFromCode(rawCode);
+      if ((name == null || name.isEmpty || name == 'NA') && embeddedName != null) {
+        return {...meal, 'name': embeddedName};
+      }
+      return meal;
+    }).toList();
+  }
+
+  Future<void> _generate() async {
+    setState(() => _generating = true);
+    try {
+      final result = await widget.api.generateMealPlan();
+      if (!mounted) return;
+      final meals = await _withRecipeNames(
+        _flattenGeneratedPlan(result['plan']),
+      );
+      if (!mounted) return;
+      setState(() {
+        _future = Future.value({
+          'meal_plan': {
+            'id': result['meal_id'],
+            'status': result['status'],
+          },
+          'meals': meals,
+        });
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your 7-day meal plan is ready.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _generating = false);
+    }
+  }
+
+  List<Map<String, dynamic>> _flattenGeneratedPlan(dynamic rawPlan) {
+    if (rawPlan is! Map) return const [];
+    final rows = <Map<String, dynamic>>[];
+    for (final entry in rawPlan.entries) {
+      final date = entry.key.toString();
+      final meals = entry.value;
+      if (meals is! Map) continue;
+      for (final type in ['breakfast', 'lunch', 'dinner']) {
+        final raw = meals[type];
+        String? name;
+        String? recipeCode;
+        if (raw is String) {
+          final parts = raw.split('-');
+          if (parts.length > 1) {
+            name = parts.first.trim();
+            recipeCode = parts.sublist(1).join('-').trim();
+          } else {
+            name = 'NA';
+            recipeCode = raw.trim();
+          }
+        } else if (raw is List && raw.isNotEmpty) {
+          final value = raw.first?.toString() ?? '';
+          final parts = value.split('-');
+          if (parts.length > 1) {
+            name = parts.first.trim();
+            recipeCode = parts.sublist(1).join('-').trim();
+          } else {
+            name = 'NA';
+            recipeCode = value.trim();
+          }
+        }
+        if (name == null || name.isEmpty) continue;
+        rows.add({
+          'meal_date': date,
+          'meal_type': type,
+          'name': name,
+          'source_recipe_code': recipeCode,
+          'status': 'planned',
+          'description': null,
+          'nutrition': <String, dynamic>{},
+        });
+      }
+    }
+    rows.sort((a, b) {
+      final dateCompare = a['meal_date'].toString().compareTo(b['meal_date'].toString());
+      if (dateCompare != 0) return dateCompare;
+      return a['meal_type'].toString().compareTo(b['meal_type'].toString());
+    });
+    return rows;
   }
 
   @override
@@ -42,11 +160,16 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         child: FutureBuilder<Map<String, dynamic>>(
           future: _future,
           builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
+            if (snapshot.connectionState != ConnectionState.done || _generating) {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError) {
-              return _ErrorState(message: snapshot.error.toString(), onRetry: _reload);
+              return _ErrorState(
+                message: snapshot.error.toString(),
+                onRetry: _reload,
+                actionLabel: 'Generate plan',
+                onAction: _generate,
+              );
             }
             return _buildContent(snapshot.data ?? const <String, dynamic>{});
           },
@@ -57,8 +180,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   Widget _buildContent(Map<String, dynamic> data) {
     final plan = Map<String, dynamic>.from(data['meal_plan'] ?? {});
-    final rawMeals = (data['meals'] as List? ?? const []);
-    final meals = rawMeals.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    final rawMeals = data['meals'] as List? ?? const [];
+    final meals = rawMeals
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
     final dates = meals
         .map((e) => e['meal_date']?.toString())
         .whereType<String>()
@@ -67,7 +193,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       ..sort();
 
     if (dates.isEmpty) {
-      return _ErrorState(message: 'No meals are available for this plan yet.', onRetry: _reload);
+      return _ErrorState(
+        message: 'No meals are available for this plan yet.',
+        onRetry: _reload,
+        actionLabel: 'Generate plan',
+        onAction: _generate,
+      );
     }
 
     final safeDay = _selectedDay.clamp(0, dates.length - 1).toInt();
@@ -95,11 +226,14 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 if (_selectedTab == 0) ...[
                   for (final meal in dayMeals) _buildMealCard(meal),
                   const SizedBox(height: 12),
-                  _buildNutritionSummary(),
+                  _buildNutritionSummary(dayMeals),
                 ] else if (_selectedTab == 1)
-                  _buildNutritionTab()
+                  _buildNutritionTab(dayMeals)
                 else if (_selectedTab == 2)
-                  _buildPantryTab()
+                  _buildPantryTab(
+                    plan['id']?.toString() ?? plan['meal_id']?.toString(),
+                    selectedDate,
+                  )
                 else
                   _buildAssistTab(),
               ],
@@ -192,10 +326,18 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
 
   Widget _buildMealCard(Map<String, dynamic> meal) {
     final type = meal['meal_type']?.toString() ?? 'meal';
-    final name = meal['name']?.toString() ?? 'Meal';
-    final icon = type == 'breakfast' ? '🌞' : type == 'lunch' ? '🍲' : '🌙';
+    final savedName = meal['name']?.toString();
+    final recipeCode = meal['source_recipe_code']?.toString();
+    final resolvedRecipeName = recipeCode == null ? null : _recipeNameFromCode(recipeCode);
+    final name = savedName == null || savedName.isEmpty || savedName == 'NA'
+        ? (resolvedRecipeName ?? 'Meal')
+        : savedName;
+    final description = meal['description']?.toString();
+    final icon = type == 'breakfast' ? '🌞' : type == 'lunch' ? '🍲' : type == 'dinner' ? '🌙' : '🍽️';
     final color = type == 'breakfast' ? _orange : type == 'lunch' ? _green : _blue;
-    final cooked = meal['status']?.toString() == 'cooked';
+    final status = meal['status']?.toString() ?? 'planned';
+    final statusLabel = status == 'cooked' ? '✓ Cooked' : status == 'skipped' ? 'Skipped' : 'Planned';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), boxShadow: const [BoxShadow(color: Color(0x10000000), blurRadius: 10, offset: Offset(0, 4))]),
@@ -205,21 +347,18 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           Row(children: [
             Text('$icon ${type.toUpperCase()}', style: TextStyle(fontSize: 10, letterSpacing: 1.1, color: color, fontWeight: FontWeight.w600)),
             const Spacer(),
-            _pill(cooked ? '✓ Done' : '⏰ Upcoming', cooked ? const Color(0xFFE5F4ED) : const Color(0xFFFFF1D9), cooked ? const Color(0xFF2D9070) : const Color(0xFFB96A14)),
+            _pill(statusLabel, status == 'cooked' ? const Color(0xFFE5F4ED) : const Color(0xFFFFF1D9), status == 'cooked' ? const Color(0xFF2D9070) : const Color(0xFFB96A14)),
           ]),
           const Divider(height: 18, color: _border),
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Container(width: 46, height: 46, decoration: BoxDecoration(color: color.withValues(alpha: .18), borderRadius: BorderRadius.circular(14)), child: Center(child: Text(type == 'breakfast' ? '🥣' : type == 'lunch' ? '🍛' : '🍽️', style: const TextStyle(fontSize: 24)))),
+            Container(width: 46, height: 46, decoration: BoxDecoration(color: color.withOpacity(.18), borderRadius: BorderRadius.circular(14)), child: Center(child: Text(icon, style: const TextStyle(fontSize: 24)))),
             const SizedBox(width: 11),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _text)),
-              const SizedBox(height: 4),
-              const Text('Planned for your household', style: TextStyle(fontSize: 10.5, color: _muted)),
-              const SizedBox(height: 7),
-              Wrap(spacing: 6, children: [
-                _pill('🌿 Veg', const Color(0xFFE5F4ED), const Color(0xFF2D9070)),
-                _pill('✦ AI suggested', const Color(0xFFF0E9FF), const Color(0xFF8057D8)),
-              ]),
+              if (description != null && description.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(description, style: const TextStyle(fontSize: 10.5, color: _muted, height: 1.3)),
+              ],
             ])),
           ]),
         ]),
@@ -227,36 +366,172 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     );
   }
 
-  Widget _buildNutritionSummary() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 13, 14, 14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), boxShadow: const [BoxShadow(color: Color(0x10000000), blurRadius: 10, offset: Offset(0, 4))]),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text("📊 Today's nutrition summary", style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: _text)),
-        const SizedBox(height: 11),
-        _progressRow('Calories', 0.84, '1,680/2,000', _orange),
-        _progressRow('Protein', 0.55, '44/80g', _blue),
-        _progressRow('Carbs', 0.80, '200/250g', const Color(0xFFF3B72D)),
-        _progressRow('Fat', 0.52, '32/70g', const Color(0xFFF1A05B)),
-      ]),
+  Widget _buildNutritionSummary(List<Map<String, dynamic>> meals) {
+    final hasNutrition = meals.any((meal) {
+      final nutrition = meal['nutrition'];
+      return nutrition is Map && nutrition.isNotEmpty;
+    });
+    return _simpleCard(
+      '📊 Today\'s nutrition summary',
+      hasNutrition
+          ? 'Nutrition data is available for this day.'
+          : 'Nutrition values are not populated by the current meal-planning API yet.',
     );
   }
 
-  Widget _progressRow(String label, double value, String text, Color color) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(children: [
-        SizedBox(width: 55, child: Text(label, style: const TextStyle(fontSize: 10.5, color: _text))),
-        Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(5), child: LinearProgressIndicator(value: value, minHeight: 7, backgroundColor: const Color(0xFFEDE8DF), valueColor: AlwaysStoppedAnimation(color)))),
-        const SizedBox(width: 9),
-        SizedBox(width: 66, child: Text(text, textAlign: TextAlign.right, style: const TextStyle(fontSize: 9.5, color: _muted))),
-      ]),
+  Widget _buildNutritionTab(List<Map<String, dynamic>> meals) => _buildNutritionSummary(meals);
+
+  Widget _buildPantryTab(String? planId, String selectedDate) {
+    if (planId == null || planId.isEmpty) {
+      return _simpleCard('🌿 Ingredients for the day', 'No meal plan is available.');
+    }
+    final future = _ingredientsByPlan.putIfAbsent(
+      planId,
+      () => widget.api.fetchIngredients(planId),
+    );
+    return FutureBuilder<Map<String, dynamic>>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Padding(
+            padding: EdgeInsets.all(28),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return _simpleCard(
+            '🌿 Ingredients for the day',
+            'Could not load ingredients: ${snapshot.error}',
+          );
+        }
+        final rawMeals = snapshot.data?['meals'];
+        final dayMeals = rawMeals is List
+            ? rawMeals.whereType<Map>().where(
+                (meal) => meal['meal_date']?.toString() == selectedDate,
+              ).toList()
+            : const [];
+        final items = <Map<String, dynamic>>[];
+        for (final meal in dayMeals) {
+          final ingredients = meal['ingredients'];
+          if (ingredients is List) {
+            items.addAll(ingredients.whereType<Map>().map(
+              (item) => Map<String, dynamic>.from(item),
+            ));
+          }
+        }
+        if (items.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: const [
+                BoxShadow(color: Color(0x10000000), blurRadius: 10, offset: Offset(0, 4)),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('🌿 Ingredients for the day', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _text)),
+                const SizedBox(height: 7),
+                const Text('No ingredients are saved for this day yet. Create the ingredient list for this meal plan to view them here.', style: TextStyle(fontSize: 12, color: _muted)),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _generatingPantry ? null : () => _generatePantryList(planId),
+                    icon: _generatingPantry
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.auto_awesome, size: 17),
+                    label: Text(_generatingPantry ? 'Creating list…' : 'Create ingredient list'),
+                    style: FilledButton.styleFrom(backgroundColor: _green, foregroundColor: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        final uniqueItems = <String, Map<String, dynamic>>{};
+        for (final item in items) {
+          final name = (item['food_name'] ?? '').toString().trim();
+          if (name.isEmpty) continue;
+          final unit = item['unit']?.toString().trim() ?? '';
+          final key = '${name.toLowerCase()}|${unit.toLowerCase()}';
+          final previous = uniqueItems[key];
+          if (previous == null) {
+            uniqueItems[key] = item;
+          } else {
+            final oldAmount = double.tryParse(previous['amount']?.toString() ?? '');
+            final newAmount = double.tryParse(item['amount']?.toString() ?? '');
+            if (oldAmount != null && newAmount != null &&
+                unit == (item['unit']?.toString().trim() ?? '')) {
+              uniqueItems[key] = {
+                ...previous,
+                'amount': oldAmount + newAmount,
+              };
+            }
+          }
+        }
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: const [
+              BoxShadow(color: Color(0x10000000), blurRadius: 10, offset: Offset(0, 4)),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Ingredients for the day', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _text)),
+              const SizedBox(height: 4),
+              Text('${uniqueItems.length} ingredients across ${dayMeals.length} meals', style: const TextStyle(fontSize: 11, color: _muted)),
+              const SizedBox(height: 12),
+              for (final item in uniqueItems.values) ...[
+                const Divider(height: 1, color: _border),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.circle, size: 7, color: _green),
+                      const SizedBox(width: 10),
+                      Expanded(child: Text(item['food_name']?.toString() ?? 'Ingredient', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _text))),
+                      Text(_formatIngredientAmount(item['amount'], item['unit']), style: const TextStyle(fontSize: 12, color: _muted)),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildNutritionTab() => _simpleCard('📊 Nutrition', 'Nutrition values will appear here once the meal nutrition data is populated.');
-  Widget _buildPantryTab() => _simpleCard('🌿 From Pantry', 'Pantry matching will appear here when pantry inventory is connected.');
-  Widget _buildAssistTab() => _simpleCard('⚡ Annora Assist', 'Ask Annora for swaps and meal suggestions in a future iteration.');
+  Future<void> _generatePantryList(String planId) async {
+    setState(() => _generatingPantry = true);
+    try {
+      await widget.api.generateIngredients(planId);
+      _ingredientsByPlan.remove(planId);
+      if (mounted) setState(() {});
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not create ingredient list: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _generatingPantry = false);
+    }
+  }
+
+  String _formatIngredientAmount(dynamic amount, dynamic unit) {
+    final amountText = amount?.toString() ?? '';
+    final unitText = unit?.toString() ?? '';
+    return [amountText, unitText].where((part) => part.trim().isNotEmpty).join(' ');
+  }
+
+  Widget _buildAssistTab() => _simpleCard('⚡ Annora Assist', 'Meal swaps and AI assistance are not part of the current meal-planning API contract.');
 
   Widget _simpleCard(String title, String body) {
     return Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _text)), const SizedBox(height: 8), Text(body, style: const TextStyle(fontSize: 11, color: _muted, height: 1.4))]));
@@ -290,7 +565,31 @@ class _NavItem extends StatelessWidget {
 class _ErrorState extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
-  const _ErrorState({required this.message, required this.onRetry});
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  const _ErrorState({
+    required this.message,
+    required this.onRetry,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
   @override
-  Widget build(BuildContext context) => Center(child: Padding(padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, children: [const Text('🍽️', style: TextStyle(fontSize: 38)), const SizedBox(height: 10), Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF6E6259))), const SizedBox(height: 12), FilledButton(onPressed: onRetry, child: const Text('Retry'))])));
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('🍽️', style: TextStyle(fontSize: 38)),
+              const SizedBox(height: 10),
+              Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF6E6259))),
+              const SizedBox(height: 12),
+              FilledButton(onPressed: onAction, child: Text(actionLabel)),
+              TextButton(onPressed: onRetry, child: const Text('Retry')),
+            ],
+          ),
+        ),
+      );
 }
