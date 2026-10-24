@@ -81,7 +81,7 @@ async def get_user_meal_plan(user_id: str):
         raise HTTPException(status_code=503, detail="Could not reach Supabase.") from exc
 
 
-@router.get("/{meal_plan_id}/ingredients")
+@router.get("/{meal_id}/ingredients")
 async def get_meal_plan_ingredients(meal_id: str, user_id: str):
     """Return saved ingredients grouped by the meal type/recipe in the plan."""
     if not settings.supabase_url or not settings.supabase_service_role_key:

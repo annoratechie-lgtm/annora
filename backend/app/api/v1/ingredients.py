@@ -27,13 +27,20 @@ async def generate_meal_plan_ingredients(meal_id: str, user_id: str):
         async with httpx.AsyncClient(timeout=20) as client:
             plan_response = await client.get(
                 f"{base_url}/rest/v1/meal",
-                params={"select": "id", "id": f"eq.{meal_id}", "user_id": f"eq.{user_id}", "limit": "1"},
+                params={"select": "id", 
+                        "id": f"eq.{meal_id}",
+                        "user_id": f"eq.{user_id}", 
+                        "status": "eq.active",
+                        },
                 headers=headers,
             )
             if plan_response.status_code != 200:
-                raise HTTPException(status_code=502, detail="Could not load meal plan from Supabase.")
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Could not load meal plan from Supabase ({plan_response.status_code}): {plan_response.text}",
+                )
             if not plan_response.json():
-                raise HTTPException(status_code=404, detail="Meal plan not found for this user.")
+                raise HTTPException(status_code=404, detail="No Active Meal plan not found for this user.")
 
             meals_response = await client.get(
                 f"{base_url}/rest/v1/meal_plan",
@@ -51,12 +58,13 @@ async def generate_meal_plan_ingredients(meal_id: str, user_id: str):
             if len(meals) < 21:
                 raise HTTPException(
                     status_code=422,
-                    detail=f"Expected 21 meals for a 7-day plan, found {len(meals)}.",
+                    detail=f"Expected more than 21 meals for a 7-day plan, found {len(meals)}.",
                 )
             
             generated = await generate_ingredients(meal_id)
             
             meal_ids = {str(meal["meal_id"]) for meal in meals}
+            # print(f"Meals in plan: {generated}")
             rows = []
             for meal_entry in generated:
                 if meal_entry["meal_id"] not in meal_ids:

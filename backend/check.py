@@ -3,8 +3,8 @@ from app.api.v1.meal_plans import generate_meal_plan, GenerateMealPlanRequest
 from app.api.v1.ingredients import generate_meal_plan_ingredients
 from app.api.v1.grocery_lists import generate_grocery_list
 
-user_id = 'ee4ea15d-30bd-4862-aeeb-3789dced8254'
-meal_id = '2ee226f5-3d9c-4998-9914-1db99eaa7f39'
+user_id = '97fe4f67-de72-40cc-9997-a7187b78d9e4'
+meal_id = 'a13c91b6-437b-4755-abbc-04f57b54dad0'
 dietary_preference = 'vegetarian'
 
 async def test_recipe_database(dietary_preference):
@@ -25,8 +25,8 @@ async def test_grocery_list_api(meal_id=meal_id, user_id=user_id):
     grocery_list = await generate_grocery_list(meal_id, user_id)
     return grocery_list
 
-response = asyncio.run(test_meal_api(user_id))
+# response = asyncio.run(test_meal_api(user_id))
 # recipe = asyncio.run(test_recipe_database(dietary_preference))
 # response = asyncio.run(test_ingredients_api(meal_id, user_id))
-# response = asyncio.run(test_grocery_list_api(meal_id, user_id))
+response = asyncio.run(test_grocery_list_api(meal_id, user_id))
 print(response)

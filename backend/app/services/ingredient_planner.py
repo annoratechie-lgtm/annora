@@ -37,6 +37,6 @@ async def generate_ingredients(meal_id: str) -> dict:
 
     
     if not content:
-        raise IngredientPlannerError("Groq returned an empty ingredient response.")
+        raise IngredientPlannerError("RPC table returned an empty ingredient response.")
 
     return content

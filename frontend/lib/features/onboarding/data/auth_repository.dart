@@ -29,7 +29,7 @@ class AuthRepository {
       // On web, null lets Supabase redirect back to the current page's
       // origin automatically. The custom scheme only makes sense on
       // Android/iOS, where there's a real deep link to catch.
-      redirectTo: kIsWeb ? null : 'io.supabase.annora://login-callback',
+      redirectTo: 'http://localhost:7357',
     );
   }
 
