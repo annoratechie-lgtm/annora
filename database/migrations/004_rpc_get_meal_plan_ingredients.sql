@@ -1,8 +1,10 @@
+--DROP FUNCTION get_meal_plan_ingredients(uuid)
+
 CREATE OR REPLACE FUNCTION get_meal_plan_ingredients(
-    p_meal_plan_id uuid
+    p_meal_id uuid
 )
 RETURNS TABLE (
-    meal_plan_id uuid,
+    meal_id uuid,
     meal_date date,
     meal_type text,
     source_recipe_code text,
@@ -14,7 +16,7 @@ RETURNS TABLE (
 LANGUAGE sql
 AS $$
     SELECT
-        m.meal_plan_id,
+        m.meal_id,
         m.meal_date,
         m.meal_type,
         m.source_recipe_code,
@@ -22,9 +24,8 @@ AS $$
         ri.food_name,
         ri.amount,
         ri.unit
-    FROM meals m
-    JOIN recipe_ingredient ri
-        ON ri.source_recipe_code = m.source_recipe_code
-    WHERE m.meal_plan_id = p_meal_plan_id
+    FROM meal_plan m
+    JOIN recipe_ingredient ri ON ri.source_recipe_code = m.source_recipe_code
+    WHERE m.meal_id = p_meal_id
     ORDER BY m.meal_date, m.meal_type;
 $$;
