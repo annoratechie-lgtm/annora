@@ -10,11 +10,13 @@ class Settings(BaseSettings):
     supabase_service_role_key: str = ""
     dev_user_id: str = ""
 
-    # Groq server-side configuration. Keep the API key out of source control.
+    # LLM-compatible provider configuration. Keep the API key server-side.
+    llm_api_key: str = ""
+    llm_base_url: str = "https://api.x.ai/v1"
+    llm_timeout_seconds: float = 90.0
     grokapi: str = ""
     llm_model: str = "openai/gpt-oss-20b"
     llm_temperature: float = 0.2
-    llm_timeout_seconds: float = 90.0
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

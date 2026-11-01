@@ -108,7 +108,6 @@ async def get_meal_plan_ingredients(meal_id: str, user_id: str):
                 "meal_id": f"eq.{meal_id}",
                 "order": "created_at.asc",
             })
-            print(meals)
             grouped = []
             for meal in meals:
                 meal_ingredients = [

@@ -157,7 +157,7 @@ async def save_meal_plan(user_id: str, start_date: date, plan) -> str:
                             "prep_time_minutes": None,
                             "nutrition": nutrition_by_code.get(source_recipe_code.strip().upper(), {}),
                         })      
-            print("Meal Rows to be saved:", meal_rows)
+            # print("Meal Rows to be saved:", meal_rows)
 
             meal_response = await client.post(
                 f"{base_url}/rest/v1/meal_plan",
