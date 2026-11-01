@@ -23,6 +23,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:7357",
         "http://127.0.0.1:7357",
+        "https://annorasave.netlify.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
