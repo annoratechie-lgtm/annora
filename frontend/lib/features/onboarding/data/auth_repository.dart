@@ -26,10 +26,13 @@ class AuthRepository {
   Future<void> signInWithGoogle() {
     return _client.auth.signInWithOAuth(
       OAuthProvider.google,
+      redirectTo: kIsWeb
+        ? Uri.base.origin
+        : 'io.supabase.annora://login-callback',
       // On web, null lets Supabase redirect back to the current page's
       // origin automatically. The custom scheme only makes sense on
       // Android/iOS, where there's a real deep link to catch.
-      redirectTo: 'http://localhost:7357',
+      // redirectTo: 'http://localhost:7357',
     );
   }
 
