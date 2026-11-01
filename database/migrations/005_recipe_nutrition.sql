@@ -3,7 +3,8 @@ begin;
 -- Recipe-level INDB values per serving. food_code maps to
 -- recipes.source_recipe_code; the column names match the INDB workbook.
 create table if not exists public.recipe_nutrition (
-  food_code text primary key,
+  id uuid primary key default gen_random_uuid(),
+  source_recipe_code text not null,
   unit_serving_energy_kcal numeric,
   unit_serving_protein_g numeric,
   unit_serving_carb_g numeric,

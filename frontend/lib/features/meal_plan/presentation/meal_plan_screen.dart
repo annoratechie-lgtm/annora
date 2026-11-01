@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../../assistant/presentation/assistant_chat.dart';
+import '../../assistant/data/assistant_api.dart';
 import '../data/meal_plan_api.dart';
 
 class MealPlanScreen extends StatefulWidget {
   final MealPlanApi api;
+  final AssistantApi assistantApi;
 
-  const MealPlanScreen({super.key, required this.api});
+  const MealPlanScreen({
+    super.key,
+    required this.api,
+    required this.assistantApi,
+  });
 
   @override
   State<MealPlanScreen> createState() => _MealPlanScreenState();
@@ -45,7 +52,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     final rawMeals = result['meals'];
     if (rawMeals is List) {
       result['meals'] = await _withRecipeNames(
-        rawMeals.whereType<Map>().map((meal) => Map<String, dynamic>.from(meal)).toList(),
+        rawMeals
+            .whereType<Map>()
+            .map((meal) => Map<String, dynamic>.from(meal))
+            .toList(),
       );
     }
     return result;
@@ -62,31 +72,78 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     return meals.map((meal) {
       final rawCode = meal['source_recipe_code']?.toString();
       final name = meal['name']?.toString();
-      final embeddedName = rawCode == null ? null : _recipeNameFromCode(rawCode);
-      if ((name == null || name.isEmpty || name == 'NA') && embeddedName != null) {
+      final embeddedName =
+          rawCode == null ? null : _recipeNameFromCode(rawCode);
+      if ((name == null || name.isEmpty || name == 'NA') &&
+          embeddedName != null) {
         return {...meal, 'name': embeddedName};
       }
       return meal;
     }).toList();
   }
 
+  List<Map<String, dynamic>> _groupMealsForCards(
+    List<Map<String, dynamic>> meals,
+  ) {
+    final sortedMeals = [...meals]..sort((a, b) {
+        final dateCompare = (a['meal_date']?.toString() ?? '')
+            .compareTo(b['meal_date']?.toString() ?? '');
+        if (dateCompare != 0) return dateCompare;
+        return _mealTypeOrder(a['meal_type']?.toString())
+            .compareTo(_mealTypeOrder(b['meal_type']?.toString()));
+      });
+
+    final groups = <String, Map<String, dynamic>>{};
+    for (final meal in sortedMeals) {
+      final date = meal['meal_date']?.toString() ?? '';
+      final type = meal['meal_type']?.toString() ?? 'meal';
+      final key = '$date|$type';
+      final code = meal['source_recipe_code']?.toString();
+      final savedName = meal['name']?.toString();
+      final embeddedName = code == null ? null : _recipeNameFromCode(code);
+      final name = savedName == null || savedName.isEmpty || savedName == 'NA'
+          ? (embeddedName ?? 'Meal')
+          : savedName;
+      final rawNutrition = meal['nutrition'];
+      final recipe = <String, dynamic>{
+        'source_recipe_code': code,
+        'name': name,
+        'nutrition': rawNutrition is Map
+            ? Map<String, dynamic>.from(rawNutrition)
+            : <String, dynamic>{},
+      };
+
+      final group = groups.putIfAbsent(
+          key,
+          () => {
+                ...meal,
+                'recipes': <Map<String, dynamic>>[],
+              });
+      (group['recipes'] as List<Map<String, dynamic>>).add(recipe);
+      group['name'] = (group['recipes'] as List<Map<String, dynamic>>)
+          .map((item) => item['name'].toString())
+          .join(', ');
+    }
+
+    return groups.values.toList();
+  }
+
+  int _mealTypeOrder(String? type) => switch (type) {
+        'breakfast' => 0,
+        'lunch' => 1,
+        'dinner' => 2,
+        'snack' => 3,
+        _ => 4,
+      };
+
   Future<void> _generate() async {
     setState(() => _generating = true);
     try {
-      final result = await widget.api.generateMealPlan();
-      if (!mounted) return;
-      final meals = await _withRecipeNames(
-        _flattenGeneratedPlan(result['plan']),
-      );
+      await widget.api.generateMealPlan();
       if (!mounted) return;
       setState(() {
-        _future = Future.value({
-          'meal_plan': {
-            'id': result['meal_id'],
-            'status': result['status'],
-          },
-          'meals': meals,
-        });
+        // Reload the saved plan so each meal includes its persisted nutrition.
+        _future = _fetchMealPlanWithRecipeNames();
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Your 7-day meal plan is ready.')),
@@ -101,57 +158,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     }
   }
 
-  List<Map<String, dynamic>> _flattenGeneratedPlan(dynamic rawPlan) {
-    if (rawPlan is! Map) return const [];
-    final rows = <Map<String, dynamic>>[];
-    for (final entry in rawPlan.entries) {
-      final date = entry.key.toString();
-      final meals = entry.value;
-      if (meals is! Map) continue;
-      for (final type in ['breakfast', 'lunch', 'dinner']) {
-        final raw = meals[type];
-        String? name;
-        String? recipeCode;
-        if (raw is String) {
-          final parts = raw.split('-');
-          if (parts.length > 1) {
-            name = parts.first.trim();
-            recipeCode = parts.sublist(1).join('-').trim();
-          } else {
-            name = 'NA';
-            recipeCode = raw.trim();
-          }
-        } else if (raw is List && raw.isNotEmpty) {
-          final value = raw.first?.toString() ?? '';
-          final parts = value.split('-');
-          if (parts.length > 1) {
-            name = parts.first.trim();
-            recipeCode = parts.sublist(1).join('-').trim();
-          } else {
-            name = 'NA';
-            recipeCode = value.trim();
-          }
-        }
-        if (name == null || name.isEmpty) continue;
-        rows.add({
-          'meal_date': date,
-          'meal_type': type,
-          'name': name,
-          'source_recipe_code': recipeCode,
-          'status': 'planned',
-          'description': null,
-          'nutrition': <String, dynamic>{},
-        });
-      }
-    }
-    rows.sort((a, b) {
-      final dateCompare = a['meal_date'].toString().compareTo(b['meal_date'].toString());
-      if (dateCompare != 0) return dateCompare;
-      return a['meal_type'].toString().compareTo(b['meal_type'].toString());
-    });
-    return rows;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,7 +166,8 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         child: FutureBuilder<Map<String, dynamic>>(
           future: _future,
           builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done || _generating) {
+            if (snapshot.connectionState != ConnectionState.done ||
+                _generating) {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError) {
@@ -193,11 +200,21 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       ..sort();
 
     if (dates.isEmpty) {
-      return _ErrorState(
-        message: 'No meals are available for this plan yet.',
-        onRetry: _reload,
-        actionLabel: 'Generate plan',
-        onAction: _generate,
+      return Column(
+        children: [
+          _buildTabs(),
+          Expanded(
+            child: _selectedTab == 3
+                ? AssistantChat(api: widget.assistantApi)
+                : _ErrorState(
+                    message: 'No meals are available for this plan yet.',
+                    onRetry: _reload,
+                    actionLabel: 'Generate plan',
+                    onAction: _generate,
+                  ),
+          ),
+          _buildBottomNav(),
+        ],
       );
     }
 
@@ -209,36 +226,36 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     }
 
     final selectedDate = dates[safeDay];
-    final dayMeals = meals.where((e) => e['meal_date']?.toString() == selectedDate).toList();
+    final dayMeals = _groupMealsForCards(
+      meals.where((e) => e['meal_date']?.toString() == selectedDate).toList(),
+    );
 
     return Column(
       children: [
         _buildDayStrip(dates),
         _buildTabs(),
         Expanded(
-          child: RefreshIndicator(
-            onRefresh: () async => _reload(),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(15, 14, 15, 22),
-              children: [
-                _buildDayTitle(selectedDate, plan),
-                const SizedBox(height: 10),
-                if (_selectedTab == 0) ...[
-                  for (final meal in dayMeals) _buildMealCard(meal),
-                  const SizedBox(height: 12),
-                  _buildNutritionSummary(dayMeals),
-                ] else if (_selectedTab == 1)
-                  _buildNutritionTab(dayMeals)
-                else if (_selectedTab == 2)
-                  _buildPantryTab(
-                    plan['id']?.toString() ?? plan['meal_id']?.toString(),
-                    selectedDate,
-                  )
-                else
-                  _buildAssistTab(),
-              ],
-            ),
-          ),
+          child: _selectedTab == 3
+              ? AssistantChat(api: widget.assistantApi)
+              : RefreshIndicator(
+                  onRefresh: () async => _reload(),
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(15, 14, 15, 22),
+                    children: [
+                      _buildDayTitle(selectedDate, plan),
+                      const SizedBox(height: 10),
+                      if (_selectedTab == 0) ...[
+                        for (final meal in dayMeals) _buildMealCard(meal),
+                      ] else if (_selectedTab == 1)
+                        _buildNutritionTab(dayMeals)
+                      else
+                        _buildPantryTab(
+                          plan['id']?.toString() ?? plan['meal_id']?.toString(),
+                          selectedDate,
+                        ),
+                    ],
+                  ),
+                ),
         ),
         _buildBottomNav(),
       ],
@@ -278,11 +295,21 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         ),
         child: Column(
           children: [
-            Text(dayLabel, style: TextStyle(fontSize: 10, color: selected ? _green : _muted)),
+            Text(dayLabel,
+                style:
+                    TextStyle(fontSize: 10, color: selected ? _green : _muted)),
             const SizedBox(height: 2),
-            Text('${date.day}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: selected ? _green : _text)),
+            Text('${date.day}',
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? _green : _text)),
             const SizedBox(height: 2),
-            Container(width: 5, height: 5, decoration: BoxDecoration(color: selected ? _green : _muted, shape: BoxShape.circle)),
+            Container(
+                width: 5,
+                height: 5,
+                decoration: BoxDecoration(
+                    color: selected ? _green : _muted, shape: BoxShape.circle)),
           ],
         ),
       ),
@@ -290,9 +317,16 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   Widget _buildTabs() {
-    const tabs = [('🍴', 'Meals'), ('📊', 'Nutrition'), ('🌿', 'From Pantry'), ('⚡', 'Assist')];
+    const tabs = [
+      ('🍴', 'Meals'),
+      ('📊', 'Nutrition'),
+      ('🌿', 'From Pantry'),
+      ('⚡', 'Assist')
+    ];
     return Container(
-      decoration: const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: _border))),
+      decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(bottom: BorderSide(color: _border))),
       child: Row(
         children: [
           for (var i = 0; i < tabs.length; i++)
@@ -301,8 +335,18 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                 onTap: () => setState(() => _selectedTab = i),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(border: Border(bottom: BorderSide(color: i == _selectedTab ? _orange : Colors.transparent, width: 2))),
-                  child: Text('${tabs[i].$1} ${tabs[i].$2}', textAlign: TextAlign.center, style: TextStyle(fontSize: 10.5, color: i == _selectedTab ? _orange : _muted)),
+                  decoration: BoxDecoration(
+                      border: Border(
+                          bottom: BorderSide(
+                              color: i == _selectedTab
+                                  ? _orange
+                                  : Colors.transparent,
+                              width: 2))),
+                  child: Text('${tabs[i].$1} ${tabs[i].$2}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontSize: 10.5,
+                          color: i == _selectedTab ? _orange : _muted)),
                 ),
               ),
             ),
@@ -314,52 +358,153 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   Widget _buildDayTitle(String iso, Map<String, dynamic> plan) {
     final date = DateTime.tryParse(iso) ?? DateTime.now();
     final start = DateTime.tryParse(plan['start_date']?.toString() ?? '');
-    final label = start != null && DateUtils.isSameDay(start, date) ? 'Today' : _formatDate(date);
+    final label = start != null && DateUtils.isSameDay(start, date)
+        ? 'Today'
+        : _formatDate(date);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: _text)),
-        Text(_formatDate(date), style: const TextStyle(fontSize: 10.5, color: _muted)),
+        Text(label,
+            style: const TextStyle(
+                fontSize: 17, fontWeight: FontWeight.w800, color: _text)),
+        Text(_formatDate(date),
+            style: const TextStyle(fontSize: 10.5, color: _muted)),
       ],
     );
   }
 
   Widget _buildMealCard(Map<String, dynamic> meal) {
     final type = meal['meal_type']?.toString() ?? 'meal';
-    final savedName = meal['name']?.toString();
-    final recipeCode = meal['source_recipe_code']?.toString();
-    final resolvedRecipeName = recipeCode == null ? null : _recipeNameFromCode(recipeCode);
-    final name = savedName == null || savedName.isEmpty || savedName == 'NA'
-        ? (resolvedRecipeName ?? 'Meal')
-        : savedName;
+    final rawRecipes = meal['recipes'];
+    final recipes = rawRecipes is List
+        ? rawRecipes
+            .whereType<Map>()
+            .map((recipe) => Map<String, dynamic>.from(recipe))
+            .toList()
+        : <Map<String, dynamic>>[meal];
+    final name = recipes
+        .map((recipe) => recipe['name']?.toString() ?? 'Meal')
+        .join(', ');
+    final nutritionLines = <String>[];
+    for (final recipe in recipes) {
+      final rawNutrition = recipe['nutrition'];
+      final label = _mealNutritionLabel(
+        rawNutrition is Map ? rawNutrition : const <String, dynamic>{},
+      );
+      if (label == null) continue;
+      nutritionLines.add(
+        recipes.length > 1 ? '${recipe['name']}: $label' : label,
+      );
+    }
     final description = meal['description']?.toString();
-    final icon = type == 'breakfast' ? '🌞' : type == 'lunch' ? '🍲' : type == 'dinner' ? '🌙' : '🍽️';
-    final color = type == 'breakfast' ? _orange : type == 'lunch' ? _green : _blue;
+    final icon = type == 'breakfast'
+        ? '🌞'
+        : type == 'lunch'
+            ? '🍲'
+            : type == 'dinner'
+                ? '🌙'
+                : '🍽️';
+    final color = type == 'breakfast'
+        ? _orange
+        : type == 'lunch'
+            ? _green
+            : _blue;
     final status = meal['status']?.toString() ?? 'planned';
-    final statusLabel = status == 'cooked' ? '✓ Cooked' : status == 'skipped' ? 'Skipped' : 'Planned';
+    final statusLabel = status == 'cooked'
+        ? '✓ Cooked'
+        : status == 'skipped'
+            ? 'Skipped'
+            : 'Planned';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), boxShadow: const [BoxShadow(color: Color(0x10000000), blurRadius: 10, offset: Offset(0, 4))]),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: const [
+            BoxShadow(
+                color: Color(0x10000000), blurRadius: 10, offset: Offset(0, 4))
+          ]),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 11),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Text('$icon ${type.toUpperCase()}', style: TextStyle(fontSize: 10, letterSpacing: 1.1, color: color, fontWeight: FontWeight.w600)),
+            Text('$icon ${type.toUpperCase()}',
+                style: TextStyle(
+                    fontSize: 10,
+                    letterSpacing: 1.1,
+                    color: color,
+                    fontWeight: FontWeight.w600)),
             const Spacer(),
-            _pill(statusLabel, status == 'cooked' ? const Color(0xFFE5F4ED) : const Color(0xFFFFF1D9), status == 'cooked' ? const Color(0xFF2D9070) : const Color(0xFFB96A14)),
+            _pill(
+                statusLabel,
+                status == 'cooked'
+                    ? const Color(0xFFE5F4ED)
+                    : const Color(0xFFFFF1D9),
+                status == 'cooked'
+                    ? const Color(0xFF2D9070)
+                    : const Color(0xFFB96A14)),
           ]),
           const Divider(height: 18, color: _border),
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Container(width: 46, height: 46, decoration: BoxDecoration(color: color.withOpacity(.18), borderRadius: BorderRadius.circular(14)), child: Center(child: Text(icon, style: const TextStyle(fontSize: 24)))),
+            Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                    color: color.withOpacity(.18),
+                    borderRadius: BorderRadius.circular(14)),
+                child: Center(
+                    child: Text(icon, style: const TextStyle(fontSize: 24)))),
             const SizedBox(width: 11),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _text)),
-              if (description != null && description.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(description, style: const TextStyle(fontSize: 10.5, color: _muted, height: 1.3)),
-              ],
-            ])),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text(name,
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: _text)),
+                  if (nutritionLines.isNotEmpty) ...[
+                    const SizedBox(height: 7),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 9, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF2EAFE),
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (var index = 0;
+                              index < nutritionLines.length;
+                              index++)
+                            Padding(
+                              padding: EdgeInsets.only(
+                                bottom:
+                                    index == nutritionLines.length - 1 ? 0 : 3,
+                              ),
+                              child: Text(
+                                nutritionLines[index],
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF7041A6),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (description != null && description.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(description,
+                        style: const TextStyle(
+                            fontSize: 10.5, color: _muted, height: 1.3)),
+                  ],
+                ])),
           ]),
         ]),
       ),
@@ -367,23 +512,123 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   }
 
   Widget _buildNutritionSummary(List<Map<String, dynamic>> meals) {
-    final hasNutrition = meals.any((meal) {
-      final nutrition = meal['nutrition'];
-      return nutrition is Map && nutrition.isNotEmpty;
-    });
-    return _simpleCard(
-      '📊 Today\'s nutrition summary',
-      hasNutrition
-          ? 'Nutrition data is available for this day.'
-          : 'Nutrition values are not populated by the current meal-planning API yet.',
+    const nutritionKeys = {
+      'energy': 'unit_serving_energy_kcal',
+      'protein': 'unit_serving_protein_g',
+      'carbs': 'unit_serving_carb_g',
+    };
+    final totals = {for (final key in nutritionKeys.keys) key: 0.0};
+    final availableCounts = {for (final key in nutritionKeys.keys) key: 0};
+    var recipeCount = 0;
+    var recipesWithNutrition = 0;
+
+    for (final meal in meals) {
+      final rawRecipes = meal['recipes'];
+      final recipes =
+          rawRecipes is List ? rawRecipes.whereType<Map>() : <Map>[meal];
+      for (final recipe in recipes) {
+        recipeCount++;
+        final rawNutrition = recipe['nutrition'];
+        if (rawNutrition is! Map) continue;
+        var hasAnyValue = false;
+        for (final entry in nutritionKeys.entries) {
+          final value =
+              double.tryParse(rawNutrition[entry.value]?.toString() ?? '');
+          if (value == null) continue;
+          totals[entry.key] = totals[entry.key]! + value;
+          availableCounts[entry.key] = availableCounts[entry.key]! + 1;
+          hasAnyValue = true;
+        }
+        if (hasAnyValue) recipesWithNutrition++;
+      }
+    }
+
+    String totalFor(String key, {int decimalPlaces = 1}) {
+      if (availableCounts[key] == 0) return '—';
+      return _formatNutritionNumber(totals[key], decimalPlaces: decimalPlaces);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x10000000), blurRadius: 10, offset: Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '📊 Daily nutrition summary',
+            style: TextStyle(
+                fontSize: 14, fontWeight: FontWeight.w700, color: _text),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            recipesWithNutrition == 0
+                ? 'Nutrition data is not available for this day yet.'
+                : 'Per serving, summed across recipes · $recipesWithNutrition of $recipeCount recipes',
+            style: const TextStyle(fontSize: 10.5, color: _muted),
+          ),
+          const SizedBox(height: 13),
+          Row(
+            children: [
+              Expanded(
+                  child: _nutritionTotalTile(
+                      'Energy', totalFor('energy', decimalPlaces: 0), 'kcal')),
+              const SizedBox(width: 8),
+              Expanded(
+                  child:
+                      _nutritionTotalTile('Protein', totalFor('protein'), 'g')),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: _nutritionTotalTile('Carbs', totalFor('carbs'), 'g')),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildNutritionTab(List<Map<String, dynamic>> meals) => _buildNutritionSummary(meals);
+  Widget _nutritionTotalTile(String label, String value, String unit) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4EBFF),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 10, color: _muted)),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '$value $unit',
+              maxLines: 1,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF7541B8)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNutritionTab(List<Map<String, dynamic>> meals) =>
+      _buildNutritionSummary(meals);
 
   Widget _buildPantryTab(String? planId, String selectedDate) {
     if (planId == null || planId.isEmpty) {
-      return _simpleCard('🌿 Ingredients for the day', 'No meal plan is available.');
+      return _simpleCard(
+          '🌿 Ingredients for the day', 'No meal plan is available.');
     }
     final future = _ingredientsByPlan.putIfAbsent(
       planId,
@@ -406,17 +651,20 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         }
         final rawMeals = snapshot.data?['meals'];
         final dayMeals = rawMeals is List
-            ? rawMeals.whereType<Map>().where(
-                (meal) => meal['meal_date']?.toString() == selectedDate,
-              ).toList()
+            ? rawMeals
+                .whereType<Map>()
+                .where(
+                  (meal) => meal['meal_date']?.toString() == selectedDate,
+                )
+                .toList()
             : const [];
         final items = <Map<String, dynamic>>[];
         for (final meal in dayMeals) {
           final ingredients = meal['ingredients'];
           if (ingredients is List) {
             items.addAll(ingredients.whereType<Map>().map(
-              (item) => Map<String, dynamic>.from(item),
-            ));
+                  (item) => Map<String, dynamic>.from(item),
+                ));
           }
         }
         if (items.isEmpty) {
@@ -426,25 +674,42 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(15),
               boxShadow: const [
-                BoxShadow(color: Color(0x10000000), blurRadius: 10, offset: Offset(0, 4)),
+                BoxShadow(
+                    color: Color(0x10000000),
+                    blurRadius: 10,
+                    offset: Offset(0, 4)),
               ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('🌿 Ingredients for the day', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _text)),
+                const Text('🌿 Ingredients for the day',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: _text)),
                 const SizedBox(height: 7),
-                const Text('No ingredients are saved for this day yet. Create the ingredient list for this meal plan to view them here.', style: TextStyle(fontSize: 12, color: _muted)),
+                const Text(
+                    'No ingredients are saved for this day yet. Create the ingredient list for this meal plan to view them here.',
+                    style: TextStyle(fontSize: 12, color: _muted)),
                 const SizedBox(height: 14),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    onPressed: _generatingPantry ? null : () => _generatePantryList(planId),
+                    onPressed: _generatingPantry
+                        ? null
+                        : () => _generatePantryList(planId),
                     icon: _generatingPantry
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2))
                         : const Icon(Icons.auto_awesome, size: 17),
-                    label: Text(_generatingPantry ? 'Creating list…' : 'Create ingredient list'),
-                    style: FilledButton.styleFrom(backgroundColor: _green, foregroundColor: Colors.white),
+                    label: Text(_generatingPantry
+                        ? 'Creating list…'
+                        : 'Create ingredient list'),
+                    style: FilledButton.styleFrom(
+                        backgroundColor: _green, foregroundColor: Colors.white),
                   ),
                 ),
               ],
@@ -461,9 +726,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           if (previous == null) {
             uniqueItems[key] = item;
           } else {
-            final oldAmount = double.tryParse(previous['amount']?.toString() ?? '');
+            final oldAmount =
+                double.tryParse(previous['amount']?.toString() ?? '');
             final newAmount = double.tryParse(item['amount']?.toString() ?? '');
-            if (oldAmount != null && newAmount != null &&
+            if (oldAmount != null &&
+                newAmount != null &&
                 unit == (item['unit']?.toString().trim() ?? '')) {
               uniqueItems[key] = {
                 ...previous,
@@ -478,15 +745,22 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(15),
             boxShadow: const [
-              BoxShadow(color: Color(0x10000000), blurRadius: 10, offset: Offset(0, 4)),
+              BoxShadow(
+                  color: Color(0x10000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 4)),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Ingredients for the day', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: _text)),
+              const Text('Ingredients for the day',
+                  style: TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w700, color: _text)),
               const SizedBox(height: 4),
-              Text('${uniqueItems.length} ingredients across ${dayMeals.length} meals', style: const TextStyle(fontSize: 11, color: _muted)),
+              Text(
+                  '${uniqueItems.length} ingredients across ${dayMeals.length} meals',
+                  style: const TextStyle(fontSize: 11, color: _muted)),
               const SizedBox(height: 12),
               for (final item in uniqueItems.values) ...[
                 const Divider(height: 1, color: _border),
@@ -496,8 +770,16 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     children: [
                       const Icon(Icons.circle, size: 7, color: _green),
                       const SizedBox(width: 10),
-                      Expanded(child: Text(item['food_name']?.toString() ?? 'Ingredient', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: _text))),
-                      Text(_formatIngredientAmount(item['amount'], item['unit']), style: const TextStyle(fontSize: 12, color: _muted)),
+                      Expanded(
+                          child: Text(
+                              item['food_name']?.toString() ?? 'Ingredient',
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: _text))),
+                      Text(
+                          _formatIngredientAmount(item['amount'], item['unit']),
+                          style: const TextStyle(fontSize: 12, color: _muted)),
                     ],
                   ),
                 ),
@@ -525,30 +807,79 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     }
   }
 
+  String? _mealNutritionLabel(Map<dynamic, dynamic> nutrition) {
+    final values = <String>[];
+    final energy = _formatNutritionNumber(
+      nutrition['unit_serving_energy_kcal'],
+      decimalPlaces: 0,
+    );
+    final protein = _formatNutritionNumber(nutrition['unit_serving_protein_g']);
+    final carbs = _formatNutritionNumber(nutrition['unit_serving_carb_g']);
+
+    if (energy.isNotEmpty) values.add('$energy kcal');
+    if (protein.isNotEmpty) values.add('$protein g protein');
+    if (carbs.isNotEmpty) values.add('$carbs g carbs');
+    if (values.isEmpty) return null;
+    return 'Per serving  •  ${values.join('  •  ')}';
+  }
+
+  String _formatNutritionNumber(dynamic value, {int decimalPlaces = 1}) {
+    final number = double.tryParse(value?.toString() ?? '');
+    if (number == null) return '';
+    final formatted = number.toStringAsFixed(decimalPlaces);
+    if (decimalPlaces > 0 && formatted.endsWith('.0')) {
+      return formatted.substring(0, formatted.length - 2);
+    }
+    return formatted;
+  }
+
   String _formatIngredientAmount(dynamic amount, dynamic unit) {
     final amountText = amount?.toString() ?? '';
     final unitText = unit?.toString() ?? '';
-    return [amountText, unitText].where((part) => part.trim().isNotEmpty).join(' ');
+    return [amountText, unitText]
+        .where((part) => part.trim().isNotEmpty)
+        .join(' ');
   }
 
-  Widget _buildAssistTab() => _simpleCard('⚡ Annora Assist', 'Meal swaps and AI assistance are not part of the current meal-planning API contract.');
-
   Widget _simpleCard(String title, String body) {
-    return Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _text)), const SizedBox(height: 8), Text(body, style: const TextStyle(fontSize: 11, color: _muted, height: 1.4))]));
+    return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(15)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w700, color: _text)),
+          const SizedBox(height: 8),
+          Text(body,
+              style: const TextStyle(fontSize: 11, color: _muted, height: 1.4))
+        ]));
   }
 
   Widget _buildBottomNav() {
-    const items = [('⌂', 'Home'), ('▦', 'Plan'), ('🛒', 'Shop'), ('📦', 'Pantry'), ('♟', 'Profile')];
+    const items = [
+      ('⌂', 'Home'),
+      ('▦', 'Plan'),
+      ('🛒', 'Shop'),
+      ('📦', 'Pantry'),
+      ('♟', 'Profile')
+    ];
     return Container(
-      decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: _border))),
+      decoration: const BoxDecoration(
+          color: Colors.white, border: Border(top: BorderSide(color: _border))),
       padding: const EdgeInsets.only(top: 7, bottom: 6),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-        for (var i = 0; i < items.length; i++) _NavItem(icon: items[i].$1, label: items[i].$2, selected: i == 1),
+        for (var i = 0; i < items.length; i++)
+          _NavItem(icon: items[i].$1, label: items[i].$2, selected: i == 1),
       ]),
     );
   }
 
-  Widget _pill(String text, Color background, Color foreground) => Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(10)), child: Text(text, style: TextStyle(fontSize: 8.5, color: foreground)));
+  Widget _pill(String text, Color background, Color foreground) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+          color: background, borderRadius: BorderRadius.circular(10)),
+      child: Text(text, style: TextStyle(fontSize: 8.5, color: foreground)));
 
   String _formatDate(DateTime date) => '${date.day}/${date.month}';
 }
@@ -557,9 +888,26 @@ class _NavItem extends StatelessWidget {
   final String icon;
   final String label;
   final bool selected;
-  const _NavItem({required this.icon, required this.label, required this.selected});
+  const _NavItem(
+      {required this.icon, required this.label, required this.selected});
   @override
-  Widget build(BuildContext context) => SizedBox(width: 52, child: Column(mainAxisSize: MainAxisSize.min, children: [Text(icon, style: TextStyle(fontSize: 18, color: selected ? const Color(0xFFF47A2A) : const Color(0xFF6E6259))), const SizedBox(height: 2), Text(label, style: TextStyle(fontSize: 8.5, color: selected ? const Color(0xFFF47A2A) : const Color(0xFF8A8179)))]));
+  Widget build(BuildContext context) => SizedBox(
+      width: 52,
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text(icon,
+            style: TextStyle(
+                fontSize: 18,
+                color: selected
+                    ? const Color(0xFFF47A2A)
+                    : const Color(0xFF6E6259))),
+        const SizedBox(height: 2),
+        Text(label,
+            style: TextStyle(
+                fontSize: 8.5,
+                color: selected
+                    ? const Color(0xFFF47A2A)
+                    : const Color(0xFF8A8179)))
+      ]));
 }
 
 class _ErrorState extends StatelessWidget {
@@ -584,7 +932,9 @@ class _ErrorState extends StatelessWidget {
             children: [
               const Text('🍽️', style: TextStyle(fontSize: 38)),
               const SizedBox(height: 10),
-              Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF6E6259))),
+              Text(message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Color(0xFF6E6259))),
               const SizedBox(height: 12),
               FilledButton(onPressed: onAction, child: Text(actionLabel)),
               TextButton(onPressed: onRetry, child: const Text('Retry')),
