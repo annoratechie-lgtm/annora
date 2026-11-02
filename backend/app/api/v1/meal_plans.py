@@ -176,7 +176,7 @@ async def generate_meal_plan(
         startdate='2026-11-02'
         next6days = [start_date + timedelta(days=i) for i in range(1, 7)]
         plan = {'2026-10-24': {'breakfast': 'BFP153', 'lunch': ['BFP185', 'ASC113'], 'dinner': ['ASC226', 'ASC113']}, '2026-10-25': {'breakfast': 'BFP114', 'lunch': ['ASC138'], 'dinner': ['ASC069']}, '2026-10-26': {'breakfast': 'BFP116', 'lunch': ['BFP205', 'ASC118'], 'dinner': ['ASC167', 'BFP552']}, '2026-10-27': {'breakfast': 'ASC106', 'lunch': ['BFP152'], 'dinner': ['ASC142']}, '2026-10-28': {'breakfast': 'BFP570', 'lunch': ['BFP257', 'ASC150'], 'dinner': ['ASC195', 'ASC150']}, '2026-10-29': {'breakfast': 'OSR100', 'lunch': ['ASC134'], 'dinner': ['ASC138']}, '2026-10-30': {'breakfast': 'ASC115', 'lunch': ['ASC214', 'BFP041'], 'dinner': ['ASC215', 'ASC123']}}
-        plan = {next6days[i].strftime("%Y-%m-%d"): plan[date_str] for i, date_str in enumerate(plan.keys())}
+        plan = {next6days[i].strftime("%Y-%m-%d"): date_str[i] for i, date_str in enumerate(plan.values())}
         meal_id = await save_meal_plan(user_id, start_date, plan)
     except (RuntimeError, MealPlanRepositoryError) as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
