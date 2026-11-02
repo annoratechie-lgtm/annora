@@ -174,6 +174,7 @@ async def generate_meal_plan(
     try:
         # plan = await run_llm_meal_plan(context, start_date)
         today = date.today()
+        today = datetime.strptime("2026-11-02", "%Y-%m-%d").date()
         next7days = [(today + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
         plan = {'2026-10-24': {'breakfast': 'BFP153', 'lunch': ['BFP185', 'ASC113'], 'dinner': ['ASC226', 'ASC113']}, '2026-10-25': {'breakfast': 'BFP114', 'lunch': ['ASC138'], 'dinner': ['ASC069']}, '2026-10-26': {'breakfast': 'BFP116', 'lunch': ['BFP205', 'ASC118'], 'dinner': ['ASC167', 'BFP552']}, '2026-10-27': {'breakfast': 'ASC106', 'lunch': ['BFP152'], 'dinner': ['ASC142']}, '2026-10-28': {'breakfast': 'BFP570', 'lunch': ['BFP257', 'ASC150'], 'dinner': ['ASC195', 'ASC150']}, '2026-10-29': {'breakfast': 'OSR100', 'lunch': ['ASC134'], 'dinner': ['ASC138']}, '2026-10-30': {'breakfast': 'ASC115', 'lunch': ['ASC214', 'BFP041'], 'dinner': ['ASC215', 'ASC123']}}
         plan = {next7days[i]: day_plan for i, day_plan in enumerate(plan.values())}
