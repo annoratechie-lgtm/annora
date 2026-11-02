@@ -30,10 +30,10 @@ printf '%s\n' \
   "ANNORA_BACKEND_URL=$ANNORA_BACKEND_URL" \
   > .env
 
-echo "Installing dependencies..."
-flutter pub get
-
 echo "Building Annora Web..."
 flutter build web --release
+
+echo "Copying environment file to web root..."
+cp .env build/web/.env
 
 echo "Annora Web build completed!"
