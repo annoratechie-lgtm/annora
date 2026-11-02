@@ -41,6 +41,7 @@ flutter build web --release
 echo "Copying .env to published assets..."
 mkdir -p build/web/assets
 cp .env build/web/assets/.env
+cp .env build/web/assets/env-check.txt
 
 echo "Verifying final deployment directory..."
 test -s build/web/assets/.env
