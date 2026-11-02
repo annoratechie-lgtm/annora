@@ -35,17 +35,6 @@ flutter build web --release
 
 echo "Copying environment file to web root..."
 mkdir -p build/web/assets
-echo "Checking Flutter environment asset..."
-
-if [ ! -f build/web/assets/.env ]; then
-  echo "ERROR: build/web/assets/.env was not generated!"
-  echo "Checking build output:"
-  ls -la build/web/assets/ || true
-  exit 1
-fi
-
-echo "SUCCESS: .env exists in Flutter web assets."
-echo "File size:"
-wc -c < build/web/assets/.env
+cp annora.env build/web/assets/annora.env
 
 echo "Annora Web build completed!"
