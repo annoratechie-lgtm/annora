@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -16,25 +15,32 @@ export PATH="$FLUTTER_HOME/bin:$PATH"
 flutter --version
 flutter config --enable-web
 
-echo "Checking deployment environment variables..."
+echo "Checking environment variables..."
 
 : "${SUPABASE_URL:?Missing SUPABASE_URL}"
 : "${SUPABASE_PUBLISHABLE_KEY:?Missing SUPABASE_PUBLISHABLE_KEY}"
 : "${ANNORA_BACKEND_URL:?Missing ANNORA_BACKEND_URL}"
 
-echo "Creating frontend .env..."
+echo "Creating assets/env before Flutter build..."
 
+mkdir -p assets
 printf '%s\n' \
   "SUPABASE_URL=$SUPABASE_URL" \
   "SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY" \
   "ANNORA_BACKEND_URL=$ANNORA_BACKEND_URL" \
-  > .env
+  > assets/env
 
-echo "Building Annora Web..."
+test -s assets/env
+
+echo "Installing dependencies..."
+flutter pub get
+
+echo "Building Flutter Web..."
 flutter build web --release
 
-echo "Copying environment file to web root..."
-mkdir -p build/web/assets
-cp .env build/web/assets/.env
+echo "Verifying final deployment directory..."
+test -s build/web/index.html
+test -s build/web/assets/assets/env
+ls -la build/web/index.html build/web/assets/assets/env
 
-echo "Annora Web build completed!"
+echo "Build completed successfully."
