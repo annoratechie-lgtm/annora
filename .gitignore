@@ -5,6 +5,7 @@
 **/.env
 **/.env.*
 !**/.env.example
+frontend/assets/env
 
 # Python
 __pycache__/
