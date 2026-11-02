@@ -34,6 +34,7 @@ echo "Building Annora Web..."
 flutter build web --release
 
 echo "Copying environment file to web root..."
-cp .env build/web/.env
+mkdir -p build/web/assets
+cp .env build/web/assets/.env
 
 echo "Annora Web build completed!"
