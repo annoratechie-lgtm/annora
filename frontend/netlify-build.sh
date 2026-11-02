@@ -35,6 +35,14 @@ flutter build web --release
 
 echo "Copying environment file to web root..."
 mkdir -p build/web/assets
-cp annora.env build/web/assets/annora.env
+cp annora.env build/web/assets/.env
+echo "Verifying Flutter environment asset..."
+
+if [ ! -f build/web/assets/.env ]; then
+  echo "ERROR: Flutter did not package .env"
+  exit 1
+fi
+
+echo "Environment asset found."
 
 echo "Annora Web build completed!"
