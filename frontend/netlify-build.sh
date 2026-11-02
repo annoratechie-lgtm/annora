@@ -31,6 +31,7 @@ printf '%s\n' \
   > .env
 
 echo "Building Annora Web..."
+flutter pub get
 flutter build web --release
 
 echo "Copying environment file to web root..."
