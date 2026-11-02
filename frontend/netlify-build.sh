@@ -30,20 +30,34 @@ printf '%s\n' \
   "ANNORA_BACKEND_URL=$ANNORA_BACKEND_URL" \
   > .env
 
-echo "Building Annora Web..."
+echo "Checking source .env..."
+test -s .env
+wc -c .env
+
+echo "Installing dependencies..."
 flutter pub get
+
+echo "Building Annora Web..."
 flutter build web --release
 
-echo "Copying environment file to web root..."
+echo "Copying .env into published Flutter assets..."
+
 mkdir -p build/web/assets
 cp .env build/web/assets/.env
-echo "Verifying Flutter environment asset..."
 
-if [ ! -f build/web/assets/.env ]; then
-  echo "ERROR: Flutter did not package .env"
-  exit 1
-fi
+echo "Verifying published output..."
 
-echo "Environment asset found."
+test -s build/web/assets/.env
 
+echo "Published environment file:"
+ls -la build/web/assets/.env
+wc -c build/web/assets/.env
+
+echo "Checking required variable names..."
+
+grep -q '^SUPABASE_URL=' build/web/assets/.env
+grep -q '^SUPABASE_PUBLISHABLE_KEY=' build/web/assets/.env
+grep -q '^ANNORA_BACKEND_URL=' build/web/assets/.env
+
+echo "SUCCESS: All environment variables are present."
 echo "Annora Web build completed!"
