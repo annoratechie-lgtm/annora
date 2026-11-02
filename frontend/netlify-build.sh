@@ -21,15 +21,16 @@ echo "Checking environment variables..."
 : "${SUPABASE_PUBLISHABLE_KEY:?Missing SUPABASE_PUBLISHABLE_KEY}"
 : "${ANNORA_BACKEND_URL:?Missing ANNORA_BACKEND_URL}"
 
-echo "Creating .env before Flutter build..."
+echo "Creating assets/env before Flutter build..."
 
+mkdir -p assets
 printf '%s\n' \
   "SUPABASE_URL=$SUPABASE_URL" \
   "SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY" \
   "ANNORA_BACKEND_URL=$ANNORA_BACKEND_URL" \
-  > .env
+  > assets/env
 
-test -s .env
+test -s assets/env
 
 echo "Installing dependencies..."
 flutter pub get
@@ -37,13 +38,9 @@ flutter pub get
 echo "Building Flutter Web..."
 flutter build web --release
 
-echo "Copying .env to published assets..."
-mkdir -p build/web/assets
-cp .env build/web/assets/env
-
 echo "Verifying final deployment directory..."
 test -s build/web/index.html
-test -s build/web/assets/env
-ls -la build/web/index.html build/web/assets/env
+test -s build/web/assets/assets/env
+ls -la build/web/index.html build/web/assets/assets/env
 
 echo "Build completed successfully."
