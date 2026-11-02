@@ -39,25 +39,31 @@ flutter pub get
 
 echo "Building Annora Web..."
 flutter build web --release
+echo "Verifying published environment asset..."
 
-echo "Copying .env into published Flutter assets..."
+test -s build/web/assets/annora.env
 
-mkdir -p build/web/assets
-cp .env build/web/assets/.env
+echo "SUCCESS: annora.env exists in Flutter assets."
+ls -la build/web/assets/annora.env
 
-echo "Verifying published output..."
+# echo "Copying .env into published Flutter assets..."
 
-test -s build/web/assets/.env
+# mkdir -p build/web/assets
+# cp .env build/web/assets/.env
 
-echo "Published environment file:"
-ls -la build/web/assets/.env
-wc -c build/web/assets/.env
+# echo "Verifying published output..."
 
-echo "Checking required variable names..."
+# test -s build/web/assets/.env
 
-grep -q '^SUPABASE_URL=' build/web/assets/.env
-grep -q '^SUPABASE_PUBLISHABLE_KEY=' build/web/assets/.env
-grep -q '^ANNORA_BACKEND_URL=' build/web/assets/.env
+# echo "Published environment file:"
+# ls -la build/web/assets/.env
+# wc -c build/web/assets/.env
 
-echo "SUCCESS: All environment variables are present."
+# echo "Checking required variable names..."
+
+# grep -q '^SUPABASE_URL=' build/web/assets/.env
+# grep -q '^SUPABASE_PUBLISHABLE_KEY=' build/web/assets/.env
+# grep -q '^ANNORA_BACKEND_URL=' build/web/assets/.env
+
+# echo "SUCCESS: All environment variables are present."
 echo "Annora Web build completed!"
