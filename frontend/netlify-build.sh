@@ -36,7 +36,7 @@ flutter build web --release
 
 echo "Copying environment file to web root..."
 mkdir -p build/web/assets
-cp annora.env build/web/assets/.env
+cp .env build/web/assets/.env
 echo "Verifying Flutter environment asset..."
 
 if [ ! -f build/web/assets/.env ]; then
