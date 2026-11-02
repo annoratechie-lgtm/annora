@@ -39,11 +39,11 @@ flutter build web --release
 
 echo "Copying .env to published assets..."
 mkdir -p build/web/assets
-cp .env build/web/assets/.env
+cp .env build/web/assets/env
 
 echo "Verifying final deployment directory..."
 test -s build/web/index.html
-test -s build/web/assets/.env
-ls -la build/web/index.html build/web/assets/.env
+test -s build/web/assets/env
+ls -la build/web/index.html build/web/assets/env
 
 echo "Build completed successfully."
