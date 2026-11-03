@@ -99,7 +99,10 @@ class _PostOnboardingShellState extends State<PostOnboardingShell> {
   Widget build(BuildContext context) => IndexedStack(
         index: _selectedScreen,
         children: [
-          HomeScreen(onOpenMealPlan: () => setState(() => _selectedScreen = 1)),
+          HomeScreen(
+            mealPlanApi: widget.api,
+            onOpenMealPlan: () => setState(() => _selectedScreen = 1),
+          ),
           MealPlanScreen(
             api: widget.api,
             assistantApi: widget.assistantApi,

@@ -41,6 +41,17 @@ class OnboardingRepository {
     return OnboardingProfile.fromMap(row);
   }
 
+  Future<List<String>> fetchDietaryExclusions() async {
+    final rows = await _client
+        .from('dietary_exclusions')
+        .select('ingredient_name')
+        .eq('user_id', _userId)
+        .order('ingredient_name');
+    return rows
+        .map((row) => row['ingredient_name'] as String)
+        .toList();
+  }
+
   /// Saves the household information collected in onboarding step 1.
   /// Dietary goals are collected in the following step and saved by
   /// completeOnboarding().
