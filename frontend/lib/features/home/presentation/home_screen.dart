@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 /// They will be replaced by the generated 7-day plan and pantry/grocery data
 /// once those services are available.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final VoidCallback? onOpenMealPlan;
+
+  const HomeScreen({super.key, this.onOpenMealPlan});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -235,7 +237,14 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           for (var i = 0; i < items.length; i++)
             GestureDetector(
-              onTap: () => setState(() => _selectedNav = i),
+              onTap: () {
+                if (i == 1 && widget.onOpenMealPlan != null) {
+                  widget.onOpenMealPlan!();
+                  return;
+                }
+                if (i == 0) return;
+                setState(() => _selectedNav = i);
+              },
               child: _NavItem(
                 icon: items[i].$1,
                 label: items[i].$2,

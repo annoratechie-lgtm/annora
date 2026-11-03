@@ -8,6 +8,7 @@ import 'features/assistant/data/assistant_api.dart';
 import 'features/meal_plan/data/meal_plan_api.dart';
 import 'features/meal_plan/data/meal_plan_config.dart';
 import 'features/meal_plan/presentation/meal_plan_screen.dart';
+import 'features/home/presentation/home_screen.dart';
 import 'features/onboarding/data/onboarding_repository.dart';
 import 'features/onboarding/presentation/household_basics_screen.dart';
 import 'features/onboarding/presentation/welcome_screen.dart';
@@ -67,7 +68,7 @@ class AnnoraApp extends StatelessWidget {
 
               final profile = profileSnapshot.data;
               return profile?.onboardingCompleted == true
-                  ? MealPlanScreen(api: mealPlanApi, assistantApi: assistantApi)
+                  ? PostOnboardingShell(api: mealPlanApi, assistantApi: assistantApi)
                   : const HouseholdBasicsScreen();
             },
           );
@@ -75,4 +76,35 @@ class AnnoraApp extends StatelessWidget {
       ),
     );
   }
+}
+
+class PostOnboardingShell extends StatefulWidget {
+  final MealPlanApi api;
+  final AssistantApi assistantApi;
+
+  const PostOnboardingShell({
+    super.key,
+    required this.api,
+    required this.assistantApi,
+  });
+
+  @override
+  State<PostOnboardingShell> createState() => _PostOnboardingShellState();
+}
+
+class _PostOnboardingShellState extends State<PostOnboardingShell> {
+  int _selectedScreen = 0;
+
+  @override
+  Widget build(BuildContext context) => IndexedStack(
+        index: _selectedScreen,
+        children: [
+          HomeScreen(onOpenMealPlan: () => setState(() => _selectedScreen = 1)),
+          MealPlanScreen(
+            api: widget.api,
+            assistantApi: widget.assistantApi,
+            onOpenHome: () => setState(() => _selectedScreen = 0),
+          ),
+        ],
+      );
 }

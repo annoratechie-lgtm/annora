@@ -7,11 +7,13 @@ import '../data/meal_plan_api.dart';
 class MealPlanScreen extends StatefulWidget {
   final MealPlanApi api;
   final AssistantApi assistantApi;
+  final VoidCallback? onOpenHome;
 
   const MealPlanScreen({
     super.key,
     required this.api,
     required this.assistantApi,
+    this.onOpenHome,
   });
 
   @override
@@ -870,7 +872,12 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       padding: const EdgeInsets.only(top: 7, bottom: 6),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
         for (var i = 0; i < items.length; i++)
-          _NavItem(icon: items[i].$1, label: items[i].$2, selected: i == 1),
+          GestureDetector(
+            onTap: () {
+              if (i == 0) widget.onOpenHome?.call();
+            },
+            child: _NavItem(icon: items[i].$1, label: items[i].$2, selected: i == 1),
+          ),
       ]),
     );
   }
