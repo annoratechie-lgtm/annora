@@ -45,11 +45,23 @@ class _HomeScreenState extends State<HomeScreen> {
     final dateKey = '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
     var meals = <Map<String, dynamic>>[];
     var hasActivePlan = false;
+    var planCoversToday = false;
     String? planError;
     if (widget.mealPlanApi != null) {
       try {
         final plan = await widget.mealPlanApi!.fetchMealPlan();
         hasActivePlan = true;
+        final planInfo = plan['meal_plan'];
+        if (planInfo is Map) {
+          final start = DateTime.tryParse(planInfo['start_date']?.toString() ?? '');
+          final end = DateTime.tryParse(planInfo['end_date']?.toString() ?? '');
+          if (start != null && end != null) {
+            final todayDate = DateTime(today.year, today.month, today.day);
+            final startDate = DateTime(start.year, start.month, start.day);
+            final endDate = DateTime(end.year, end.month, end.day);
+            planCoversToday = !todayDate.isBefore(startDate) && !todayDate.isAfter(endDate);
+          }
+        }
         final rows = plan['meals'];
         if (rows is List) {
           meals = rows.whereType<Map>()
@@ -63,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
         planError = error.toString();
       }
     }
-    return _HomeData(profile, exclusions, meals, hasActivePlan, planError);
+    return _HomeData(profile, exclusions, meals, hasActivePlan, planCoversToday, planError);
   }
 
   Future<void> _generateMealPlan() async {
@@ -122,6 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             _buildMealsCard(
                               data?.meals ?? const [],
                               hasActivePlan: data?.hasActivePlan ?? false,
+                              planCoversToday: data?.planCoversToday ?? false,
                               planError: data?.planError,
                             ),
                           ],
@@ -195,6 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildMealsCard(
     List<Map<String, dynamic>> meals, {
     required bool hasActivePlan,
+    required bool planCoversToday,
     String? planError,
   }) {
     final grouped = <String, List<String>>{};
@@ -217,13 +231,17 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              planError ?? (hasActivePlan ? 'No meals planned for today.' : 'No active meal plan yet.'),
+              planError ?? (hasActivePlan && planCoversToday
+                  ? 'No meals planned for today.'
+                  : hasActivePlan
+                      ? "Today's date isn't covered by your active plan."
+                      : 'No active meal plan yet.'),
               style: const TextStyle(fontSize: 13, color: _muted),
             ),
           ),
           if (planError != null)
             TextButton(onPressed: () => setState(() => _homeData = _loadHomeData()), child: const Text('Retry'))
-          else if (hasActivePlan)
+          else if (hasActivePlan && planCoversToday)
             TextButton(onPressed: widget.onOpenMealPlan, child: const Text('View plan'))
           else
             FilledButton.tonalIcon(
@@ -231,7 +249,11 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: _generatingMealPlan
                   ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.auto_awesome, size: 16),
-              label: Text(_generatingMealPlan ? 'Creating' : 'Generate plan'),
+              label: Text(_generatingMealPlan
+                  ? 'Creating'
+                  : hasActivePlan
+                      ? 'Generate new plan'
+                      : 'Generate plan'),
             ),
         ]),
       );
@@ -293,9 +315,10 @@ class _HomeData {
   final List<String> exclusions;
   final List<Map<String, dynamic>> meals;
   final bool hasActivePlan;
+  final bool planCoversToday;
   final String? planError;
 
-  const _HomeData(this.profile, this.exclusions, this.meals, this.hasActivePlan, this.planError);
+  const _HomeData(this.profile, this.exclusions, this.meals, this.hasActivePlan, this.planCoversToday, this.planError);
 }
 
 class _ProfileChip extends StatelessWidget {
