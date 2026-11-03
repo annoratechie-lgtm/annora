@@ -106,6 +106,7 @@ class _PostOnboardingShellState extends State<PostOnboardingShell> {
           MealPlanScreen(
             api: widget.api,
             assistantApi: widget.assistantApi,
+            isActive: _selectedScreen == 1,
             onOpenHome: () => setState(() => _selectedScreen = 0),
           ),
         ],
