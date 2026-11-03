@@ -20,6 +20,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedNav = 0;
   late Future<_HomeData> _homeData;
+  bool _generatingMealPlan = false;
 
   static const _background = Color(0xFFFAF7F1);
   static const _text = Color(0xFF171411);
@@ -43,9 +44,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final today = DateTime.now();
     final dateKey = '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
     var meals = <Map<String, dynamic>>[];
+    var hasActivePlan = false;
+    String? planError;
     if (widget.mealPlanApi != null) {
       try {
         final plan = await widget.mealPlanApi!.fetchMealPlan();
+        hasActivePlan = true;
         final rows = plan['meals'];
         if (rows is List) {
           meals = rows.whereType<Map>()
@@ -53,11 +57,34 @@ class _HomeScreenState extends State<HomeScreen> {
               .where((row) => row['meal_date']?.toString() == dateKey)
               .toList();
         }
-      } catch (_) {
-        // A profile without an active meal plan still has a useful home screen.
+      } on MealPlanApiException catch (error) {
+        if (error.statusCode != 404) planError = error.message;
+      } catch (error) {
+        planError = error.toString();
       }
     }
-    return _HomeData(profile, exclusions, meals);
+    return _HomeData(profile, exclusions, meals, hasActivePlan, planError);
+  }
+
+  Future<void> _generateMealPlan() async {
+    final api = widget.mealPlanApi;
+    if (api == null || _generatingMealPlan) return;
+    setState(() => _generatingMealPlan = true);
+    try {
+      await api.generateMealPlan();
+      if (!mounted) return;
+      setState(() => _homeData = _loadHomeData());
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your meal plan is ready.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not generate meal plan: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _generatingMealPlan = false);
+    }
   }
 
   @override
@@ -92,7 +119,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(height: 24),
                             _sectionLabel("TODAY'S MEALS"),
                             const SizedBox(height: 8),
-                            _buildMealsCard(data?.meals ?? const []),
+                            _buildMealsCard(
+                              data?.meals ?? const [],
+                              hasActivePlan: data?.hasActivePlan ?? false,
+                              planError: data?.planError,
+                            ),
                           ],
                         );
                       },
@@ -161,7 +192,11 @@ class _HomeScreenState extends State<HomeScreen> {
   String _prettyLabel(String value) => value.split('_').map((part) => part.isEmpty ? part : '${part[0].toUpperCase()}${part.substring(1)}').join(' ');
   String _formatBudget(double amount) => amount == amount.roundToDouble() ? amount.toStringAsFixed(0) : amount.toStringAsFixed(2);
 
-  Widget _buildMealsCard(List<Map<String, dynamic>> meals) {
+  Widget _buildMealsCard(
+    List<Map<String, dynamic>> meals, {
+    required bool hasActivePlan,
+    String? planError,
+  }) {
     final grouped = <String, List<String>>{};
     for (final meal in meals) {
       final type = meal['meal_type']?.toString().toLowerCase() ?? 'meal';
@@ -178,10 +213,26 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
         child: Row(children: [
-          const Icon(Icons.event_note_outlined, color: _muted),
+          Icon(planError == null ? Icons.event_note_outlined : Icons.cloud_off_outlined, color: _muted),
           const SizedBox(width: 10),
-          const Expanded(child: Text('No meals planned for today yet.', style: TextStyle(fontSize: 13, color: _muted))),
-          TextButton(onPressed: widget.onOpenMealPlan, child: const Text('View plan')),
+          Expanded(
+            child: Text(
+              planError ?? (hasActivePlan ? 'No meals planned for today.' : 'No active meal plan yet.'),
+              style: const TextStyle(fontSize: 13, color: _muted),
+            ),
+          ),
+          if (planError != null)
+            TextButton(onPressed: () => setState(() => _homeData = _loadHomeData()), child: const Text('Retry'))
+          else if (hasActivePlan)
+            TextButton(onPressed: widget.onOpenMealPlan, child: const Text('View plan'))
+          else
+            FilledButton.tonalIcon(
+              onPressed: _generatingMealPlan ? null : _generateMealPlan,
+              icon: _generatingMealPlan
+                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.auto_awesome, size: 16),
+              label: Text(_generatingMealPlan ? 'Creating' : 'Generate plan'),
+            ),
         ]),
       );
     }
@@ -241,8 +292,10 @@ class _HomeData {
   final OnboardingProfile? profile;
   final List<String> exclusions;
   final List<Map<String, dynamic>> meals;
+  final bool hasActivePlan;
+  final String? planError;
 
-  const _HomeData(this.profile, this.exclusions, this.meals);
+  const _HomeData(this.profile, this.exclusions, this.meals, this.hasActivePlan, this.planError);
 }
 
 class _ProfileChip extends StatelessWidget {
