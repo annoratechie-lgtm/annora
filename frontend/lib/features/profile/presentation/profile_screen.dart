@@ -52,7 +52,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _syncCurrentProfile() async {
     try {
-      await widget.api.syncCurrentProfile();
+      final data = await _profileFuture;
+      final savedName = data.profile?.name?.trim();
+      final name = savedName?.isNotEmpty == true ? savedName : _displayName;
+      final phone = data.profile?.phone ?? _metadata['contact_phone']?.toString();
+      await widget.api.syncProfile(name: name, phone: phone);
     } catch (error) {
       if (mounted) _showMessage('Could not sync profile: $error');
     }
@@ -88,8 +92,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<void> _editName() async {
-    final controller = TextEditingController(text: _displayName);
+  Future<void> _editName(String currentName, String? currentPhone) async {
+    final controller = TextEditingController(text: currentName);
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -118,18 +122,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     await _runAction(
       () async {
-        await _updateMetadata({'full_name': name});
-        await widget.api.syncCurrentProfile();
-        if (mounted) setState(() {});
+        await widget.api.syncProfile(name: name, phone: currentPhone);
+        await _updateMetadata({
+          'full_name': name,
+          'contact_phone': currentPhone,
+        });
+        if (mounted) setState(() => _profileFuture = _loadProfile());
       },
       successMessage: 'Name updated.',
     );
   }
 
-  Future<void> _editPhone() async {
-    final controller = TextEditingController(
-      text: _metadata['contact_phone']?.toString() ?? '',
-    );
+  Future<void> _editPhone(String currentName, String? currentPhone) async {
+    final controller = TextEditingController(text: currentPhone ?? '');
     final phone = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -173,11 +178,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     await _runAction(
       () async {
+        final updatedPhone = normalizedPhone.isEmpty ? null : normalizedPhone;
+        await widget.api.syncProfile(name: currentName, phone: updatedPhone);
         await _updateMetadata({
-          'contact_phone': normalizedPhone.isEmpty ? null : normalizedPhone,
+          'full_name': currentName,
+          'contact_phone': updatedPhone,
         });
-        await widget.api.syncCurrentProfile();
-        if (mounted) setState(() {});
+        if (mounted) setState(() => _profileFuture = _loadProfile());
       },
       successMessage: normalizedPhone.isEmpty
           ? 'Phone number removed.'
@@ -333,7 +340,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 12),
                       _buildIdentityCard(
                         email: email,
-                        phone: phone,
+                        name: data.profile?.name?.trim().isNotEmpty == true
+                            ? data.profile!.name!.trim()
+                            : _displayName,
+                        phone: data.profile?.phone ?? phone,
                       ),
                       const SizedBox(height: 22),
                       _sectionTitle('YOUR KITCHEN'),
@@ -359,8 +369,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildIdentityCard({required String email, required String? phone}) {
-    final initials = _displayName
+  Widget _buildIdentityCard({
+    required String email,
+    required String name,
+    required String? phone,
+  }) {
+    final initials = name
         .split(RegExp(r'\s+'))
         .where((part) => part.isNotEmpty)
         .take(2)
@@ -409,7 +423,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _displayName,
+                      name,
                       style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
@@ -422,7 +436,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-              TextButton(onPressed: _editName, child: const Text('Edit')),
+              TextButton(
+                onPressed: () => _editName(name, phone),
+                child: const Text('Edit'),
+              ),
             ],
           ),
           const SizedBox(height: 13),
@@ -440,7 +457,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: TextStyle(fontSize: 10, color: _muted),
             ),
             trailing: const Icon(Icons.chevron_right, color: _muted),
-            onTap: _editPhone,
+            onTap: () => _editPhone(name, phone),
           ),
           Align(
             alignment: Alignment.centerLeft,

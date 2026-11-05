@@ -44,18 +44,20 @@ def test_user_profile_upserts_authenticated_identity(monkeypatch):
         async def __aexit__(self, exc_type, exc_value, traceback):
             return False
 
-        async def post(self, url, *, params, headers, json):
+        async def post(self, url, *, headers, json):
             observed.update(
                 url=url,
-                params=params,
                 headers=headers,
                 body=json,
             )
             return httpx.Response(
-                201,
+                200,
                 json=[
                     {
-                        **json,
+                        "user_id": json["p_user_id"],
+                        "name": json["p_name"],
+                        "email": json["p_email"],
+                        "phone": json["p_phone"],
                         "photo_uploaded": False,
                     }
                 ],
@@ -88,17 +90,15 @@ def test_user_profile_upserts_authenticated_identity(monkeypatch):
         "phone": "+91 98765 43210",
         "photo_uploaded": False,
     }
-    assert observed["url"] == "https://example.supabase.co/rest/v1/users"
-    assert observed["params"] == {"on_conflict": "user_id"}
-    assert observed["body"] == {
-        "user_id": USER_ID,
-        "name": "Updated Name",
-        "email": "person@example.com",
-        "phone": "+91 98765 43210",
-    }
-    assert observed["headers"]["Prefer"] == (
-        "resolution=merge-duplicates,return=representation"
+    assert observed["url"] == (
+        "https://example.supabase.co/rest/v1/rpc/sync_user_profile"
     )
+    assert observed["body"] == {
+        "p_user_id": USER_ID,
+        "p_name": "Updated Name",
+        "p_email": "person@example.com",
+        "p_phone": "+91 98765 43210",
+    }
 
 
 def test_user_profile_rejects_client_supplied_email(monkeypatch):

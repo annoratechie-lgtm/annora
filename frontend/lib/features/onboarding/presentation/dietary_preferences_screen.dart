@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../meal_plan/data/meal_plan_config.dart';
+import '../../profile/data/user_profile_api.dart';
 import '../state/onboarding_providers.dart';
 import 'profile_saved_placeholder_screen.dart';
 
@@ -14,7 +17,9 @@ const _dietaryGoals = [
 ];
 
 class DietaryPreferencesScreen extends ConsumerStatefulWidget {
-  const DietaryPreferencesScreen({super.key});
+  final UserProfileApi? api;
+
+  const DietaryPreferencesScreen({super.key, this.api});
 
   @override
   ConsumerState<DietaryPreferencesScreen> createState() =>
@@ -55,10 +60,25 @@ class _DietaryPreferencesScreenState
       _error = null;
     });
     try {
-      await ref.read(onboardingRepositoryProvider).completeOnboarding(
+      final repository = ref.read(onboardingRepositoryProvider);
+      await repository.completeOnboarding(
             dietaryGoals: _selectedGoals.toList(),
             exclusions: _exclusions,
           );
+      final profile = await repository.fetchProfile();
+      if (profile == null) {
+        throw StateError('The onboarding profile could not be loaded.');
+      }
+      await (widget.api ?? UserProfileApi(baseUrl: mealPlanBackendUrl))
+          .syncProfile(name: profile.name, phone: profile.phone);
+      await Supabase.instance.client.auth.updateUser(
+        UserAttributes(
+          data: {
+            'full_name': profile.name,
+            'contact_phone': profile.phone,
+          },
+        ),
+      );
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const ProfileSavedPlaceholderScreen()),

@@ -76,7 +76,7 @@ class AnnoraApp extends StatelessWidget {
                       assistantApi: assistantApi,
                       userProfileApi: userProfileApi,
                     )
-                  : const HouseholdBasicsScreen();
+                  : HouseholdBasicsScreen(profileApi: userProfileApi);
             },
           );
         },

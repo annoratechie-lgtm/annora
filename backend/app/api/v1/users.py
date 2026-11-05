@@ -60,14 +60,15 @@ async def upsert_my_profile(
         )
 
     profile_data: dict[str, Any] = {
-        "user_id": user.id,
-        "name": _profile_name(user),
-        "email": user.email,
+        "p_user_id": user.id,
+        "p_name": request.name if "name" in request.model_fields_set else _profile_name(user),
+        "p_email": user.email,
+        "p_phone": (
+            request.phone
+            if "phone" in request.model_fields_set
+            else user.user_metadata.get("contact_phone")
+        ),
     }
-    if "name" in request.model_fields_set:
-        profile_data["name"] = request.name
-    if "phone" in request.model_fields_set:
-        profile_data["phone"] = request.phone
 
     base_url = settings.supabase_url.rstrip("/")
     headers = {
@@ -79,8 +80,7 @@ async def upsert_my_profile(
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             response = await client.post(
-                f"{base_url}/rest/v1/users",
-                params={"on_conflict": "user_id"},
+                f"{base_url}/rest/v1/rpc/sync_user_profile",
                 headers=headers,
                 json=profile_data,
             )
@@ -90,7 +90,7 @@ async def upsert_my_profile(
             detail="Could not reach Supabase.",
         ) from exc
 
-    if response.status_code not in (200, 201):
+    if response.status_code != status.HTTP_200_OK:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Could not save user profile ({response.status_code}).",

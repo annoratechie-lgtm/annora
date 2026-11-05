@@ -41,9 +41,22 @@ class UserProfileApi {
     final profileName = name?.isNotEmpty == true
         ? name
         : (user.email?.split('@').first ?? 'Annora member');
-    final body = <String, dynamic>{'name': profileName};
-    if (metadata.containsKey('contact_phone')) {
-      body['phone'] = metadata['contact_phone'];
+    return syncProfile(
+      name: profileName,
+      phone: metadata['contact_phone']?.toString(),
+    );
+  }
+
+  Future<Map<String, dynamic>> syncProfile({
+    required String? name,
+    required String? phone,
+  }) async {
+    final user = _supabase.auth.currentUser;
+    final session = _supabase.auth.currentSession;
+    if (user == null || session == null) {
+      throw const UserProfileApiException(
+        'Please sign in to update your profile.',
+      );
     }
 
     final response = await _client.put(
@@ -53,7 +66,7 @@ class UserProfileApi {
         'Authorization': 'Bearer ${session.accessToken}',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode(body),
+      body: jsonEncode({'name': name, 'phone': phone}),
     );
     dynamic responseBody;
     try {
