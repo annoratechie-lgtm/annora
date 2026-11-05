@@ -44,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final today = DateTime.now();
     final dateKey = '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
     var meals = <Map<String, dynamic>>[];
+    var weeklyMeals = <Map<String, dynamic>>[];
     var hasActivePlan = false;
     var planCoversToday = false;
     String? planError;
@@ -64,8 +65,10 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         final rows = plan['meals'];
         if (rows is List) {
-          meals = rows.whereType<Map>()
+          weeklyMeals = rows.whereType<Map>()
               .map((row) => Map<String, dynamic>.from(row))
+              .toList();
+          meals = weeklyMeals
               .where((row) => row['meal_date']?.toString() == dateKey)
               .toList();
         }
@@ -75,7 +78,15 @@ class _HomeScreenState extends State<HomeScreen> {
         planError = error.toString();
       }
     }
-    return _HomeData(profile, exclusions, meals, hasActivePlan, planCoversToday, planError);
+    return _HomeData(
+      profile,
+      exclusions,
+      meals,
+      weeklyMeals,
+      hasActivePlan,
+      planCoversToday,
+      planError,
+    );
   }
 
   Future<void> _generateMealPlan() async {
@@ -128,6 +139,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             _buildHeader(),
                             const SizedBox(height: 16),
                             _buildProfileCard(data),
+                            const SizedBox(height: 24),
+                            _sectionLabel('WEEKLY NUTRITION'),
+                            const SizedBox(height: 8),
+                            _buildWeeklyNutritionSummary(data),
                             const SizedBox(height: 24),
                             _sectionLabel("TODAY'S MEALS"),
                             const SizedBox(height: 8),
@@ -204,6 +219,190 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _prettyLabel(String value) => value.split('_').map((part) => part.isEmpty ? part : '${part[0].toUpperCase()}${part.substring(1)}').join(' ');
   String _formatBudget(double amount) => amount == amount.roundToDouble() ? amount.toStringAsFixed(0) : amount.toStringAsFixed(2);
+
+  Widget _buildWeeklyNutritionSummary(_HomeData? data) {
+    if (data == null) return const SizedBox.shrink();
+    if (!data.hasActivePlan) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: _border),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.insights_outlined, color: _purple),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Generate a meal plan to see your weekly nutrition summary.',
+                style: TextStyle(fontSize: 12, color: _muted),
+              ),
+            ),
+            TextButton(
+              onPressed: _generatingMealPlan ? null : _generateMealPlan,
+              child: Text(_generatingMealPlan ? 'Creating' : 'Get started'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final today = DateTime.now();
+    final consumedMeals = data.weeklyMeals.where((meal) {
+      final mealDate = DateTime.tryParse(meal['meal_date']?.toString() ?? '');
+      return meal['status']?.toString().toLowerCase() == 'cooked' &&
+          mealDate != null &&
+          !DateUtils.dateOnly(mealDate).isAfter(DateUtils.dateOnly(today));
+    }).toList();
+    final planned = _sumNutrition(data.weeklyMeals);
+    final consumed = _sumNutrition(consumedMeals);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x10000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.insights_outlined, color: _purple, size: 18),
+              SizedBox(width: 7),
+              Text(
+                'Nutrition at a glance',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: _text,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 3),
+          const Text(
+            'Per serving · totals across meals in your active plan',
+            style: TextStyle(fontSize: 10.5, color: _muted),
+          ),
+          const SizedBox(height: 13),
+          _buildNutritionGroup(
+            title: 'PLANNED THIS WEEK',
+            totals: planned,
+            accent: _purple,
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(height: 1, color: _border),
+          ),
+          _buildNutritionGroup(
+            title: 'CONSUMED THROUGH TODAY',
+            totals: consumed,
+            accent: _green,
+          ),
+          const SizedBox(height: 9),
+          const Text(
+            'Consumed totals include meals marked cooked, up to today.',
+            style: TextStyle(fontSize: 10, color: _muted),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNutritionGroup({
+    required String title,
+    required _NutritionTotals totals,
+    required Color accent,
+  }) {
+    String valueFor(String key, {int decimalPlaces = 1}) {
+      final value = totals.values[key];
+      if (value == null) return '—';
+      final formatted = decimalPlaces == 0
+          ? value.round().toString()
+          : value.toStringAsFixed(decimalPlaces);
+      return switch (key) {
+        'energy' => '$formatted kcal',
+        _ => '$formatted g',
+      };
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 9.5,
+            letterSpacing: 0.9,
+            fontWeight: FontWeight.w700,
+            color: _muted,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _NutritionStatTile(
+                label: 'Energy',
+                value: valueFor('energy', decimalPlaces: 0),
+                accent: accent,
+              ),
+            ),
+            const SizedBox(width: 7),
+            Expanded(
+              child: _NutritionStatTile(
+                label: 'Protein',
+                value: valueFor('protein'),
+                accent: accent,
+              ),
+            ),
+            const SizedBox(width: 7),
+            Expanded(
+              child: _NutritionStatTile(
+                label: 'Carbs',
+                value: valueFor('carbs'),
+                accent: accent,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  _NutritionTotals _sumNutrition(List<Map<String, dynamic>> meals) {
+    const nutritionKeys = {
+      'energy': 'unit_serving_energy_kcal',
+      'protein': 'unit_serving_protein_g',
+      'carbs': 'unit_serving_carb_g',
+    };
+    final values = <String, double>{};
+
+    for (final meal in meals) {
+      final nutrition = meal['nutrition'];
+      if (nutrition is! Map) continue;
+      for (final entry in nutritionKeys.entries) {
+        final value = double.tryParse(nutrition[entry.value]?.toString() ?? '');
+        if (value == null || !value.isFinite) continue;
+        values.update(entry.key, (total) => total + value,
+            ifAbsent: () => value);
+      }
+    }
+
+    return _NutritionTotals(values);
+  }
 
   Widget _buildMealsCard(
     List<Map<String, dynamic>> meals, {
@@ -314,11 +513,73 @@ class _HomeData {
   final OnboardingProfile? profile;
   final List<String> exclusions;
   final List<Map<String, dynamic>> meals;
+  final List<Map<String, dynamic>> weeklyMeals;
   final bool hasActivePlan;
   final bool planCoversToday;
   final String? planError;
 
-  const _HomeData(this.profile, this.exclusions, this.meals, this.hasActivePlan, this.planCoversToday, this.planError);
+  const _HomeData(
+    this.profile,
+    this.exclusions,
+    this.meals,
+    this.weeklyMeals,
+    this.hasActivePlan,
+    this.planCoversToday,
+    this.planError,
+  );
+}
+
+class _NutritionTotals {
+  final Map<String, double> values;
+
+  const _NutritionTotals(this.values);
+}
+
+class _NutritionStatTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color accent;
+
+  const _NutritionStatTile({
+    required this.label,
+    required this.value,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: .1),
+          borderRadius: BorderRadius.circular(11),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 9,
+                color: Color(0xFF7B746D),
+              ),
+            ),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: accent,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
 }
 
 class _ProfileChip extends StatelessWidget {
