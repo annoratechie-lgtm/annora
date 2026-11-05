@@ -1,7 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import assistant, health, meal_plans, ingredients, grocery_lists, read_apis, nutrition
+from app.api.v1 import (
+    assistant,
+    grocery_lists,
+    health,
+    ingredients,
+    meal_plans,
+    nutrition,
+    read_apis,
+    users,
+)
 from app.core.config import settings
 
 app = FastAPI(
@@ -37,6 +46,7 @@ app.include_router(ingredients.router, prefix="/api/v1")
 app.include_router(grocery_lists.router, prefix="/api/v1")
 app.include_router(read_apis.router, prefix="/api/v1")
 app.include_router(nutrition.router, prefix="/api/v1")
+app.include_router(users.router, prefix="/api/v1")
 
 
 @app.get("/")

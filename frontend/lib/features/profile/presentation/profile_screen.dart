@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../data/user_profile_api.dart';
 import '../../onboarding/data/onboarding_repository.dart';
 
 class ProfileScreen extends StatefulWidget {
+  final UserProfileApi api;
   final VoidCallback? onOpenHome;
   final VoidCallback? onOpenMealPlan;
   final bool isActive;
 
   const ProfileScreen({
     super.key,
+    required this.api,
     this.onOpenHome,
     this.onOpenMealPlan,
     this.isActive = false,
@@ -35,6 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _profileFuture = _loadProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncCurrentProfile());
   }
 
   @override
@@ -42,6 +46,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.isActive && widget.isActive) {
       setState(() => _profileFuture = _loadProfile());
+      WidgetsBinding.instance.addPostFrameCallback((_) => _syncCurrentProfile());
+    }
+  }
+
+  Future<void> _syncCurrentProfile() async {
+    try {
+      await widget.api.syncCurrentProfile();
+    } catch (error) {
+      if (mounted) _showMessage('Could not sync profile: $error');
     }
   }
 
@@ -104,7 +117,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (name == null || name.isEmpty || !mounted) return;
 
     await _runAction(
-      () => _updateMetadata({'full_name': name}),
+      () async {
+        await _updateMetadata({'full_name': name});
+        await widget.api.syncCurrentProfile();
+        if (mounted) setState(() {});
+      },
       successMessage: 'Name updated.',
     );
   }
@@ -155,9 +172,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
     await _runAction(
-      () => _updateMetadata({
-        'contact_phone': normalizedPhone.isEmpty ? null : normalizedPhone,
-      }),
+      () async {
+        await _updateMetadata({
+          'contact_phone': normalizedPhone.isEmpty ? null : normalizedPhone,
+        });
+        await widget.api.syncCurrentProfile();
+        if (mounted) setState(() {});
+      },
       successMessage: normalizedPhone.isEmpty
           ? 'Phone number removed.'
           : 'Phone number updated.',
