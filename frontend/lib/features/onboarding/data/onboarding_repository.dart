@@ -52,6 +52,43 @@ class OnboardingRepository {
         .toList();
   }
 
+  Future<void> updateProfile({
+    required int familySize,
+    required double monthlyBudget,
+    required String dietaryPreference,
+    required List<String> dietaryGoals,
+    required List<String> exclusions,
+  }) async {
+    final cleanedExclusions = <String>[];
+    final seen = <String>{};
+
+    for (final exclusion in exclusions) {
+      final value = exclusion.trim();
+      if (value.isNotEmpty && seen.add(value.toLowerCase())) {
+        cleanedExclusions.add(value);
+      }
+    }
+
+    await _client.from('onboarding_profiles').update({
+      'family_size': familySize,
+      'monthly_budget': monthlyBudget,
+      'dietary_preference': dietaryPreference,
+      'dietary_goals': dietaryGoals,
+    }).eq('user_id', _userId);
+
+    await _client.from('dietary_exclusions').delete().eq('user_id', _userId);
+    if (cleanedExclusions.isNotEmpty) {
+      await _client.from('dietary_exclusions').insert(
+        cleanedExclusions
+            .map((ingredient) => {
+                  'user_id': _userId,
+                  'ingredient_name': ingredient,
+                })
+            .toList(),
+      );
+    }
+  }
+
   /// Saves the household information collected in onboarding step 1.
   /// Dietary goals are collected in the following step and saved by
   /// completeOnboarding().

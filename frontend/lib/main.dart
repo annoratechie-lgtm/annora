@@ -9,6 +9,7 @@ import 'features/meal_plan/data/meal_plan_api.dart';
 import 'features/meal_plan/data/meal_plan_config.dart';
 import 'features/meal_plan/presentation/meal_plan_screen.dart';
 import 'features/home/presentation/home_screen.dart';
+import 'features/profile/presentation/profile_screen.dart';
 import 'features/onboarding/data/onboarding_repository.dart';
 import 'features/onboarding/presentation/household_basics_screen.dart';
 import 'features/onboarding/presentation/welcome_screen.dart';
@@ -101,13 +102,21 @@ class _PostOnboardingShellState extends State<PostOnboardingShell> {
         children: [
           HomeScreen(
             mealPlanApi: widget.api,
+            isActive: _selectedScreen == 0,
             onOpenMealPlan: () => setState(() => _selectedScreen = 1),
+            onOpenProfile: () => setState(() => _selectedScreen = 2),
           ),
           MealPlanScreen(
             api: widget.api,
             assistantApi: widget.assistantApi,
             isActive: _selectedScreen == 1,
             onOpenHome: () => setState(() => _selectedScreen = 0),
+            onOpenProfile: () => setState(() => _selectedScreen = 2),
+          ),
+          ProfileScreen(
+            isActive: _selectedScreen == 2,
+            onOpenHome: () => setState(() => _selectedScreen = 0),
+            onOpenMealPlan: () => setState(() => _selectedScreen = 1),
           ),
         ],
       );

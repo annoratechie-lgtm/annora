@@ -9,9 +9,17 @@ import '../../onboarding/data/onboarding_repository.dart';
 /// Home summary backed by the signed-in user profile and active meal plan.
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onOpenMealPlan;
+  final VoidCallback? onOpenProfile;
   final MealPlanApi? mealPlanApi;
+  final bool isActive;
 
-  const HomeScreen({super.key, this.onOpenMealPlan, this.mealPlanApi});
+  const HomeScreen({
+    super.key,
+    this.onOpenMealPlan,
+    this.onOpenProfile,
+    this.mealPlanApi,
+    this.isActive = true,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -35,6 +43,14 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _homeData = _loadHomeData();
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isActive && widget.isActive) {
+      setState(() => _selectedNav = 0);
+    }
   }
 
   Future<_HomeData> _loadHomeData() async {
@@ -486,6 +502,11 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () {
               if (i == 1 && widget.onOpenMealPlan != null) {
                 widget.onOpenMealPlan!();
+                return;
+              }
+              if (i == 4 && widget.onOpenProfile != null) {
+                setState(() => _selectedNav = i);
+                widget.onOpenProfile!();
                 return;
               }
               if (i != 0) setState(() => _selectedNav = i);

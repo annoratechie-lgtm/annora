@@ -8,6 +8,7 @@ class MealPlanScreen extends StatefulWidget {
   final MealPlanApi api;
   final AssistantApi assistantApi;
   final VoidCallback? onOpenHome;
+  final VoidCallback? onOpenProfile;
   final bool isActive;
 
   const MealPlanScreen({
@@ -15,6 +16,7 @@ class MealPlanScreen extends StatefulWidget {
     required this.api,
     required this.assistantApi,
     this.onOpenHome,
+    this.onOpenProfile,
     this.isActive = false,
   });
 
@@ -911,6 +913,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             onTap: () {
               if (i == 0) widget.onOpenHome?.call();
               if (i == 1) _openToday();
+              if (i == 4) widget.onOpenProfile?.call();
             },
             child: _NavItem(icon: items[i].$1, label: items[i].$2, selected: i == 1),
           ),
