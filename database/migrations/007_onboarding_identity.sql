@@ -35,6 +35,7 @@ language plpgsql
 security definer
 set search_path = public, pg_temp
 as $$
+#variable_conflict use_column
 begin
   insert into public.users as profile (
     user_id,
