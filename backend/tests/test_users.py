@@ -215,6 +215,54 @@ def test_user_profile_upserts_authenticated_identity(monkeypatch):
     }
 
 
+def test_user_profile_surfaces_supabase_rpc_error(monkeypatch):
+    class FakeAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc_value, traceback):
+            return False
+
+        async def post(self, url, *, headers, json):
+            return httpx.Response(
+                400,
+                json={
+                    "code": "PGRST202",
+                    "message": "Could not find the function in the schema cache",
+                },
+                request=httpx.Request("POST", url),
+            )
+
+    monkeypatch.setattr("app.api.v1.users.httpx.AsyncClient", FakeAsyncClient)
+    monkeypatch.setattr(
+        "app.api.v1.users.settings.supabase_url",
+        "https://example.supabase.co",
+    )
+    monkeypatch.setattr(
+        "app.api.v1.users.settings.supabase_service_role_key",
+        "test-service-key",
+    )
+    _override_authenticated_user()
+    try:
+        response = client.put(
+            "/api/v1/users/me/profile",
+            json={"name": "Person"},
+        )
+    finally:
+        _clear_authenticated_user_override()
+
+    assert response.status_code == 502
+    assert response.json() == {
+        "detail": (
+            "Could not save user profile (400) [PGRST202]: "
+            "Could not find the function in the schema cache"
+        )
+    }
+
+
 def test_user_profile_rejects_client_supplied_email(monkeypatch):
     _override_authenticated_user()
     try:

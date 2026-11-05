@@ -58,9 +58,20 @@ def _supabase_headers() -> dict[str, str]:
 
 def _decode_profile_rows(response: httpx.Response, action: str) -> list[dict[str, Any]]:
     if response.status_code != status.HTTP_200_OK:
+        try:
+            error = response.json()
+        except ValueError:
+            error = None
+        message = error.get("message") if isinstance(error, dict) else None
+        code = error.get("code") if isinstance(error, dict) else None
+        reason = f": {message}" if isinstance(message, str) else ""
+        error_code = f" [{code}]" if isinstance(code, str) else ""
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Could not {action} user profile ({response.status_code}).",
+            detail=(
+                f"Could not {action} user profile "
+                f"({response.status_code}){error_code}{reason}"
+            ),
         )
     try:
         rows = response.json()
