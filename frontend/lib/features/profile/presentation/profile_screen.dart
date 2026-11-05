@@ -38,7 +38,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _profileFuture = _loadProfile();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _syncCurrentProfile());
   }
 
   @override
@@ -46,27 +45,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.isActive && widget.isActive) {
       setState(() => _profileFuture = _loadProfile());
-      WidgetsBinding.instance.addPostFrameCallback((_) => _syncCurrentProfile());
-    }
-  }
-
-  Future<void> _syncCurrentProfile() async {
-    try {
-      final data = await _profileFuture;
-      final savedName = data.profile?.name?.trim();
-      final name = savedName?.isNotEmpty == true ? savedName : _displayName;
-      final phone = data.profile?.phone ?? _metadata['contact_phone']?.toString();
-      await widget.api.syncProfile(name: name, phone: phone);
-    } catch (error) {
-      if (mounted) _showMessage('Could not sync profile: $error');
     }
   }
 
   Future<_ProfileData> _loadProfile() async {
     final repository = OnboardingRepository();
-    final profile = await repository.fetchProfile();
-    final exclusions = await repository.fetchDietaryExclusions();
-    return _ProfileData(profile, exclusions);
+    final results = await Future.wait<Object?>([
+      repository.fetchProfile(),
+      repository.fetchDietaryExclusions(),
+      widget.api.fetchProfile(),
+    ]);
+    return _ProfileData(
+      results[0] as OnboardingProfile?,
+      results[1] as List<String>,
+      results[2] as Map<String, dynamic>,
+    );
   }
 
   Map<String, dynamic> get _metadata {
@@ -123,10 +116,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await _runAction(
       () async {
         await widget.api.syncProfile(name: name, phone: currentPhone);
-        await _updateMetadata({
-          'full_name': name,
-          'contact_phone': currentPhone,
-        });
         if (mounted) setState(() => _profileFuture = _loadProfile());
       },
       successMessage: 'Name updated.',
@@ -180,10 +169,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       () async {
         final updatedPhone = normalizedPhone.isEmpty ? null : normalizedPhone;
         await widget.api.syncProfile(name: currentName, phone: updatedPhone);
-        await _updateMetadata({
-          'full_name': currentName,
-          'contact_phone': updatedPhone,
-        });
         if (mounted) setState(() => _profileFuture = _loadProfile());
       },
       successMessage: normalizedPhone.isEmpty
@@ -298,7 +283,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final user = Supabase.instance.client.auth.currentUser;
     final email = user?.email ?? 'No email available';
-    final phone = _metadata['contact_phone']?.toString();
     final rawPreferences = _metadata['notification_preferences'];
     final notificationPreferences = rawPreferences is Map
         ? Map<String, dynamic>.from(rawPreferences)
@@ -324,7 +308,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           setState(() => _profileFuture = _loadProfile()),
                     );
                   }
-                  final data = snapshot.data ?? const _ProfileData(null, []);
+                  final data = snapshot.data ??
+                      const _ProfileData(null, [], <String, dynamic>{});
+                  final profileName =
+                      data.userProfile['name']?.toString().trim();
+                  final profilePhone =
+                      data.userProfile['phone']?.toString().trim();
                   return ListView(
                     padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
                     children: [
@@ -340,10 +329,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 12),
                       _buildIdentityCard(
                         email: email,
-                        name: data.profile?.name?.trim().isNotEmpty == true
-                            ? data.profile!.name!.trim()
+                        name: profileName?.isNotEmpty == true
+                            ? profileName!
                             : _displayName,
-                        phone: data.profile?.phone ?? phone,
+                        phone: profilePhone?.isNotEmpty == true
+                            ? profilePhone
+                            : null,
                       ),
                       const SizedBox(height: 22),
                       _sectionTitle('YOUR KITCHEN'),
@@ -721,8 +712,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 class _ProfileData {
   final OnboardingProfile? profile;
   final List<String> exclusions;
+  final Map<String, dynamic> userProfile;
 
-  const _ProfileData(this.profile, this.exclusions);
+  const _ProfileData(this.profile, this.exclusions, this.userProfile);
 }
 
 class _ProfileEditSheet extends StatefulWidget {

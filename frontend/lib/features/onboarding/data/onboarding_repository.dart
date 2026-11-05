@@ -1,8 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OnboardingProfile {
-  final String? name;
-  final String? phone;
   final int familySize;
   final double monthlyBudget;
   final String dietaryPreference;
@@ -10,8 +8,6 @@ class OnboardingProfile {
   final bool onboardingCompleted;
 
   OnboardingProfile({
-    required this.name,
-    required this.phone,
     required this.familySize,
     required this.monthlyBudget,
     required this.dietaryPreference,
@@ -21,8 +17,6 @@ class OnboardingProfile {
 
   factory OnboardingProfile.fromMap(Map<String, dynamic> map) =>
       OnboardingProfile(
-        name: map['name'] as String?,
-        phone: map['phone'] as String?,
         familySize: map['family_size'] as int,
         monthlyBudget: (map['monthly_budget'] as num).toDouble(),
         dietaryPreference: map['dietary_preference'] as String,
@@ -99,15 +93,11 @@ class OnboardingRepository {
   /// Dietary goals are collected in the following step and saved by
   /// completeOnboarding().
   Future<void> saveHouseholdBasics({
-    required String name,
-    required String? phone,
     required int familySize,
     required double monthlyBudget,
     required String dietaryPreference,
   }) async {
     await _client.from('onboarding_profiles').update({
-      'name': name.trim(),
-      'phone': phone?.trim().isEmpty == true ? null : phone?.trim(),
       'family_size': familySize,
       'monthly_budget': monthlyBudget,
       'dietary_preference': dietaryPreference,

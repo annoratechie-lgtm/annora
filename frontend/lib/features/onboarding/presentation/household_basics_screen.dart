@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../meal_plan/data/meal_plan_config.dart';
 import '../../profile/data/user_profile_api.dart';
 import '../state/onboarding_providers.dart';
 import 'dietary_preferences_screen.dart';
@@ -73,19 +74,21 @@ class _HouseholdBasicsScreenState extends ConsumerState<HouseholdBasicsScreen> {
     });
     try {
       await ref.read(onboardingRepositoryProvider).saveHouseholdBasics(
-            name: _nameController.text.trim(),
-            phone: _phoneController.text.trim().isEmpty
-                ? null
-                : _phoneController.text.trim(),
             familySize: _familySize,
             monthlyBudget: double.parse(_budgetController.text),
             dietaryPreference: _dietaryPreference!,
           );
+      await (widget.profileApi ??
+              UserProfileApi(baseUrl: mealPlanBackendUrl))
+          .syncProfile(
+        name: _nameController.text.trim(),
+        phone: _phoneController.text.trim().isEmpty
+            ? null
+            : _phoneController.text.trim(),
+      );
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => DietaryPreferencesScreen(api: widget.profileApi),
-          ),
+          MaterialPageRoute(builder: (_) => const DietaryPreferencesScreen()),
         );
       }
     } catch (e) {

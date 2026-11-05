@@ -10,6 +10,7 @@ from app.core.config import settings
 
 router = APIRouter(prefix="/users", tags=["users"])
 _PHONE_NUMBER = re.compile(r"^\+?[0-9\s()-]{7,20}$")
+_PROFILE_COLUMNS = "user_id,name,email,phone,photo_uploaded"
 
 
 class UserProfileUpdate(BaseModel):
@@ -47,6 +48,113 @@ def _profile_name(user: AuthenticatedUser) -> str | None:
     return None
 
 
+def _supabase_headers() -> dict[str, str]:
+    return {
+        "apikey": settings.supabase_service_role_key,
+        "Authorization": f"Bearer {settings.supabase_service_role_key}",
+        "Content-Type": "application/json",
+    }
+
+
+def _decode_profile_rows(response: httpx.Response, action: str) -> list[dict[str, Any]]:
+    if response.status_code != status.HTTP_200_OK:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Could not {action} user profile ({response.status_code}).",
+        )
+    try:
+        rows = response.json()
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Supabase returned an invalid user profile response.",
+        ) from exc
+    if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Supabase returned an invalid user profile response.",
+        )
+    return rows
+
+
+async def _sync_profile_row(
+    user: AuthenticatedUser,
+    *,
+    name: str | None,
+    phone: str | None,
+) -> dict[str, Any]:
+    base_url = settings.supabase_url.rstrip("/")
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.post(
+                f"{base_url}/rest/v1/rpc/sync_user_profile",
+                headers=_supabase_headers(),
+                json={
+                    "p_user_id": user.id,
+                    "p_name": name,
+                    "p_email": user.email,
+                    "p_phone": phone,
+                },
+            )
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not reach Supabase.",
+        ) from exc
+
+    rows = _decode_profile_rows(response, "save")
+    if not rows:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Supabase did not return the saved user profile.",
+        )
+    return rows[0]
+
+
+@router.get("/me/profile")
+async def get_my_profile(
+    user: AuthenticatedUser = Depends(require_authenticated_user_details),
+) -> dict[str, Any]:
+    """Return the signed-in user's profile, creating it for existing accounts."""
+    if not settings.supabase_url or not settings.supabase_service_role_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Supabase backend configuration is missing.",
+        )
+
+    base_url = settings.supabase_url.rstrip("/")
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.get(
+                f"{base_url}/rest/v1/users",
+                params={
+                    "select": _PROFILE_COLUMNS,
+                    "user_id": f"eq.{user.id}",
+                    "limit": "1",
+                },
+                headers=_supabase_headers(),
+            )
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not reach Supabase.",
+        ) from exc
+
+    rows = _decode_profile_rows(response, "load")
+    if rows:
+        return rows[0]
+
+    return await _sync_profile_row(
+        user,
+        name=_profile_name(user),
+        phone=(
+            user.user_metadata.get("contact_phone")
+            if isinstance(user.user_metadata.get("contact_phone"), str)
+            else None
+        ),
+    )
+
+
 @router.put("/me/profile")
 async def upsert_my_profile(
     request: UserProfileUpdate,
@@ -59,54 +167,20 @@ async def upsert_my_profile(
             detail="Supabase backend configuration is missing.",
         )
 
-    profile_data: dict[str, Any] = {
-        "p_user_id": user.id,
-        "p_name": request.name if "name" in request.model_fields_set else _profile_name(user),
-        "p_email": user.email,
-        "p_phone": (
+    return await _sync_profile_row(
+        user,
+        name=(
+            request.name
+            if "name" in request.model_fields_set
+            else _profile_name(user)
+        ),
+        phone=(
             request.phone
             if "phone" in request.model_fields_set
-            else user.user_metadata.get("contact_phone")
-        ),
-    }
-
-    base_url = settings.supabase_url.rstrip("/")
-    headers = {
-        "apikey": settings.supabase_service_role_key,
-        "Authorization": f"Bearer {settings.supabase_service_role_key}",
-        "Content-Type": "application/json",
-        "Prefer": "resolution=merge-duplicates,return=representation",
-    }
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            response = await client.post(
-                f"{base_url}/rest/v1/rpc/sync_user_profile",
-                headers=headers,
-                json=profile_data,
+            else (
+                user.user_metadata.get("contact_phone")
+                if isinstance(user.user_metadata.get("contact_phone"), str)
+                else None
             )
-    except httpx.HTTPError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Could not reach Supabase.",
-        ) from exc
-
-    if response.status_code != status.HTTP_200_OK:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Could not save user profile ({response.status_code}).",
-        )
-
-    try:
-        rows = response.json()
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Supabase returned an invalid user profile response.",
-        ) from exc
-
-    if not isinstance(rows, list) or not rows or not isinstance(rows[0], dict):
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Supabase did not return the saved user profile.",
-        )
-    return rows[0]
+        ),
+    )

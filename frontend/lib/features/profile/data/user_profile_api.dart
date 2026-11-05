@@ -24,27 +24,22 @@ class UserProfileApi {
   })  : _client = client ?? http.Client(),
         _supabase = supabase ?? Supabase.instance.client;
 
-  Future<Map<String, dynamic>> syncCurrentProfile() async {
-    final user = _supabase.auth.currentUser;
+  Future<Map<String, dynamic>> fetchProfile() async {
     final session = _supabase.auth.currentSession;
-    if (user == null || session == null) {
+    if (_supabase.auth.currentUser == null || session == null) {
       throw const UserProfileApiException(
-        'Please sign in to update your profile.',
+        'Please sign in to view your profile.',
       );
     }
 
-    final metadata = user.userMetadata ?? const <String, dynamic>{};
-    final name =
-        (metadata['full_name'] ?? metadata['name'] ?? metadata['display_name'])
-            ?.toString()
-            .trim();
-    final profileName = name?.isNotEmpty == true
-        ? name
-        : (user.email?.split('@').first ?? 'Annora member');
-    return syncProfile(
-      name: profileName,
-      phone: metadata['contact_phone']?.toString(),
+    final response = await _client.get(
+      Uri.parse('$baseUrl/api/v1/users/me/profile'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ${session.accessToken}',
+      },
     );
+    return _decodeProfileResponse(response);
   }
 
   Future<Map<String, dynamic>> syncProfile({
@@ -68,6 +63,10 @@ class UserProfileApi {
       },
       body: jsonEncode({'name': name, 'phone': phone}),
     );
+    return _decodeProfileResponse(response);
+  }
+
+  Map<String, dynamic> _decodeProfileResponse(http.Response response) {
     dynamic responseBody;
     try {
       responseBody = jsonDecode(response.body);
@@ -79,7 +78,7 @@ class UserProfileApi {
       final detail =
           responseBody is Map ? responseBody['detail']?.toString() : null;
       throw UserProfileApiException(
-        detail ?? 'Profile update failed (${response.statusCode}).',
+        detail ?? 'Profile request failed (${response.statusCode}).',
       );
     }
     if (responseBody is! Map<String, dynamic>) {

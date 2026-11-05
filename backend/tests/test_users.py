@@ -31,6 +31,120 @@ def test_user_profile_requires_bearer_token():
     assert response.json() == {"detail": "Missing bearer token."}
 
 
+def test_get_user_profile_returns_existing_user_row(monkeypatch):
+    profile = {
+        "user_id": USER_ID,
+        "name": "Saved Name",
+        "email": "person@example.com",
+        "phone": "+91 98765 43210",
+        "photo_uploaded": False,
+    }
+
+    class FakeAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc_value, traceback):
+            return False
+
+        async def get(self, url, *, params, headers):
+            assert url == "https://example.supabase.co/rest/v1/users"
+            assert params == {
+                "select": "user_id,name,email,phone,photo_uploaded",
+                "user_id": f"eq.{USER_ID}",
+                "limit": "1",
+            }
+            return httpx.Response(
+                200,
+                json=[profile],
+                request=httpx.Request("GET", url),
+            )
+
+    monkeypatch.setattr("app.api.v1.users.httpx.AsyncClient", FakeAsyncClient)
+    monkeypatch.setattr(
+        "app.api.v1.users.settings.supabase_url",
+        "https://example.supabase.co",
+    )
+    monkeypatch.setattr(
+        "app.api.v1.users.settings.supabase_service_role_key",
+        "test-service-key",
+    )
+    _override_authenticated_user()
+    try:
+        response = client.get("/api/v1/users/me/profile")
+    finally:
+        _clear_authenticated_user_override()
+
+    assert response.status_code == 200
+    assert response.json() == profile
+
+
+def test_get_user_profile_initializes_missing_user_row(monkeypatch):
+    observed = {}
+
+    class FakeAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc_value, traceback):
+            return False
+
+        async def get(self, url, *, params, headers):
+            return httpx.Response(
+                200,
+                json=[],
+                request=httpx.Request("GET", url),
+            )
+
+        async def post(self, url, *, headers, json):
+            observed.update(url=url, body=json)
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "user_id": USER_ID,
+                        "name": "Person Example",
+                        "email": "person@example.com",
+                        "phone": None,
+                        "photo_uploaded": False,
+                    }
+                ],
+                request=httpx.Request("POST", url),
+            )
+
+    monkeypatch.setattr("app.api.v1.users.httpx.AsyncClient", FakeAsyncClient)
+    monkeypatch.setattr(
+        "app.api.v1.users.settings.supabase_url",
+        "https://example.supabase.co",
+    )
+    monkeypatch.setattr(
+        "app.api.v1.users.settings.supabase_service_role_key",
+        "test-service-key",
+    )
+    _override_authenticated_user()
+    try:
+        response = client.get("/api/v1/users/me/profile")
+    finally:
+        _clear_authenticated_user_override()
+
+    assert response.status_code == 200
+    assert observed["url"] == (
+        "https://example.supabase.co/rest/v1/rpc/sync_user_profile"
+    )
+    assert observed["body"] == {
+        "p_user_id": USER_ID,
+        "p_name": "Person Example",
+        "p_email": "person@example.com",
+        "p_phone": None,
+    }
+
+
 def test_user_profile_upserts_authenticated_identity(monkeypatch):
     observed = {}
 
