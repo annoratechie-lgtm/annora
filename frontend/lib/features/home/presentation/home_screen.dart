@@ -140,10 +140,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(height: 16),
                             _buildProfileCard(data),
                             const SizedBox(height: 24),
-                            _sectionLabel('WEEKLY NUTRITION'),
-                            const SizedBox(height: 8),
-                            _buildWeeklyNutritionSummary(data),
-                            const SizedBox(height: 24),
                             _sectionLabel("TODAY'S MEALS"),
                             const SizedBox(height: 8),
                             _buildMealsCard(
@@ -152,6 +148,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               planCoversToday: data?.planCoversToday ?? false,
                               planError: data?.planError,
                             ),
+                            const SizedBox(height: 24),
+                            _sectionLabel('WEEKLY NUTRITION'),
+                            const SizedBox(height: 8),
+                            _buildWeeklyNutritionSummary(data),
                           ],
                         );
                       },
@@ -251,14 +251,13 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final today = DateTime.now();
-    final consumedMeals = data.weeklyMeals.where((meal) {
+    final mealsThroughToday = data.weeklyMeals.where((meal) {
       final mealDate = DateTime.tryParse(meal['meal_date']?.toString() ?? '');
-      return meal['status']?.toString().toLowerCase() == 'cooked' &&
-          mealDate != null &&
+      return mealDate != null &&
           !DateUtils.dateOnly(mealDate).isAfter(DateUtils.dateOnly(today));
     }).toList();
     final planned = _sumNutrition(data.weeklyMeals);
-    final consumed = _sumNutrition(consumedMeals);
+    final throughToday = _sumNutrition(mealsThroughToday);
 
     return Container(
       width: double.infinity,
@@ -307,13 +306,13 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Divider(height: 1, color: _border),
           ),
           _buildNutritionGroup(
-            title: 'CONSUMED THROUGH TODAY',
-            totals: consumed,
+            title: 'SHOULD BE CONSUMED THROUGH TODAY',
+            totals: throughToday,
             accent: _green,
           ),
           const SizedBox(height: 9),
           const Text(
-            'Consumed totals include meals marked cooked, up to today.',
+            'Based on meals scheduled in your plan through today.',
             style: TextStyle(fontSize: 10, color: _muted),
           ),
         ],
