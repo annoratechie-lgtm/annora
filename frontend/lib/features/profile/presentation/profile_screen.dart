@@ -96,6 +96,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           controller: controller,
           autofocus: true,
           textCapitalization: TextCapitalization.words,
+          style: const TextStyle(color: _text),
           decoration: const InputDecoration(labelText: 'Name'),
         ),
         actions: [
@@ -133,6 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           controller: controller,
           autofocus: true,
           keyboardType: TextInputType.phone,
+          style: const TextStyle(color: _text),
           decoration: const InputDecoration(
             labelText: 'Phone number',
             hintText: '+91 98765 43210',
@@ -348,6 +350,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _sectionTitle('ACCOUNT'),
                       const SizedBox(height: 8),
                       _buildAccountCard(email),
+                      const SizedBox(height: 22),
+                      _sectionTitle('HELP & SUPPORT'),
+                      const SizedBox(height: 8),
+                      _buildHelpSupportCard(),
                     ],
                   );
                 },
@@ -604,6 +610,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 side: const BorderSide(color: Color(0xFFE8D3CE)),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelpSupportCard() {
+    return _card(
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: EdgeInsets.zero,
+        shape: const Border(),
+        collapsedShape: const Border(),
+        visualDensity: VisualDensity.compact,
+        leading: const Icon(Icons.support_agent_outlined, color: _orange),
+        title: const Text(
+          'Contact Annora',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: _text,
+          ),
+        ),
+        subtitle: const Text(
+          'Office address, email and phone',
+          style: TextStyle(fontSize: 10, color: _muted),
+        ),
+        children: [
+          const SizedBox(height: 10),
+          _detailRow(
+            Icons.location_on_outlined,
+            'Office address',
+            'Registered Office: Atal Center, BHU Varanasi, Uttar Pradesh –221005 India',
+          ),
+          const Divider(height: 20, color: _border),
+          _detailRow(
+            Icons.email_outlined,
+            'Email',
+            'annora.techie@gmail.com',
+          ),
+          const Divider(height: 20, color: _border),
+          _detailRow(
+            Icons.phone_outlined,
+            'Phone number',
+            '+91 9675866766',
           ),
         ],
       ),
@@ -878,6 +929,7 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
                       controller: _budgetController,
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(color: Color(0xFF211C18)),
                       decoration: const InputDecoration(
                         prefixText: '₹ ',
                         border: OutlineInputBorder(),
@@ -929,6 +981,7 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
                             controller: _exclusionController,
                             textCapitalization: TextCapitalization.sentences,
                             onSubmitted: (_) => _addExclusion(),
+                            style: const TextStyle(color: Color(0xFF211C18)),
                             decoration: const InputDecoration(
                               hintText: 'Add an ingredient',
                               border: OutlineInputBorder(),
