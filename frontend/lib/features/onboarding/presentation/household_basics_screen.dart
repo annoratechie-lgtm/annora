@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../meal_plan/data/meal_plan_config.dart';
+import '../../profile/data/user_profile_api.dart';
 import '../state/onboarding_providers.dart';
 import 'dietary_preferences_screen.dart';
 
@@ -14,7 +17,9 @@ const _dietaryPreferences = [
 ];
 
 class HouseholdBasicsScreen extends ConsumerStatefulWidget {
-  const HouseholdBasicsScreen({super.key});
+  final UserProfileApi? profileApi;
+
+  const HouseholdBasicsScreen({super.key, this.profileApi});
 
   @override
   ConsumerState<HouseholdBasicsScreen> createState() => _HouseholdBasicsScreenState();
@@ -22,20 +27,44 @@ class HouseholdBasicsScreen extends ConsumerStatefulWidget {
 
 class _HouseholdBasicsScreenState extends ConsumerState<HouseholdBasicsScreen> {
   int _familySize = 4;
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _budgetController = TextEditingController();
   String? _dietaryPreference;
   bool _saving = false;
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    final metadata =
+        Supabase.instance.client.auth.currentUser?.userMetadata ?? const {};
+    _nameController.text = (metadata['full_name'] ??
+            metadata['name'] ??
+            metadata['display_name'])
+        ?.toString() ??
+        '';
+    _phoneController.text = metadata['contact_phone']?.toString() ?? '';
+  }
+
+  @override
   void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
     _budgetController.dispose();
     super.dispose();
   }
 
   bool get _canContinue {
     final budget = double.tryParse(_budgetController.text);
-    return _dietaryPreference != null && budget != null && budget > 0;
+    final phone = _phoneController.text.trim();
+    final validPhone = phone.isEmpty ||
+        RegExp(r'^\+?[0-9\s()-]{7,20}$').hasMatch(phone);
+    return _nameController.text.trim().isNotEmpty &&
+        validPhone &&
+        _dietaryPreference != null &&
+        budget != null &&
+        budget > 0;
   }
 
   Future<void> _onContinue() async {
@@ -49,13 +78,21 @@ class _HouseholdBasicsScreenState extends ConsumerState<HouseholdBasicsScreen> {
             monthlyBudget: double.parse(_budgetController.text),
             dietaryPreference: _dietaryPreference!,
           );
+      await (widget.profileApi ??
+              UserProfileApi(baseUrl: mealPlanBackendUrl))
+          .syncProfile(
+        name: _nameController.text.trim(),
+        phone: _phoneController.text.trim().isEmpty
+            ? null
+            : _phoneController.text.trim(),
+      );
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const DietaryPreferencesScreen()),
         );
       }
     } catch (e) {
-      setState(() => _error = 'Could not save -- $e');
+      if (mounted) setState(() => _error = 'Could not save -- $e');
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -79,6 +116,46 @@ class _HouseholdBasicsScreenState extends ConsumerState<HouseholdBasicsScreen> {
                 style: AppTheme.displayFont.copyWith(fontSize: 24, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 32),
+
+              const Text('Your name', style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _nameController,
+                textCapitalization: TextCapitalization.words,
+                style: const TextStyle(color: AppColors.textPrimary),
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  hintText: 'e.g. Alex Morgan',
+                  hintStyle: const TextStyle(color: AppColors.textFaint),
+                  filled: true,
+                  fillColor: AppColors.card,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.cardBorder),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              const Text('Mobile number (optional)', style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                style: const TextStyle(color: AppColors.textPrimary),
+                onChanged: (_) => setState(() {}),
+                decoration: InputDecoration(
+                  hintText: '+91 98765 43210',
+                  hintStyle: const TextStyle(color: AppColors.textFaint),
+                  filled: true,
+                  fillColor: AppColors.card,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.cardBorder),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
 
               const Text('Family size', style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
               const SizedBox(height: 8),

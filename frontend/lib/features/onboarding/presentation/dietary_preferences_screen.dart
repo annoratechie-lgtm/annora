@@ -55,7 +55,8 @@ class _DietaryPreferencesScreenState
       _error = null;
     });
     try {
-      await ref.read(onboardingRepositoryProvider).completeOnboarding(
+      final repository = ref.read(onboardingRepositoryProvider);
+      await repository.completeOnboarding(
             dietaryGoals: _selectedGoals.toList(),
             exclusions: _exclusions,
           );

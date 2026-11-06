@@ -7,11 +7,17 @@ import '../data/meal_plan_api.dart';
 class MealPlanScreen extends StatefulWidget {
   final MealPlanApi api;
   final AssistantApi assistantApi;
+  final VoidCallback? onOpenHome;
+  final VoidCallback? onOpenProfile;
+  final bool isActive;
 
   const MealPlanScreen({
     super.key,
     required this.api,
     required this.assistantApi,
+    this.onOpenHome,
+    this.onOpenProfile,
+    this.isActive = false,
   });
 
   @override
@@ -31,6 +37,7 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   int _selectedTab = 0;
   bool _generating = false;
   bool _generatingPantry = false;
+  bool _selectTodayOnNextBuild = false;
   late Future<Map<String, dynamic>> _future;
   final Map<String, Future<Map<String, dynamic>>> _ingredientsByPlan = {};
 
@@ -40,8 +47,26 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     _future = _fetchMealPlanWithRecipeNames();
   }
 
+  @override
+  void didUpdateWidget(covariant MealPlanScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isActive && widget.isActive) {
+      _ingredientsByPlan.clear();
+      _future = _fetchMealPlanWithRecipeNames();
+      _selectTodayOnNextBuild = true;
+    }
+  }
+
   void _reload() {
     setState(() {
+      _ingredientsByPlan.clear();
+      _future = _fetchMealPlanWithRecipeNames();
+    });
+  }
+
+  void _openToday() {
+    setState(() {
+      _selectTodayOnNextBuild = true;
       _ingredientsByPlan.clear();
       _future = _fetchMealPlanWithRecipeNames();
     });
@@ -218,7 +243,21 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       );
     }
 
-    final safeDay = _selectedDay.clamp(0, dates.length - 1).toInt();
+    var safeDay = _selectedDay.clamp(0, dates.length - 1).toInt();
+    if (_selectTodayOnNextBuild) {
+      final now = DateTime.now();
+      final today = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final todayIndex = dates.indexOf(today);
+      if (todayIndex >= 0) safeDay = todayIndex;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _selectedDay = safeDay;
+            _selectTodayOnNextBuild = false;
+          });
+        }
+      });
+    }
     if (safeDay != _selectedDay) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) setState(() => _selectedDay = safeDay);
@@ -870,7 +909,14 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
       padding: const EdgeInsets.only(top: 7, bottom: 6),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
         for (var i = 0; i < items.length; i++)
-          _NavItem(icon: items[i].$1, label: items[i].$2, selected: i == 1),
+          GestureDetector(
+            onTap: () {
+              if (i == 0) widget.onOpenHome?.call();
+              if (i == 1) _openToday();
+              if (i == 4) widget.onOpenProfile?.call();
+            },
+            child: _NavItem(icon: items[i].$1, label: items[i].$2, selected: i == 1),
+          ),
       ]),
     );
   }

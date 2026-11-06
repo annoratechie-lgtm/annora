@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from typing import Any
 from uuid import UUID
 
 import httpx
@@ -10,9 +12,16 @@ from app.core.config import settings
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-async def require_authenticated_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
-) -> str:
+@dataclass(frozen=True)
+class AuthenticatedUser:
+    id: str
+    email: str | None
+    user_metadata: dict[str, Any]
+
+
+async def _get_authenticated_user(
+    credentials: HTTPAuthorizationCredentials | None,
+) -> AuthenticatedUser:
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -57,8 +66,8 @@ async def require_authenticated_user(
         )
 
     try:
-        authenticated_user_id = response.json().get("id")
-        user_id = str(UUID(authenticated_user_id))
+        user_data = response.json()
+        user_id = str(UUID(user_data.get("id")))
     except (AttributeError, TypeError, ValueError) as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -66,4 +75,22 @@ async def require_authenticated_user(
             headers={"WWW-Authenticate": "Bearer"},
         ) from exc
 
-    return user_id
+    raw_metadata = user_data.get("user_metadata")
+    raw_email = user_data.get("email")
+    return AuthenticatedUser(
+        id=user_id,
+        email=raw_email if isinstance(raw_email, str) else None,
+        user_metadata=raw_metadata if isinstance(raw_metadata, dict) else {},
+    )
+
+
+async def require_authenticated_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> str:
+    return (await _get_authenticated_user(credentials)).id
+
+
+async def require_authenticated_user_details(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> AuthenticatedUser:
+    return await _get_authenticated_user(credentials)

@@ -4,7 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MealPlanApiException implements Exception {
   final String message;
-  MealPlanApiException(this.message);
+  final int? statusCode;
+  MealPlanApiException(this.message, {this.statusCode});
 
   @override
   String toString() => message;
@@ -118,6 +119,7 @@ class MealPlanApi {
       final detail = body is Map<String, dynamic> ? body['detail'] : null;
       throw MealPlanApiException(
         detail?.toString() ?? 'Meal plan request failed (${response.statusCode}).',
+        statusCode: response.statusCode,
       );
     }
     if (body is! Map<String, dynamic>) {

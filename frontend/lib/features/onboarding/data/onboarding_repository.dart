@@ -15,11 +15,13 @@ class OnboardingProfile {
     required this.onboardingCompleted,
   });
 
-  factory OnboardingProfile.fromMap(Map<String, dynamic> map) => OnboardingProfile(
+  factory OnboardingProfile.fromMap(Map<String, dynamic> map) =>
+      OnboardingProfile(
         familySize: map['family_size'] as int,
         monthlyBudget: (map['monthly_budget'] as num).toDouble(),
         dietaryPreference: map['dietary_preference'] as String,
-        dietaryGoals: (map['dietary_goals'] as List<dynamic>? ?? []).cast<String>(),
+        dietaryGoals:
+            (map['dietary_goals'] as List<dynamic>? ?? []).cast<String>(),
         onboardingCompleted: map['onboarding_completed'] as bool,
       );
 }
@@ -41,6 +43,52 @@ class OnboardingRepository {
     return OnboardingProfile.fromMap(row);
   }
 
+  Future<List<String>> fetchDietaryExclusions() async {
+    final rows = await _client
+        .from('dietary_exclusions')
+        .select('ingredient_name')
+        .eq('user_id', _userId)
+        .order('ingredient_name');
+    return rows.map((row) => row['ingredient_name'] as String).toList();
+  }
+
+  Future<void> updateProfile({
+    required int familySize,
+    required double monthlyBudget,
+    required String dietaryPreference,
+    required List<String> dietaryGoals,
+    required List<String> exclusions,
+  }) async {
+    final cleanedExclusions = <String>[];
+    final seen = <String>{};
+
+    for (final exclusion in exclusions) {
+      final value = exclusion.trim();
+      if (value.isNotEmpty && seen.add(value.toLowerCase())) {
+        cleanedExclusions.add(value);
+      }
+    }
+
+    await _client.from('onboarding_profiles').update({
+      'family_size': familySize,
+      'monthly_budget': monthlyBudget,
+      'dietary_preference': dietaryPreference,
+      'dietary_goals': dietaryGoals,
+    }).eq('user_id', _userId);
+
+    await _client.from('dietary_exclusions').delete().eq('user_id', _userId);
+    if (cleanedExclusions.isNotEmpty) {
+      await _client.from('dietary_exclusions').insert(
+            cleanedExclusions
+                .map((ingredient) => {
+                      'user_id': _userId,
+                      'ingredient_name': ingredient,
+                    })
+                .toList(),
+          );
+    }
+  }
+
   /// Saves the household information collected in onboarding step 1.
   /// Dietary goals are collected in the following step and saved by
   /// completeOnboarding().
@@ -49,14 +97,11 @@ class OnboardingRepository {
     required double monthlyBudget,
     required String dietaryPreference,
   }) async {
-    await _client
-        .from('onboarding_profiles')
-        .update({
-          'family_size': familySize,
-          'monthly_budget': monthlyBudget,
-          'dietary_preference': dietaryPreference,
-        })
-        .eq('user_id', _userId);
+    await _client.from('onboarding_profiles').update({
+      'family_size': familySize,
+      'monthly_budget': monthlyBudget,
+      'dietary_preference': dietaryPreference,
+    }).eq('user_id', _userId);
   }
 
   /// Saves the final onboarding preferences, replaces dietary exclusions,
@@ -75,32 +120,25 @@ class OnboardingRepository {
       }
     }
 
-    await _client
-        .from('dietary_exclusions')
-        .delete()
-        .eq('user_id', _userId);
+    await _client.from('dietary_exclusions').delete().eq('user_id', _userId);
 
     if (cleanedExclusions.isNotEmpty) {
       await _client.from('dietary_exclusions').insert(
-        cleanedExclusions
-            .map(
-              (ingredient) => {
-                'user_id': _userId,
-                'ingredient_name': ingredient,
-              },
-            )
-            .toList(),
-      );
+            cleanedExclusions
+                .map(
+                  (ingredient) => {
+                    'user_id': _userId,
+                    'ingredient_name': ingredient,
+                  },
+                )
+                .toList(),
+          );
     }
 
-    await _client
-        .from('onboarding_profiles')
-        .update({
-          'dietary_goals': dietaryGoals,
-          'onboarding_completed': true,
-          'onboarding_completed_at':
-              DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('user_id', _userId);
+    await _client.from('onboarding_profiles').update({
+      'dietary_goals': dietaryGoals,
+      'onboarding_completed': true,
+      'onboarding_completed_at': DateTime.now().toUtc().toIso8601String(),
+    }).eq('user_id', _userId);
   }
 }
