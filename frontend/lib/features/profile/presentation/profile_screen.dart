@@ -96,6 +96,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           controller: controller,
           autofocus: true,
           textCapitalization: TextCapitalization.words,
+          style: const TextStyle(color: _text),
           decoration: const InputDecoration(labelText: 'Name'),
         ),
         actions: [
@@ -133,6 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           controller: controller,
           autofocus: true,
           keyboardType: TextInputType.phone,
+          style: const TextStyle(color: _text),
           decoration: const InputDecoration(
             labelText: 'Phone number',
             hintText: '+91 98765 43210',
@@ -927,6 +929,7 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
                       controller: _budgetController,
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(color: Color(0xFF211C18)),
                       decoration: const InputDecoration(
                         prefixText: '₹ ',
                         border: OutlineInputBorder(),
@@ -978,6 +981,7 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
                             controller: _exclusionController,
                             textCapitalization: TextCapitalization.sentences,
                             onSubmitted: (_) => _addExclusion(),
+                            style: const TextStyle(color: Color(0xFF211C18)),
                             decoration: const InputDecoration(
                               hintText: 'Add an ingredient',
                               border: OutlineInputBorder(),
