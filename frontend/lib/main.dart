@@ -15,6 +15,7 @@ import 'features/onboarding/data/onboarding_repository.dart';
 import 'features/onboarding/presentation/household_basics_screen.dart';
 import 'features/onboarding/presentation/welcome_screen.dart';
 
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
