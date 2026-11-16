@@ -1,4 +1,7 @@
 import json
+import logging
+import random
+import re
 from datetime import date, timedelta
 import instructor
 import httpx
@@ -182,11 +185,86 @@ async def generate_meal_plan(context: MealPlanningContext, start_date: date):
         raise RuntimeError(f"Groq request failed: {exc}") from exc
     content = json.loads(response.model_dump_json(indent=2))
     content = format_meal_plan_output(content)
-  
+
     if not content:
         raise RuntimeError("Groq returned an empty meal plan response.")
 
-    return content
+    return sanitize_meal_plan(content, recipe_reference)
+
+
+logger = logging.getLogger(__name__)
+
+# Recipe codes look like ASC113, BFP153, OSR107.
+_RECIPE_CODE_RE = re.compile(r"[A-Z]{2,}\d+")
+
+
+def _extract_codes(value, allowed: set[str]) -> list[str]:
+    """Pull valid recipe codes out of whatever the LLM returned for one item.
+
+    The model is shown recipes as "Name-CODE" and sometimes echoes that whole
+    string ("Plain Pulao-ASC114"), or packs two codes into one string
+    ("ASC226, ASC113"). Keep only codes that exist in the recipe reference.
+    """
+    if not isinstance(value, str):
+        return []
+    text = value.strip().upper()
+    if text in allowed:
+        return [text]
+    return [code for code in _RECIPE_CODE_RE.findall(text) if code in allowed]
+
+
+def _pick_fallback(candidates: list[str], avoid: set[str]) -> str | None:
+    pool = [c for c in candidates if c not in avoid] or candidates
+    return random.choice(pool) if pool else None
+
+
+def sanitize_meal_plan(plan: dict, recipe_reference: list[dict]) -> dict:
+    """Normalise LLM output so every saved meal uses a real recipe code.
+
+    Invalid or invented codes are dropped; a meal left empty is filled from the
+    same category (breakfast, or a main course + staple pair) so a plan never
+    ends up with unnamed "NA" meals.
+    """
+    by_category: dict[str, list[str]] = {}
+    for recipe in recipe_reference:
+        code = recipe.get("source_recipe_code")
+        if isinstance(code, str) and code.strip():
+            by_category.setdefault(recipe.get("category") or "", []).append(code.strip().upper())
+    allowed = {code for codes in by_category.values() for code in codes}
+
+    previous: dict[str, set[str]] = {"breakfast": set(), "lunch": set(), "dinner": set()}
+    for meal_date in sorted(plan):
+        meals = plan[meal_date] or {}
+
+        breakfast_codes = _extract_codes(meals.get("breakfast"), allowed)
+        breakfast = breakfast_codes[0] if breakfast_codes else None
+        if breakfast is None:
+            breakfast = _pick_fallback(by_category.get("breakfast", []), previous["breakfast"])
+            logger.warning("Meal plan %s: replaced invalid breakfast %r with %s",
+                           meal_date, meals.get("breakfast"), breakfast)
+        meals["breakfast"] = breakfast
+        previous["breakfast"] = {breakfast} if breakfast else set()
+
+        for meal_type in ("lunch", "dinner"):
+            raw = meals.get(meal_type) or []
+            if isinstance(raw, str):
+                raw = [raw]
+            codes: list[str] = []
+            for item in raw:
+                for code in _extract_codes(item, allowed):
+                    if code not in codes:
+                        codes.append(code)
+            if not codes:
+                main = _pick_fallback(by_category.get("main_course", []), previous[meal_type])
+                staple = _pick_fallback(by_category.get("staple", []), set())
+                codes = [c for c in (main, staple) if c]
+                logger.warning("Meal plan %s: replaced invalid %s %r with %s",
+                               meal_date, meal_type, raw, codes)
+            meals[meal_type] = codes
+            previous[meal_type] = set(codes)
+
+        plan[meal_date] = meals
+    return plan
 
 def format_meal_plan_output(recipes):
     formatted_output = {}

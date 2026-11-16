@@ -109,14 +109,20 @@ async def save_meal_plan(user_id: str, start_date: date, plan) -> str:
             recipe_mapping = await client.get(
                             f"{base_url}/rest/v1/recipes",
                             params={
-                                "select": "source_recipe_code,recipe_name",
+                                "select": "source_recipe_code,recipe_name,recipe_display_name",
                                 "source_recipe_code": f"in.({','.join(codes)})",
                                 "status": "eq.active",
                             },
                             headers=headers,
                         )
             recipes = recipe_mapping.json()
-            recipes = {r["source_recipe_code"]: r["recipe_name"] for r in recipes if "source_recipe_code" in r and "recipe_name" in r}
+            # Prefer the human-friendly display name ("Boiled rice (Uble chawal)")
+            # over the raw dataset name ("BOILED RICE").
+            recipes = {
+                r["source_recipe_code"]: (r.get("recipe_display_name") or "").strip() or r["recipe_name"]
+                for r in recipes
+                if r.get("source_recipe_code") and r.get("recipe_name")
+            }
             meal_rows = []
             for meal_date, meals in sorted(plan.items()):
                 current_date = date.fromisoformat(meal_date).isoformat()
