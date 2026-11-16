@@ -24,9 +24,13 @@ app = FastAPI(
 
 # Flutter Web uses a separate development origin from FastAPI. The port can vary
 # by launch command, so allow localhost origins on any port during development.
+_origin_regex = r"^http://(localhost|127\.0\.0\.1)(:\d+)?$"
+if settings.allowed_origin_regex.strip():
+    _origin_regex = f"(?:{_origin_regex})|(?:{settings.allowed_origin_regex.strip()})"
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"^http://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_origin_regex=_origin_regex,
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",

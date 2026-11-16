@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     # Extra browser origins allowed to call the API (comma-separated), e.g. the
     # Vercel URL of a dev/staging frontend. Production's origin is always allowed.
     allowed_origins: str = ""
+    # Optional regex for extra allowed origins, e.g. every Vercel preview URL
+    # of the frontend project: ^https://annora-frontend-[a-z0-9-]+-annora4\.vercel\.app$
+    allowed_origin_regex: str = ""
 
     # LLM-compatible provider configuration. Keep the API key server-side.
     llm_api_key: str = ""
