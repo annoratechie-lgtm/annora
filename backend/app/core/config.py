@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     supabase_service_role_key: str = ""
     dev_user_id: str = ""
 
+    # Extra browser origins allowed to call the API (comma-separated), e.g. the
+    # Vercel URL of a dev/staging frontend. Production's origin is always allowed.
+    allowed_origins: str = ""
+
     # LLM-compatible provider configuration. Keep the API key server-side.
     llm_api_key: str = ""
     llm_base_url: str = "https://api.x.ai/v1"

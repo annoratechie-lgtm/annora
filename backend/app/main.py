@@ -33,7 +33,9 @@ app.add_middleware(
         "http://localhost:7357",
         "http://127.0.0.1:7357",
         # "https://annorasave.netlify.app",
-        "https://annora-frontend.vercel.app"
+        "https://annora-frontend.vercel.app",
+        # Per-environment extras (e.g. the dev frontend), set via ALLOWED_ORIGINS.
+        *[o.strip().rstrip("/") for o in settings.allowed_origins.split(",") if o.strip()],
     ],
     allow_credentials=True,
     allow_methods=["*"],
