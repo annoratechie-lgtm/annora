@@ -14,6 +14,7 @@ ROUTES = [
     ("get", "/api/v1/meal-plans/plan-1/grocery-list?user_id={uid}"),
     ("post", "/api/v1/meal-plans/plan-1/ingredients?user_id={uid}"),
     ("post", "/api/v1/meal-plans/plan-1/grocery-list?user_id={uid}"),
+    ("patch", "/api/v1/meal-plans/plan-1/grocery-list/items/item-1?user_id={uid}"),
 ]
 
 
@@ -34,19 +35,25 @@ def client(monkeypatch):
     return TestClient(app)
 
 
+def call(client, method, path, **kwargs):
+    if method == "patch":
+        kwargs["json"] = {"is_purchased": True}
+    return getattr(client, method)(path, **kwargs)
+
+
 @pytest.mark.parametrize("method,path", ROUTES)
 def test_no_token_is_rejected(client, method, path):
-    r = getattr(client, method)(path.format(uid="user-a"))
+    r = call(client, method, path.format(uid="user-a"))
     assert r.status_code == 401
 
 
 @pytest.mark.parametrize("method,path", ROUTES)
 def test_someone_elses_user_id_is_forbidden(client, method, path):
-    r = getattr(client, method)(path.format(uid="user-b"), headers={"Authorization": "Bearer token-a"})
+    r = call(client, method, path.format(uid="user-b"), headers={"Authorization": "Bearer token-a"})
     assert r.status_code == 403
 
 
 @pytest.mark.parametrize("method,path", ROUTES)
 def test_own_user_id_passes_the_guard(client, method, path):
-    r = getattr(client, method)(path.format(uid="user-a"), headers={"Authorization": "Bearer token-a"})
+    r = call(client, method, path.format(uid="user-a"), headers={"Authorization": "Bearer token-a"})
     assert r.status_code == 503  # reached the handler; Supabase is deliberately unconfigured

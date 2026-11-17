@@ -3,6 +3,7 @@ import httpx
 
 from app.core.auth import require_matching_user
 from app.core.config import settings
+from app.services.grocery_list_service import display_name
 
 router = APIRouter(prefix="/meal-plans", tags=["meal-plan-reads"])
 
@@ -127,7 +128,10 @@ async def get_meal_plan_ingredients(meal_id: str, user_id: str, _: str = Depends
                     "meal_type": meal["meal_type"],
                     "source_recipe_code": meal.get("source_recipe_code"),
                     "name": meal["name"],
-                    "ingredients": meal_ingredients,
+                    "ingredients": [
+                        dict(item, display_name=display_name(item.get("food_name", "")))
+                        for item in meal_ingredients
+                    ],
                 })
             return {"meal_plan_id": meal_id, "meals": grouped}
     except httpx.HTTPError as exc:
