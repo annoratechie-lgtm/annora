@@ -29,7 +29,9 @@ class OnboardingProfile {
 /// Talks directly to Supabase for onboarding reads/writes -- see
 /// docs/architecture.md for why onboarding doesn't go through FastAPI.
 class OnboardingRepository {
-  final SupabaseClient _client = Supabase.instance.client;
+  // Looked up lazily so tests can subclass the repository without a
+  // Supabase instance.
+  SupabaseClient get _client => Supabase.instance.client;
 
   String get _userId => _client.auth.currentUser!.id;
 
@@ -59,16 +61,6 @@ class OnboardingRepository {
     required List<String> dietaryGoals,
     required List<String> exclusions,
   }) async {
-    final cleanedExclusions = <String>[];
-    final seen = <String>{};
-
-    for (final exclusion in exclusions) {
-      final value = exclusion.trim();
-      if (value.isNotEmpty && seen.add(value.toLowerCase())) {
-        cleanedExclusions.add(value);
-      }
-    }
-
     await _client.from('onboarding_profiles').update({
       'family_size': familySize,
       'monthly_budget': monthlyBudget,
@@ -76,10 +68,39 @@ class OnboardingRepository {
       'dietary_goals': dietaryGoals,
     }).eq('user_id', _userId);
 
+    await _replaceExclusions(exclusions);
+  }
+
+  /// Saves everything collected on the single-page onboarding screen.
+  ///
+  /// Exclusions are written first and `onboarding_completed` is set last, in
+  /// the same update as the household fields. If any step fails the user is
+  /// not marked as onboarded, so tapping the button again simply retries.
+  Future<void> saveOnboarding({
+    required int familySize,
+    required double monthlyBudget,
+    required String dietaryPreference,
+    required List<String> dietaryGoals,
+    required List<String> exclusions,
+  }) async {
+    await _replaceExclusions(exclusions);
+
+    await _client.from('onboarding_profiles').update({
+      'family_size': familySize,
+      'monthly_budget': monthlyBudget,
+      'dietary_preference': dietaryPreference,
+      'dietary_goals': dietaryGoals,
+      'onboarding_completed': true,
+      'onboarding_completed_at': DateTime.now().toUtc().toIso8601String(),
+    }).eq('user_id', _userId);
+  }
+
+  Future<void> _replaceExclusions(List<String> exclusions) async {
+    final cleaned = cleanExclusions(exclusions);
     await _client.from('dietary_exclusions').delete().eq('user_id', _userId);
-    if (cleanedExclusions.isNotEmpty) {
+    if (cleaned.isNotEmpty) {
       await _client.from('dietary_exclusions').insert(
-            cleanedExclusions
+            cleaned
                 .map((ingredient) => {
                       'user_id': _userId,
                       'ingredient_name': ingredient,
@@ -88,57 +109,16 @@ class OnboardingRepository {
           );
     }
   }
+}
 
-  /// Saves the household information collected in onboarding step 1.
-  /// Dietary goals are collected in the following step and saved by
-  /// completeOnboarding().
-  Future<void> saveHouseholdBasics({
-    required int familySize,
-    required double monthlyBudget,
-    required String dietaryPreference,
-  }) async {
-    await _client.from('onboarding_profiles').update({
-      'family_size': familySize,
-      'monthly_budget': monthlyBudget,
-      'dietary_preference': dietaryPreference,
-    }).eq('user_id', _userId);
+/// Trims, collapses spaces, drops blanks and removes case-insensitive
+/// duplicates, keeping the first spelling the user entered.
+List<String> cleanExclusions(Iterable<String> exclusions) {
+  final cleaned = <String>[];
+  final seen = <String>{};
+  for (final exclusion in exclusions) {
+    final value = exclusion.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (value.isNotEmpty && seen.add(value.toLowerCase())) cleaned.add(value);
   }
-
-  /// Saves the final onboarding preferences, replaces dietary exclusions,
-  /// and marks the onboarding profile as complete.
-  Future<void> completeOnboarding({
-    required List<String> dietaryGoals,
-    required List<String> exclusions,
-  }) async {
-    final cleanedExclusions = <String>[];
-    final seen = <String>{};
-
-    for (final exclusion in exclusions) {
-      final value = exclusion.trim();
-      if (value.isNotEmpty && seen.add(value.toLowerCase())) {
-        cleanedExclusions.add(value);
-      }
-    }
-
-    await _client.from('dietary_exclusions').delete().eq('user_id', _userId);
-
-    if (cleanedExclusions.isNotEmpty) {
-      await _client.from('dietary_exclusions').insert(
-            cleanedExclusions
-                .map(
-                  (ingredient) => {
-                    'user_id': _userId,
-                    'ingredient_name': ingredient,
-                  },
-                )
-                .toList(),
-          );
-    }
-
-    await _client.from('onboarding_profiles').update({
-      'dietary_goals': dietaryGoals,
-      'onboarding_completed': true,
-      'onboarding_completed_at': DateTime.now().toUtc().toIso8601String(),
-    }).eq('user_id', _userId);
-  }
+  return cleaned;
 }

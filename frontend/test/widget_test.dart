@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -23,8 +24,12 @@ void main() {
         url: 'https://example.supabase.co', anonKey: 'test-anon-key');
   });
 
-  testWidgets('App boots and shows Annora title', (WidgetTester tester) async {
+  testWidgets('App boots and shows the Annora wordmark', (WidgetTester tester) async {
     await tester.pumpWidget(const ProviderScope(child: AnnoraApp()));
-    expect(find.text('Annora'), findsOneWidget);
+    // The welcome screen shows the wordmark as an image (semantic label "Annora").
+    expect(
+      find.byWidgetPredicate((w) => w is Image && w.semanticLabel == 'Annora'),
+      findsOneWidget,
+    );
   });
 }

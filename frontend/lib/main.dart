@@ -12,9 +12,8 @@ import 'features/home/presentation/home_screen.dart';
 import 'features/profile/data/user_profile_api.dart';
 import 'features/profile/presentation/profile_screen.dart';
 import 'features/onboarding/data/onboarding_repository.dart';
-import 'features/onboarding/presentation/household_basics_screen.dart';
+import 'features/onboarding/presentation/onboarding_screen.dart';
 import 'features/onboarding/presentation/welcome_screen.dart';
-
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -63,27 +62,66 @@ class AnnoraApp extends StatelessWidget {
               : Supabase.instance.client.auth.currentSession;
           if (session == null) return const WelcomeScreen();
 
-          return FutureBuilder<OnboardingProfile?>(
-            future: OnboardingRepository().fetchProfile(),
-            builder: (context, profileSnapshot) {
-              if (profileSnapshot.connectionState != ConnectionState.done) {
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
-
-              final profile = profileSnapshot.data;
-              return profile?.onboardingCompleted == true
-                  ? PostOnboardingShell(
-                      api: mealPlanApi,
-                      assistantApi: assistantApi,
-                      userProfileApi: userProfileApi,
-                    )
-                  : HouseholdBasicsScreen(profileApi: userProfileApi);
-            },
+          return _OnboardingGate(
+            key: ValueKey(session.user.id),
+            mealPlanApi: mealPlanApi,
+            assistantApi: assistantApi,
+            userProfileApi: userProfileApi,
           );
         },
       ),
+    );
+  }
+}
+
+/// Shows onboarding until the signed-in user's profile is complete, then the
+/// main app. Fetches the profile once per user (not on every rebuild) and
+/// re-checks it when onboarding finishes.
+class _OnboardingGate extends StatefulWidget {
+  final MealPlanApi mealPlanApi;
+  final AssistantApi assistantApi;
+  final UserProfileApi userProfileApi;
+
+  const _OnboardingGate({
+    super.key,
+    required this.mealPlanApi,
+    required this.assistantApi,
+    required this.userProfileApi,
+  });
+
+  @override
+  State<_OnboardingGate> createState() => _OnboardingGateState();
+}
+
+class _OnboardingGateState extends State<_OnboardingGate> {
+  late Future<OnboardingProfile?> _profile =
+      OnboardingRepository().fetchProfile();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<OnboardingProfile?>(
+      future: _profile,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
+        }
+        if (snapshot.data?.onboardingCompleted == true) {
+          return PostOnboardingShell(
+            api: widget.mealPlanApi,
+            assistantApi: widget.assistantApi,
+            userProfileApi: widget.userProfileApi,
+          );
+        }
+        return OnboardingScreen(
+          saveProfile: ({required String name, String? phone}) async {
+            await widget.userProfileApi.syncProfile(name: name, phone: phone);
+          },
+          onCompleted: () => setState(() {
+            _profile = OnboardingRepository().fetchProfile();
+          }),
+        );
+      },
     );
   }
 }
