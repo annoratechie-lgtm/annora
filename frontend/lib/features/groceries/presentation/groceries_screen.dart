@@ -1,18 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/annora_ui.dart';
 import '../../meal_plan/data/meal_plan_api.dart';
+import '../../meal_plan/data/plan_models.dart';
+import '../../onboarding/data/onboarding_repository.dart';
 
 /// Builds the grocery list for a meal plan. The backend needs the plan's
 /// ingredients saved first (POST /ingredients), then aggregates them into the
-/// list (POST /grocery-list). Both calls replace earlier rows, so retrying is safe.
+/// list (POST /grocery-list). Both replace earlier rows, so retrying is safe;
+/// the backend keeps items the user had already ticked.
 Future<void> makeGroceryList(MealPlanApi api, String planId) async {
   await api.generateIngredients(planId);
   await api.generateGroceryList(planId);
 }
 
+/// Aisle order on screen; Pantry is shown separately as "Pantry check".
+const groceryCategoryOrder = [
+  'Vegetables & herbs',
+  'Fruits',
+  'Dairy',
+  'Grains & flours',
+  'Dals & pulses',
+  'Other'
+];
+const pantryCategory = 'Pantry';
+
 /// One saved grocery item, as returned by GET /meal-plans/{id}/grocery-list.
 class GroceryItem {
+  final String id;
   final String name;
   final double quantity;
   final String unit;
@@ -21,6 +38,7 @@ class GroceryItem {
   final bool urgent;
 
   const GroceryItem({
+    required this.id,
     required this.name,
     required this.quantity,
     required this.unit,
@@ -29,25 +47,32 @@ class GroceryItem {
     required this.urgent,
   });
 
-  factory GroceryItem.fromMap(Map<String, dynamic> m) => GroceryItem(
-        name: (m['ingredient_name'] ?? '').toString(),
-        quantity: double.tryParse(
-                '${m['purchase_quantity'] ?? m['required_quantity'] ?? 0}') ??
-            0,
-        unit: (m['unit'] ?? '').toString(),
-        category: _titleCase((m['category'] ?? '').toString().trim().isEmpty
-            ? 'Other'
-            : m['category'].toString()),
-        purchased: m['is_purchased'] == true,
-        urgent: m['is_urgent'] == true,
+  factory GroceryItem.fromMap(Map<String, dynamic> m) {
+    final category = (m['category'] ?? '').toString().trim();
+    return GroceryItem(
+      id: (m['id'] ?? '').toString(),
+      name: (m['ingredient_name'] ?? '').toString(),
+      quantity: double.tryParse(
+              '${m['purchase_quantity'] ?? m['required_quantity'] ?? 0}') ??
+          0,
+      unit: (m['unit'] ?? '').toString(),
+      category: category.isEmpty ? 'Other' : category,
+      purchased: m['is_purchased'] == true,
+      urgent: m['is_urgent'] == true,
+    );
+  }
+
+  GroceryItem copyWith({bool? purchased}) => GroceryItem(
+        id: id,
+        name: name,
+        quantity: quantity,
+        unit: unit,
+        category: category,
+        purchased: purchased ?? this.purchased,
+        urgent: urgent,
       );
 
-  static String _titleCase(String s) => s
-      .replaceAll('_', ' ')
-      .split(' ')
-      .where((w) => w.isNotEmpty)
-      .map((w) => '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
-      .join(' ');
+  bool get isPantry => category == pantryCategory;
 }
 
 List<GroceryItem> parseGroceryItems(Map<String, dynamic> response) {
@@ -66,297 +91,477 @@ String formatQuantity(double value, String unit) {
           .toStringAsFixed(2)
           .replaceFirst(RegExp(r'0+$'), '')
           .replaceFirst(RegExp(r'\.$'), '');
-  return unit.isEmpty ? number : '$number $unit';
+  if (unit.isEmpty || unit == 'piece') return number;
+  return '$number $unit';
 }
 
-const _bg = AppColors.background;
-const _card = Color(0xFF1E1815);
-const _line = Color(0x14FFFFFF);
+/// Known aisles first, then any other category present (items are never hidden).
+List<String> categoriesFor(Iterable<GroceryItem> items) => [
+      ...groceryCategoryOrder,
+      ...{
+        for (final i in items)
+          if (!i.isPantry && !groceryCategoryOrder.contains(i.category))
+            i.category
+      },
+    ];
+
+/// Plain-text list for sharing (what's left to buy, by aisle).
+String shareText(List<GroceryItem> items, String heading) {
+  final buffer = StringBuffer('$heading\n');
+  for (final category in categoriesFor(items)) {
+    final left =
+        items.where((i) => i.category == category && !i.purchased).toList();
+    if (left.isEmpty) continue;
+    buffer.writeln('\n${category.toUpperCase()}');
+    for (final i in left) {
+      buffer.writeln('- ${i.name}: ${formatQuantity(i.quantity, i.unit)}');
+    }
+  }
+  final pantry = items
+      .where((i) => i.isPantry && !i.purchased)
+      .map((i) => i.name)
+      .toList();
+  if (pantry.isNotEmpty) buffer.writeln('\nCHECK PANTRY\n${pantry.join(', ')}');
+  return buffer.toString().trimRight();
+}
 
 class GroceriesScreen extends StatefulWidget {
   final MealPlanApi api;
+  final OnboardingRepository? repository;
   final bool isActive;
   final VoidCallback? onOpenHome;
 
   const GroceriesScreen(
-      {super.key, required this.api, this.isActive = true, this.onOpenHome});
+      {super.key,
+      required this.api,
+      this.repository,
+      this.isActive = true,
+      this.onOpenHome});
 
   @override
   State<GroceriesScreen> createState() => _GroceriesScreenState();
 }
 
 class _GroceriesScreenState extends State<GroceriesScreen> {
-  late Future<_GroceryState> _state = _load();
+  late Future<void> _loading = _load();
+  String? _planId;
+  List<DateTime> _days = const [];
+  int? _household;
+  List<GroceryItem>? _items; // null = no list yet
   bool _building = false;
+  bool _confirmRebuild = false;
+  final _saving = <String>{};
 
   @override
   void didUpdateWidget(covariant GroceriesScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.isActive && widget.isActive)
-      setState(() => _state = _load());
+      setState(() {
+        _loading = _load();
+      });
   }
 
-  Future<_GroceryState> _load() async {
-    final Map<String, dynamic> plan;
+  Future<void> _load() async {
+    try {
+      _household =
+          (await (widget.repository ?? OnboardingRepository()).fetchProfile())
+              ?.familySize;
+    } catch (_) {}
+    Map<String, dynamic> plan;
     try {
       plan = await widget.api.fetchMealPlan();
     } on MealPlanApiException catch (e) {
-      if (e.statusCode == 404) return const _GroceryState(planId: null);
+      if (e.statusCode == 404) {
+        _planId = null;
+        _items = null;
+        return;
+      }
       rethrow;
     }
-    final info = plan['meal_plan'];
-    final planId = info is Map ? info['id']?.toString() : null;
-    if (planId == null) return const _GroceryState(planId: null);
+    final parsed = parsePlan(plan);
+    _planId = parsed.planId;
+    _days = parsed.days;
+    if (_planId == null) return;
     try {
-      final list = await widget.api.fetchGroceryList(planId);
-      return _GroceryState(planId: planId, items: parseGroceryItems(list));
+      _items = parseGroceryItems(await widget.api.fetchGroceryList(_planId!));
     } on MealPlanApiException catch (e) {
-      if (e.statusCode == 404) return _GroceryState(planId: planId);
-      rethrow;
+      if (e.statusCode != 404) rethrow;
+      _items = null;
     }
   }
 
-  Future<void> _build(String planId) async {
-    if (_building) return;
-    setState(() => _building = true);
+  Future<void> _build() async {
+    if (_building || _planId == null) return;
+    setState(() {
+      _building = true;
+      _confirmRebuild = false;
+    });
     try {
-      await makeGroceryList(widget.api, planId);
-      if (mounted) setState(() => _state = _load());
+      await makeGroceryList(widget.api, _planId!);
+      await _load();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Couldn't make the grocery list: $e")));
-      }
+      _snack("Couldn't make the grocery list: $e");
     } finally {
       if (mounted) setState(() => _building = false);
     }
   }
 
+  /// Optimistic tick: update the screen now, PATCH the backend, undo on failure.
+  Future<void> _toggle(GroceryItem item) async {
+    if (_planId == null || _saving.contains(item.id)) return;
+    final next = !item.purchased;
+    setState(() {
+      _saving.add(item.id);
+      _items = [
+        for (final i in _items!)
+          i.id == item.id ? i.copyWith(purchased: next) : i
+      ];
+    });
+    try {
+      await widget.api.setGroceryItemPurchased(_planId!, item.id, next);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _items = [
+            for (final i in _items!)
+              i.id == item.id ? i.copyWith(purchased: !next) : i
+          ]);
+      _snack("Couldn't save that. Check your connection and try again.");
+    } finally {
+      if (mounted) setState(() => _saving.remove(item.id));
+    }
+  }
+
+  Future<void> _share() async {
+    final heading =
+        'Annora grocery list${_days.isEmpty ? '' : ' (${_range()})'}';
+    await Clipboard.setData(
+        ClipboardData(text: shareText(_items ?? const [], heading)));
+    _snack('List copied. Paste it into WhatsApp or your notes.');
+  }
+
+  void _snack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _range() {
+    if (_days.isEmpty) return '';
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
+    final a = _days.first, b = _days.last;
+    return a.month == b.month
+        ? '${a.day}–${b.day} ${months[b.month - 1]}'
+        : '${a.day} ${months[a.month - 1]} – ${b.day} ${months[b.month - 1]}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bg,
-      body: SafeArea(
-        bottom: false,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: FutureBuilder<_GroceryState>(
-              future: _state,
-              builder: (context, snap) {
-                if (snap.connectionState != ConnectionState.done) {
-                  return const Center(
-                      child:
-                          CircularProgressIndicator(color: AppColors.orange));
-                }
-                if (snap.hasError) {
-                  return _Message(
-                    title: "Couldn't load groceries",
-                    body: '${snap.error}',
-                    action: 'Try again',
-                    onAction: () => setState(() => _state = _load()),
-                  );
-                }
-                final state = snap.data!;
-                if (state.planId == null) {
-                  return _Message(
-                    title: 'Plan your week first',
-                    body: 'Your grocery list is built from your meal plan.',
-                    action: 'Go to Home',
-                    onAction: widget.onOpenHome,
-                  );
-                }
-                if (state.items == null) {
-                  return _Message(
-                    title: 'No grocery list yet',
-                    body: "Turn this week's plan into one shopping list.",
-                    action: _building ? null : 'Make grocery list',
-                    busy: _building,
-                    onAction: () => _build(state.planId!),
-                  );
-                }
-                return _buildList(state);
-              },
+    return AnnoraPage(
+      child: FutureBuilder<void>(
+        future: _loading,
+        builder: (context, snap) {
+          if (snap.connectionState != ConnectionState.done) {
+            return const Center(
+                child: CircularProgressIndicator(color: AppColors.orange));
+          }
+          if (snap.hasError) {
+            return EmptyState(
+              icon: Icons.cloud_off_outlined,
+              title: "Couldn't load groceries",
+              body: '${snap.error}',
+              action: 'Try again',
+              onAction: () => setState(() {
+                _loading = _load();
+              }),
+            );
+          }
+          if (_planId == null) {
+            return EmptyState(
+              icon: Icons.shopping_bag_outlined,
+              title: 'Plan your week first',
+              body: 'Your grocery list is built from your meal plan.',
+              action: 'Go to Home',
+              onAction: widget.onOpenHome,
+            );
+          }
+          if (_items == null) {
+            return EmptyState(
+              icon: Icons.shopping_bag_outlined,
+              title: 'No grocery list yet',
+              body:
+                  "Turn this week's plan into one shopping list${_household != null ? ' for $_household ${_household == 1 ? 'person' : 'people'}' : ''}.",
+              action: 'Make grocery list',
+              busy: _building,
+              onAction: _build,
+            );
+          }
+          return RefreshIndicator(
+            color: AppColors.orange,
+            onRefresh: () async {
+              await _load();
+              if (mounted) setState(() {});
+            },
+            child: _list(),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _list() {
+    final items = _items!;
+    final shopping = items.where((i) => !i.isPantry).toList();
+    final pantry = items.where((i) => i.isPantry).toList();
+    final done = shopping.where((i) => i.purchased).length;
+    final basket = shopping.where((i) => i.purchased).toList();
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
+      children: [
+        PageTitle(
+          title: 'Groceries',
+          subtitle: [
+            if (_days.isNotEmpty) 'For ${_range()}',
+            if (_household != null)
+              '$_household ${_household == 1 ? 'person' : 'people'}',
+          ].join(' · '),
+          trailing: GhostButton(label: 'Share list', onTap: _share),
+        ),
+        const SizedBox(height: 16),
+        ACard(
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Expanded(
+                child: Text('$done of ${shopping.length} bought',
+                    style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15)),
+              ),
+              Text('${shopping.length - done} left',
+                  style: const TextStyle(
+                      color: AppColors.textFaint, fontSize: 12.5)),
+            ]),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: shopping.isEmpty ? 0 : done / shopping.length,
+                minHeight: 6,
+                backgroundColor: const Color(0x14FFFFFF),
+                color: AppColors.orange,
+              ),
+            ),
+          ]),
+        ),
+        const SizedBox(height: 18),
+        for (final category in categoriesFor(shopping))
+          ..._section(category, shopping),
+        if (basket.isNotEmpty)
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              key: const Key('basket'),
+              tilePadding: const EdgeInsets.symmetric(horizontal: 2),
+              childrenPadding: EdgeInsets.zero,
+              iconColor: AppColors.textMuted,
+              collapsedIconColor: AppColors.textMuted,
+              title: Text('In your basket (${basket.length})',
+                  style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13.5)),
+              children: [_itemsCard(basket)],
+            ),
+          ),
+        if (pantry.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          ACard(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                const Expanded(
+                  child: Text('Pantry check',
+                      style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w600)),
+                ),
+                Text(
+                    '${pantry.where((i) => i.purchased).length} of ${pantry.length} at home',
+                    style: const TextStyle(
+                        color: AppColors.textFaint, fontSize: 12.5)),
+              ]),
+              const SizedBox(height: 4),
+              const Text('Small amounts this week. Tap what you already have.',
+                  style: TextStyle(color: AppColors.textFaint, fontSize: 12.5)),
+              const SizedBox(height: 12),
+              Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [for (final p in pantry) _pantryChip(p)]),
+            ]),
+          ),
+        ],
+        const SizedBox(height: 14),
+        ACard(
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Changed your plan?',
+                style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15)),
+            const SizedBox(height: 2),
+            const Text(
+                "Rebuild the list from this week's meals. Ticked items stay ticked.",
+                style: TextStyle(color: AppColors.textFaint, fontSize: 12.5)),
+            const SizedBox(height: 12),
+            if (_confirmRebuild || _building)
+              ConfirmBox(
+                message: 'Rebuild the grocery list now?',
+                confirmLabel: 'Rebuild',
+                busy: _building,
+                onConfirm: _build,
+                onCancel: () => setState(() => _confirmRebuild = false),
+              )
+            else
+              GhostButton(
+                  label: 'Rebuild list',
+                  onTap: () => setState(() => _confirmRebuild = true)),
+          ]),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _section(String category, List<GroceryItem> shopping) {
+    final toBuy =
+        shopping.where((i) => i.category == category && !i.purchased).toList();
+    if (toBuy.isEmpty) return const [];
+    return [
+      SectionLabel(category, trailing: '${toBuy.length}'),
+      _itemsCard(toBuy),
+      const SizedBox(height: 16),
+    ];
+  }
+
+  Widget _itemsCard(List<GroceryItem> items) => Material(
+        color: AnnoraUi.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AnnoraUi.line),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(children: [
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0) const Divider(height: 1, color: AnnoraUi.line),
+            _ItemRow(item: items[i], onTap: () => _toggle(items[i])),
+          ],
+        ]),
+      );
+
+  Widget _pantryChip(GroceryItem item) {
+    final have = item.purchased;
+    return Semantics(
+      button: true,
+      selected: have,
+      label: '${item.name}${have ? ', at home' : ''}',
+      child: Material(
+        color: have ? const Color(0x1F7BC47F) : const Color(0x08FFFFFF),
+        shape: StadiumBorder(
+            side: BorderSide(
+                color: have ? const Color(0x997BC47F) : AnnoraUi.lineStrong)),
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: () => _toggle(item),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 7, 13, 7),
+            child: ExcludeSemantics(
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(have ? Icons.check_rounded : Icons.add_rounded,
+                    size: 15, color: have ? AnnoraUi.ok : AppColors.textFaint),
+                const SizedBox(width: 6),
+                Text(item.name,
+                    style: const TextStyle(
+                        color: AppColors.textPrimary, fontSize: 13.5)),
+              ]),
             ),
           ),
         ),
       ),
     );
   }
-
-  Widget _buildList(_GroceryState state) {
-    final items = state.items!;
-    final byCategory = <String, List<GroceryItem>>{};
-    for (final item in items) {
-      byCategory.putIfAbsent(item.category, () => []).add(item);
-    }
-    final urgent = items.where((i) => i.urgent).length;
-    return RefreshIndicator(
-      color: AppColors.orange,
-      onRefresh: () async => setState(() => _state = _load()),
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-        children: [
-          Row(children: [
-            Expanded(
-              child: Text('Groceries',
-                  style: AppTheme.displayFont.copyWith(
-                      fontSize: 27, color: AppColors.textPrimary, height: 1.1)),
-            ),
-            TextButton(
-              onPressed: _building ? null : () => _build(state.planId!),
-              child: Text(_building ? 'Rebuilding…' : 'Rebuild',
-                  style: const TextStyle(
-                      color: AppColors.orange, fontWeight: FontWeight.w600)),
-            ),
-          ]),
-          Text(
-            '${items.length} items${urgent > 0 ? ' · $urgent urgent' : ''} · for this week\'s plan',
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-          ),
-          const SizedBox(height: 16),
-          for (final entry in byCategory.entries) ...[
-            Padding(
-              padding: const EdgeInsets.only(left: 2, bottom: 8, top: 6),
-              child: Text(entry.key.toUpperCase(),
-                  style: const TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 12,
-                      letterSpacing: 1,
-                      fontWeight: FontWeight.w600)),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: _card,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _line),
-              ),
-              child: Column(children: [
-                for (var i = 0; i < entry.value.length; i++) ...[
-                  if (i > 0)
-                    const Divider(
-                        height: 1, color: _line, indent: 16, endIndent: 16),
-                  _ItemRow(item: entry.value[i]),
-                ],
-              ]),
-            ),
-            const SizedBox(height: 10),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _GroceryState {
-  final String? planId;
-  final List<GroceryItem>? items; // null = no list yet
-
-  const _GroceryState({required this.planId, this.items});
 }
 
 class _ItemRow extends StatelessWidget {
   final GroceryItem item;
-  const _ItemRow({required this.item});
+  final VoidCallback onTap;
+  const _ItemRow({required this.item, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-      child: Row(children: [
-        Expanded(
-          child: Text(item.name,
-              style: TextStyle(
-                color: item.purchased
-                    ? AppColors.textFaint
-                    : AppColors.textPrimary,
-                decoration: item.purchased ? TextDecoration.lineThrough : null,
-                fontSize: 14.5,
-                fontWeight: FontWeight.w500,
-              )),
-        ),
-        if (item.urgent)
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-            decoration: BoxDecoration(
-                color: const Color(0x26FF7A3D),
-                borderRadius: BorderRadius.circular(999)),
-            child: const Text('Urgent',
-                style: TextStyle(
-                    color: AppColors.orange,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600)),
-          ),
-        Text(formatQuantity(item.quantity, item.unit),
-            style: const TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 13,
-                fontFeatures: [FontFeature.tabularFigures()])),
-      ]),
-    );
-  }
-}
-
-class _Message extends StatelessWidget {
-  final String title;
-  final String body;
-  final String? action;
-  final VoidCallback? onAction;
-  final bool busy;
-
-  const _Message(
-      {required this.title,
-      required this.body,
-      this.action,
-      this.onAction,
-      this.busy = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-              color: const Color(0x24FF7A3D),
-              borderRadius: BorderRadius.circular(20)),
-          child: const Icon(Icons.shopping_bag_outlined,
-              color: AppColors.orange, size: 30),
-        ),
-        const SizedBox(height: 16),
-        Text(title,
-            textAlign: TextAlign.center,
-            style: AppTheme.displayFont.copyWith(
-                fontSize: 24, color: AppColors.textPrimary, height: 1.1)),
-        const SizedBox(height: 6),
-        Text(body,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 14)),
-        const SizedBox(height: 20),
-        if (busy)
-          const CircularProgressIndicator(color: AppColors.orange)
-        else if (action != null && onAction != null)
-          SizedBox(
-            height: 52,
-            child: ElevatedButton(
-              onPressed: onAction,
-              style: ElevatedButton.styleFrom(
-                elevation: 0,
-                backgroundColor: AppColors.orange,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 28),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(26)),
+    final done = item.purchased;
+    return Semantics(
+      checked: done,
+      button: true,
+      label: '${item.name}, ${formatQuantity(item.quantity, item.unit)}',
+      child: InkWell(
+        key: Key('item-${item.id}'),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          child: ExcludeSemantics(
+            child: Row(children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: done ? AppColors.orange : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                      color: done ? AppColors.orange : AnnoraUi.lineStrong,
+                      width: 1.5),
+                ),
+                child: done
+                    ? const Icon(Icons.check_rounded,
+                        size: 16, color: Colors.white)
+                    : null,
               ),
-              child: Text(action!,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(item.name,
+                    style: TextStyle(
+                      color: done ? AppColors.textFaint : AppColors.textPrimary,
+                      decoration: done ? TextDecoration.lineThrough : null,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    )),
+              ),
+              Text(formatQuantity(item.quantity, item.unit),
                   style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 15)),
-            ),
+                      color: AppColors.textMuted,
+                      fontSize: 13.5,
+                      fontFeatures: [FontFeature.tabularFigures()])),
+            ]),
           ),
-      ]),
+        ),
+      ),
     );
   }
 }

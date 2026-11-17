@@ -31,7 +31,8 @@ class FakeMealPlanApi implements MealPlanApi {
   @override
   Future<Map<String, dynamic>> fetchGroceryList(String mealPlanId) async {
     calls.add('fetchGroceryList:$mealPlanId');
-    if (groceryList == null) throw MealPlanApiException('Not found', statusCode: 404);
+    if (groceryList == null)
+      throw MealPlanApiException('Not found', statusCode: 404);
     return groceryList!;
   }
 
@@ -47,7 +48,14 @@ class FakeMealPlanApi implements MealPlanApi {
     groceryList = {
       'grocery_list': {'id': 'g1'},
       'items': [
-        {'ingredient_name': 'Rice', 'purchase_quantity': 2, 'unit': 'kg', 'category': 'grains', 'is_purchased': false, 'is_urgent': false},
+        {
+          'ingredient_name': 'Rice',
+          'purchase_quantity': 2,
+          'unit': 'kg',
+          'category': 'grains',
+          'is_purchased': false,
+          'is_urgent': false
+        },
       ],
     };
     return {};
@@ -84,7 +92,10 @@ class FakeRepository extends OnboardingRepository {
   Future<List<String>> fetchDietaryExclusions() async => ['Peanuts'];
 }
 
-Map<String, dynamic> meal(String date, String type, String name, double kcal, double p, double c, [String unit = 'bowl']) => {
+Map<String, dynamic> meal(
+        String date, String type, String name, double kcal, double p, double c,
+        [String unit = 'bowl']) =>
+    {
       'meal_date': date,
       'meal_type': type,
       'name': name,
@@ -98,14 +109,20 @@ Map<String, dynamic> meal(String date, String type, String name, double kcal, do
     };
 
 final samplePlan = <String, dynamic>{
-  'meal_plan': {'id': 'plan-1', 'start_date': '2026-11-17', 'end_date': '2026-11-23'},
+  'meal_plan': {
+    'id': 'plan-1',
+    'start_date': '2026-11-17',
+    'end_date': '2026-11-23'
+  },
   'meals': [
     meal('2026-11-17', 'breakfast', 'Appam', 409, 4.8, 20.3, 'appam'),
     meal('2026-11-17', 'lunch', 'Kabuli channa curry', 244, 10.4, 27.1),
-    meal('2026-11-17', 'lunch', 'Boiled rice (Uble chawal)', 352, 7.8, 77.2, 'plate'),
+    meal('2026-11-17', 'lunch', 'Boiled rice (Uble chawal)', 352, 7.8, 77.2,
+        'plate'),
     meal('2026-11-17', 'dinner', 'Kadhai Paneer', 344, 13.8, 23.4),
     meal('2026-11-18', 'breakfast', 'Bathua poori', 544, 2.1, 12.6, 'poori'),
-    meal('2026-11-18', 'lunch', 'Paneer pulao', 4876, 16.6, 73.4, 'plate'), // implausible kcal
+    meal('2026-11-18', 'lunch', 'Paneer pulao', 4876, 16.6, 73.4,
+        'plate'), // implausible kcal
   ],
 };
 
@@ -143,7 +160,8 @@ void main() {
     assistant = FakeAssistantApi();
   });
 
-  testWidgets("shows today's menu from the plan and switches days", (tester) async {
+  testWidgets("shows today's menu from the plan and switches days",
+      (tester) async {
     api.plan = samplePlan;
     await pumpHome(tester, now: DateTime(2026, 11, 17, 14));
 
@@ -152,10 +170,13 @@ void main() {
     expect(find.text('Appam'), findsOneWidget);
     expect(find.text('Kabuli channa curry'), findsOneWidget);
     expect(find.text('with Boiled rice (Uble chawal)'), findsOneWidget);
-    await tester.scrollUntilVisible(find.textContaining('Planning for'), 300, scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(find.textContaining('Planning for'), 300,
+        scrollable: find.byType(Scrollable).first);
     expect(find.textContaining('Planning for'), findsOneWidget);
     expect(api.calls, ['fetchMealPlan', 'fetchGroceryList:plan-1']);
-    await tester.scrollUntilVisible(find.byKey(const Key('day-2026-11-18')), -300, scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(
+        find.byKey(const Key('day-2026-11-18')), -300,
+        scrollable: find.byType(Scrollable).first);
 
     await tap(tester, find.byKey(const Key('day-2026-11-18')));
     expect(find.text("WEDNESDAY'S MENU"), findsOneWidget);
@@ -165,7 +186,8 @@ void main() {
     expect(find.textContaining('1 dish left out of calories'), findsOneWidget);
   });
 
-  testWidgets('no plan: "Plan my week" generates starting today', (tester) async {
+  testWidgets('no plan: "Plan my week" generates starting today',
+      (tester) async {
     await pumpHome(tester, now: DateTime(2026, 11, 17, 9));
     expect(find.text("Let's plan your week"), findsOneWidget);
     expect(find.textContaining('Nothing with Peanuts'), findsOneWidget);
@@ -175,7 +197,8 @@ void main() {
     expect(api.generateStart, DateTime(2026, 11, 17));
   });
 
-  testWidgets('plan ending tomorrow: next plan starts the day after it ends', (tester) async {
+  testWidgets('plan ending tomorrow: next plan starts the day after it ends',
+      (tester) async {
     api.plan = samplePlan;
     await pumpHome(tester, now: DateTime(2026, 11, 22, 19));
     expect(find.text('Your plan ends tomorrow'), findsOneWidget);
@@ -184,19 +207,23 @@ void main() {
     expect(api.generateStart, DateTime(2026, 11, 24));
   });
 
-  testWidgets('make grocery list saves ingredients first, then the list, for this plan', (tester) async {
+  testWidgets(
+      'make grocery list saves ingredients first, then the list, for this plan',
+      (tester) async {
     api.plan = samplePlan;
     await pumpHome(tester, now: DateTime(2026, 11, 17, 14));
     expect(find.text('No grocery list yet'), findsOneWidget);
 
     api.calls.clear();
     await tap(tester, find.byKey(const Key('make-grocery-list')));
-    expect(api.calls.take(2), ['generateIngredients:plan-1', 'generateGroceryList:plan-1']);
+    expect(api.calls.take(2),
+        ['generateIngredients:plan-1', 'generateGroceryList:plan-1']);
     expect(find.text("This week's groceries"), findsOneWidget);
     expect(find.text('1 items'), findsOneWidget);
   });
 
-  testWidgets('cooking tips and the ask box send the question to the assistant', (tester) async {
+  testWidgets('cooking tips and the ask box send the question to the assistant',
+      (tester) async {
     api.plan = samplePlan;
     await pumpHome(tester, now: DateTime(2026, 11, 17, 14));
 
@@ -205,13 +232,15 @@ void main() {
     Navigator.of(tester.element(find.byType(HomeScreen))).pop();
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byKey(const Key('ask-field')), 'What goes with paneer?');
+    await tester.enterText(
+        find.byKey(const Key('ask-field')), 'What goes with paneer?');
     await tester.testTextInput.receiveAction(TextInputAction.send);
     await tester.pumpAndSettle();
     expect(assistant.asked.last, 'What goes with paneer?');
   });
 
-  testWidgets('groceries screen groups items and builds a missing list', (tester) async {
+  testWidgets('groceries screen groups items and builds a missing list',
+      (tester) async {
     api.plan = samplePlan;
     tester.view.physicalSize = const Size(1290, 2800);
     tester.view.devicePixelRatio = 3;
@@ -221,8 +250,12 @@ void main() {
     expect(find.text('No grocery list yet'), findsOneWidget);
 
     await tap(tester, find.text('Make grocery list'));
-    expect(api.calls, containsAllInOrder(['generateIngredients:plan-1', 'generateGroceryList:plan-1']));
-    expect(find.text('GRAINS'), findsOneWidget);
+    expect(
+        api.calls,
+        containsAllInOrder(
+            ['generateIngredients:plan-1', 'generateGroceryList:plan-1']));
+    expect(
+        find.text('GRAINS'), findsOneWidget); // unknown categories still show
     expect(find.text('Rice'), findsOneWidget);
     expect(find.text('2 kg'), findsOneWidget);
   });

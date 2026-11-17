@@ -224,3 +224,23 @@ class _ChatMessage {
 
   const _ChatMessage(this.text, {required this.isUser});
 }
+
+/// Opens Ask Annora as a bottom sheet, optionally asking [question] straight away.
+Future<void> showAssistantSheet(BuildContext context, AssistantApi api,
+    [String? question]) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+    builder: (context) => Padding(
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.82,
+        child: AssistantChat(api: api, initialMessage: question),
+      ),
+    ),
+  );
+}

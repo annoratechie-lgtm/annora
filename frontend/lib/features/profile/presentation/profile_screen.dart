@@ -1,21 +1,84 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../data/user_profile_api.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/annora_ui.dart';
 import '../../onboarding/data/onboarding_repository.dart';
+import '../data/user_profile_api.dart';
+
+const _diets = [
+  ('vegetarian', 'Vegetarian'),
+  ('eggetarian', 'Eggetarian'),
+  ('non_vegetarian', 'Non-vegetarian'),
+  ('vegan', 'Vegan'),
+  ('no_restriction', 'No restriction'),
+];
+const _goals = [
+  ('keto', 'Keto'),
+  ('diabetic_friendly', 'Diabetic-friendly'),
+  ('high_protein', 'High protein'),
+  ('low_sodium', 'Low sodium'),
+];
+const _budgets = [5000, 10000, 15000, 25000, 40000];
+const _avoidPresets = [
+  'Peanuts',
+  'Mushroom',
+  'Onion & garlic',
+  'Gluten',
+  'Dairy',
+  'Seafood'
+];
+const _notifications = [
+  ('meal_plan_updates', 'Meal plan updates', 'When a new week is ready'),
+  ('grocery_reminders', 'Grocery reminders', 'Before your shopping day'),
+  ('cooking_reminders', 'Cooking reminders', 'Before each planned meal'),
+];
+
+const supportEmail = 'annora.techie@gmail.com';
+const supportPhone = '+91 9675866766';
+const supportAddress =
+    'Registered Office: Atal Center, BHU Varanasi, Uttar Pradesh – 221005, India';
+
+/// "+91 98765 43210" style input -> "+919876543210", null when blank,
+/// throws FormatException when it isn't a 10-digit Indian mobile number.
+String? normalizeIndianMobile(String input) {
+  var digits = input.replaceAll(RegExp(r'\D'), '');
+  if (digits.isEmpty) return null;
+  if (digits.length == 12 && digits.startsWith('91'))
+    digits = digits.substring(2);
+  if (!RegExp(r'^[6-9]\d{9}$').hasMatch(digits)) {
+    throw const FormatException(
+        'Enter a 10-digit Indian mobile number, or leave it blank.');
+  }
+  return '+91$digits';
+}
 
 class ProfileScreen extends StatefulWidget {
   final UserProfileApi api;
+  final OnboardingRepository? repository;
+  final bool isActive;
   final VoidCallback? onOpenHome;
   final VoidCallback? onOpenMealPlan;
-  final bool isActive;
+
+  /// Overridable for tests (default: Supabase auth).
+  final Future<void> Function()? signOut;
+  final Future<void> Function(Map<String, dynamic> preferences)?
+      saveNotifications;
+  final Map<String, dynamic> Function()? readMetadata;
+  final String? email;
 
   const ProfileScreen({
     super.key,
     required this.api,
+    this.repository,
+    this.isActive = true,
     this.onOpenHome,
     this.onOpenMealPlan,
-    this.isActive = false,
+    this.signOut,
+    this.saveNotifications,
+    this.readMetadata,
+    this.email,
   });
 
   @override
@@ -23,1027 +86,847 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static const _background = Color(0xFFFAF7F1);
-  static const _text = Color(0xFF211C18);
-  static const _muted = Color(0xFF7B746D);
-  static const _orange = Color(0xFFF47A2A);
-  static const _green = Color(0xFF4EB68B);
-  static const _border = Color(0xFFE8E1D8);
-
-  late Future<_ProfileData> _profileFuture;
-  bool _savingNotifications = false;
+  late Future<void> _loading = _load();
+  OnboardingProfile? _household;
+  List<String> _exclusions = const [];
+  String _name = '';
+  String? _phone;
+  Map<String, bool> _prefs = {};
+  bool _confirmSignOut = false;
   bool _signingOut = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _profileFuture = _loadProfile();
-  }
+  OnboardingRepository get _repo => widget.repository ?? OnboardingRepository();
 
   @override
   void didUpdateWidget(covariant ProfileScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!oldWidget.isActive && widget.isActive) {
-      setState(() => _profileFuture = _loadProfile());
+    if (!oldWidget.isActive && widget.isActive)
+      setState(() {
+        _loading = _load();
+      });
+  }
+
+  Map<String, dynamic> _metadata() {
+    if (widget.readMetadata != null) return widget.readMetadata!();
+    try {
+      return Map<String, dynamic>.from(
+          Supabase.instance.client.auth.currentUser?.userMetadata ?? const {});
+    } catch (_) {
+      return {};
     }
   }
 
-  Future<_ProfileData> _loadProfile() async {
-    final repository = OnboardingRepository();
+  String get _email {
+    if (widget.email != null) return widget.email!;
+    try {
+      return Supabase.instance.client.auth.currentUser?.email ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  Future<void> _load() async {
     final results = await Future.wait<Object?>([
-      repository.fetchProfile(),
-      repository.fetchDietaryExclusions(),
+      _repo.fetchProfile(),
+      _repo.fetchDietaryExclusions(),
       widget.api.fetchProfile(),
     ]);
-    return _ProfileData(
-      results[0] as OnboardingProfile?,
-      results[1] as List<String>,
-      results[2] as Map<String, dynamic>,
-    );
+    _household = results[0] as OnboardingProfile?;
+    _exclusions = results[1] as List<String>;
+    final user = results[2] as Map<String, dynamic>;
+    final meta = _metadata();
+    _name = (user['name'] ?? meta['full_name'] ?? meta['name'] ?? '')
+        .toString()
+        .trim();
+    final phone = user['phone']?.toString().trim();
+    _phone = phone == null || phone.isEmpty ? null : phone;
+    final raw = meta['notification_preferences'];
+    _prefs = {
+      for (final n in _notifications)
+        n.$1: raw is Map ? raw[n.$1] != false : true,
+    };
   }
 
-  Map<String, dynamic> get _metadata {
-    final user = Supabase.instance.client.auth.currentUser;
-    return Map<String, dynamic>.from(user?.userMetadata ?? const {});
+  // ---------- saves ----------
+
+  /// PUT /api/v1/users/me/profile {name, phone}.
+  Future<void> _saveDetails(String name, String? phone) async {
+    await widget.api.syncProfile(name: name, phone: phone);
+    setState(() {
+      _name = name;
+      _phone = phone;
+    });
+    _snack('Saved');
   }
 
-  String get _displayName {
-    final metadata = _metadata;
-    final name =
-        (metadata['full_name'] ?? metadata['name'] ?? metadata['display_name'])
-            ?.toString()
-            .trim();
-    if (name?.isNotEmpty == true) return name!;
-    return Supabase.instance.client.auth.currentUser?.email?.split('@').first ??
-        'Annora member';
+  /// onboarding_profiles + dietary_exclusions via OnboardingRepository.updateProfile.
+  Future<void> _saveHousehold(_HouseholdDraft d) async {
+    await _repo.updateProfile(
+      familySize: d.people,
+      monthlyBudget: d.budget!.toDouble(),
+      dietaryPreference: d.diet,
+      dietaryGoals: [
+        for (final g in _goals)
+          if (d.goals.contains(g.$1)) g.$1
+      ],
+      exclusions: d.avoid,
+    );
+    setState(() {
+      _loading = _load();
+    });
+    _snack('Saved. Your next plan will use these.');
   }
 
-  Future<void> _updateMetadata(Map<String, dynamic> updates) async {
-    final metadata = _metadata..addAll(updates);
-    await Supabase.instance.client.auth.updateUser(
-      UserAttributes(data: metadata),
-    );
-  }
-
-  Future<void> _editName(String currentName, String? currentPhone) async {
-    final controller = TextEditingController(text: currentName);
-    final name = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Your name'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          style: const TextStyle(color: _text),
-          decoration: const InputDecoration(labelText: 'Name'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-    if (name == null || name.isEmpty || !mounted) return;
-
-    await _runAction(
-      () async {
-        await widget.api.syncProfile(name: name, phone: currentPhone);
-        if (mounted) setState(() => _profileFuture = _loadProfile());
-      },
-      successMessage: 'Name updated.',
-    );
-  }
-
-  Future<void> _editPhone(String currentName, String? currentPhone) async {
-    final controller = TextEditingController(text: currentPhone ?? '');
-    final phone = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Contact phone'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.phone,
-          style: const TextStyle(color: _text),
-          decoration: const InputDecoration(
-            labelText: 'Phone number',
-            hintText: '+91 98765 43210',
-            helperText: 'Optional and not verified.',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          if (controller.text.isNotEmpty)
-            TextButton(
-              onPressed: () => Navigator.pop(context, ''),
-              child: const Text('Remove'),
-            ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-    if (phone == null || !mounted) return;
-
-    final normalizedPhone = phone.trim();
-    if (normalizedPhone.isNotEmpty &&
-        !RegExp(r'^\+?[0-9\s()-]{7,20}$').hasMatch(normalizedPhone)) {
-      _showMessage('Enter a valid phone number.');
-      return;
-    }
-    await _runAction(
-      () async {
-        final updatedPhone = normalizedPhone.isEmpty ? null : normalizedPhone;
-        await widget.api.syncProfile(name: currentName, phone: updatedPhone);
-        if (mounted) setState(() => _profileFuture = _loadProfile());
-      },
-      successMessage: normalizedPhone.isEmpty
-          ? 'Phone number removed.'
-          : 'Phone number updated.',
-    );
-  }
-
-  Future<void> _editFoodProfile(_ProfileData data) async {
-    final profile = data.profile;
-    if (profile == null) {
-      _showMessage('Your onboarding profile is not available.');
-      return;
-    }
-    final edits = await showModalBottomSheet<_ProfileEdits>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: _background,
-      builder: (context) => _ProfileEditSheet(
-        profile: profile,
-        exclusions: data.exclusions,
-      ),
-    );
-    if (edits == null || !mounted) return;
-
-    await _runAction(() async {
-      await OnboardingRepository().updateProfile(
-        familySize: edits.familySize,
-        monthlyBudget: edits.monthlyBudget,
-        dietaryPreference: edits.dietaryPreference,
-        dietaryGoals: edits.dietaryGoals,
-        exclusions: edits.exclusions,
-      );
-      if (mounted) setState(() => _profileFuture = _loadProfile());
-    }, successMessage: 'Your preferences were updated.');
-  }
-
-  Future<void> _setNotificationPreference(String key, bool value) async {
-    if (_savingNotifications) return;
-    setState(() => _savingNotifications = true);
+  Future<void> _toggleNotification(String key) async {
+    final next = Map<String, bool>.from(_prefs)..[key] = !(_prefs[key] ?? true);
+    final previous = _prefs;
+    setState(() => _prefs = next);
     try {
-      final preferences = Map<String, dynamic>.from(
-        _metadata['notification_preferences'] is Map
-            ? _metadata['notification_preferences'] as Map
-            : const {},
-      );
-      preferences[key] = value;
-      await _updateMetadata({'notification_preferences': preferences});
-      if (mounted) {
-        _showMessage('Notification preference saved for future use.');
+      if (widget.saveNotifications != null) {
+        await widget.saveNotifications!(next);
+      } else {
+        final meta = _metadata()..['notification_preferences'] = next;
+        await Supabase.instance.client.auth
+            .updateUser(UserAttributes(data: meta));
       }
-    } catch (error) {
-      if (mounted) {
-        _showMessage('Could not save notification preference: $error');
-      }
-    } finally {
-      if (mounted) setState(() => _savingNotifications = false);
-    }
-  }
-
-  Future<void> _runAction(
-    Future<void> Function() action, {
-    required String successMessage,
-  }) async {
-    try {
-      await action();
-      if (mounted) _showMessage(successMessage);
-    } catch (error) {
-      if (mounted) _showMessage('Could not save changes: $error');
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _prefs = previous);
+      _snack("Couldn't save that. Try again.");
     }
   }
 
   Future<void> _signOut() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Sign out?'),
-        content: const Text('You can sign back in any time.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Sign out'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-
     setState(() => _signingOut = true);
     try {
-      await Supabase.instance.client.auth.signOut();
-    } catch (error) {
-      if (mounted) {
-        _showMessage('Could not sign out: $error');
-        setState(() => _signingOut = false);
-      }
+      await (widget.signOut ?? () => Supabase.instance.client.auth.signOut())();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _signingOut = false;
+        _confirmSignOut = false;
+      });
+      _snack("Couldn't sign out: $e");
     }
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+  Future<void> _copy(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    _snack('Copied');
   }
+
+  void _snack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  // ---------- sheets ----------
+
+  Future<void> _openSheet(Widget child) => showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: AnnoraUi.card,
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+        builder: (context) => Padding(
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.88),
+            child: child,
+          ),
+        ),
+      );
+
+  void _editDetails() => _openSheet(
+      _DetailsSheet(name: _name, phone: _phone, onSave: _saveDetails));
+
+  void _editHousehold() {
+    final h = _household;
+    if (h == null) return;
+    _openSheet(_HouseholdSheet(
+      initial: _HouseholdDraft(
+        people: h.familySize,
+        budget: h.monthlyBudget.round(),
+        diet: h.dietaryPreference,
+        goals: h.dietaryGoals.where((g) => g != 'no_preference').toSet(),
+        avoid: List<String>.from(_exclusions),
+      ),
+      onSave: _saveHousehold,
+    ));
+  }
+
+  // ---------- UI ----------
 
   @override
   Widget build(BuildContext context) {
-    final user = Supabase.instance.client.auth.currentUser;
-    final email = user?.email ?? 'No email available';
-    final rawPreferences = _metadata['notification_preferences'];
-    final notificationPreferences = rawPreferences is Map
-        ? Map<String, dynamic>.from(rawPreferences)
-        : <String, dynamic>{};
-
-    return Scaffold(
-      backgroundColor: _background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: FutureBuilder<_ProfileData>(
-                future: _profileFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done ||
-                      _signingOut) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return _LoadError(
-                      message: snapshot.error.toString(),
-                      onRetry: () =>
-                          setState(() => _profileFuture = _loadProfile()),
-                    );
-                  }
-                  final data = snapshot.data ??
-                      const _ProfileData(null, [], <String, dynamic>{});
-                  final profileName =
-                      data.userProfile['name']?.toString().trim();
-                  final profilePhone =
-                      data.userProfile['phone']?.toString().trim();
-                  return ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-                    children: [
-                      const Text(
-                        'YOUR PROFILE',
-                        style: TextStyle(
-                          fontSize: 10,
-                          letterSpacing: 1.1,
-                          fontWeight: FontWeight.w700,
-                          color: _muted,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildIdentityCard(
-                        email: email,
-                        name: profileName?.isNotEmpty == true
-                            ? profileName!
-                            : _displayName,
-                        phone: profilePhone?.isNotEmpty == true
-                            ? profilePhone
-                            : null,
-                      ),
-                      const SizedBox(height: 22),
-                      _sectionTitle('YOUR KITCHEN'),
-                      const SizedBox(height: 8),
-                      _buildKitchenCard(data),
-                      const SizedBox(height: 22),
-                      _sectionTitle('NOTIFICATIONS'),
-                      const SizedBox(height: 8),
-                      _buildNotificationsCard(notificationPreferences),
-                      const SizedBox(height: 22),
-                      _sectionTitle('ACCOUNT'),
-                      const SizedBox(height: 8),
-                      _buildAccountCard(email),
-                      const SizedBox(height: 22),
-                      _sectionTitle('HELP & SUPPORT'),
-                      const SizedBox(height: 8),
-                      _buildHelpSupportCard(),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+    return AnnoraPage(
+      child: FutureBuilder<void>(
+        future: _loading,
+        builder: (context, snap) {
+          if (snap.connectionState != ConnectionState.done) {
+            return const Center(
+                child: CircularProgressIndicator(color: AppColors.orange));
+          }
+          if (snap.hasError) {
+            return EmptyState(
+              icon: Icons.cloud_off_outlined,
+              title: "Couldn't load your profile",
+              body: '${snap.error}',
+              action: 'Try again',
+              onAction: () => setState(() {
+                _loading = _load();
+              }),
+            );
+          }
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
+            children: [
+              const PageTitle(title: 'Profile'),
+              const SizedBox(height: 16),
+              _meCard(),
+              const SizedBox(height: 14),
+              if (_household != null) ...[
+                _householdCard(_household!),
+                const SizedBox(height: 14)
+              ],
+              _notificationsCard(),
+              const SizedBox(height: 14),
+              _supportCard(),
+              const SizedBox(height: 14),
+              _accountCard(),
+              const SizedBox(height: 16),
+              const Center(
+                  child: Text('Annora 0.1.0',
+                      style: TextStyle(
+                          color: AppColors.textFaint, fontSize: 12.5))),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildIdentityCard({
-    required String email,
-    required String name,
-    required String? phone,
-  }) {
-    final initials = name
+  Widget _meCard() {
+    final shownName = _name.isEmpty
+        ? (_email.isEmpty ? 'Annora member' : _email.split('@').first)
+        : _name;
+    final initials = shownName
+        .trim()
         .split(RegExp(r'\s+'))
-        .where((part) => part.isNotEmpty)
+        .where((p) => p.isNotEmpty)
         .take(2)
-        .map((part) => part[0].toUpperCase())
-        .join();
-    return _card(
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 32,
-                    backgroundColor: const Color(0xFFFFF0E2),
-                    child: Text(
-                      initials.isEmpty ? 'A' : initials,
-                      style: const TextStyle(
-                        color: _orange,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.photo_camera_outlined,
-                        size: 15,
-                        color: _muted,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: _text,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(email,
-                        style: const TextStyle(fontSize: 12, color: _muted)),
-                  ],
-                ),
-              ),
-              TextButton(
-                onPressed: () => _editName(name, phone),
-                child: const Text('Edit'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 13),
-          Container(height: 1, color: _border),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            dense: true,
-            leading: const Icon(Icons.phone_outlined, color: _muted, size: 19),
-            title: Text(
-              phone?.isNotEmpty == true ? phone! : 'Add a phone number',
-              style: const TextStyle(fontSize: 12, color: _text),
-            ),
-            subtitle: const Text(
-              'Optional · not verified',
-              style: TextStyle(fontSize: 10, color: _muted),
-            ),
-            trailing: const Icon(Icons.chevron_right, color: _muted),
-            onTap: () => _editPhone(name, phone),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () =>
-                  _showMessage('Profile photo upload is coming soon.'),
-              icon: const Icon(Icons.add_a_photo_outlined, size: 16),
-              label: const Text('Add profile photo · coming soon'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildKitchenCard(_ProfileData data) {
-    final profile = data.profile;
-    if (profile == null) {
-      return _card(
-        child: const Text(
-          'Household preferences are not available yet.',
-          style: TextStyle(fontSize: 12, color: _muted),
+        .map((p) => p[0])
+        .join()
+        .toUpperCase();
+    return ACard(
+      child: Row(children: [
+        CircleAvatar(
+          radius: 28,
+          backgroundColor: AppColors.avatarGold,
+          child: Text(initials.isEmpty ? 'A' : initials,
+              style: AppTheme.displayFont
+                  .copyWith(fontSize: 22, color: AppColors.background)),
         ),
-      );
-    }
-    final goals = profile.dietaryGoals
-        .where((goal) => goal != 'no_preference')
-        .map(_prettyLabel)
-        .toList();
-    return _card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _detailRow(
-            Icons.people_outline,
-            'Household',
-            '${profile.familySize} ${profile.familySize == 1 ? 'person' : 'people'}',
-          ),
-          const Divider(height: 20, color: _border),
-          _detailRow(
-            Icons.account_balance_wallet_outlined,
-            'Monthly grocery budget',
-            '₹${_formatBudget(profile.monthlyBudget)}',
-          ),
-          const Divider(height: 20, color: _border),
-          _detailRow(
-            Icons.restaurant_outlined,
-            'Dietary preference',
-            _prettyLabel(profile.dietaryPreference),
-          ),
-          if (goals.isNotEmpty) ...[
-            const Divider(height: 20, color: _border),
-            _detailRow(Icons.flag_outlined, 'Goals', goals.join(', ')),
-          ],
-          if (data.exclusions.isNotEmpty) ...[
-            const Divider(height: 20, color: _border),
-            _detailRow(
-              Icons.remove_circle_outline,
-              'Avoid',
-              data.exclusions.join(', '),
-            ),
-          ],
-          const SizedBox(height: 10),
-          const Text(
-            'Updates are used the next time you generate a meal plan.',
-            style: TextStyle(fontSize: 10, color: _muted),
-          ),
-          const SizedBox(height: 6),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () => _editFoodProfile(data),
-              icon: const Icon(Icons.edit_outlined, size: 16),
-              label: const Text('Edit household & food preferences'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _orange,
-                side: const BorderSide(color: Color(0xFFF0DFCC)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotificationsCard(Map<String, dynamic> preferences) {
-    return _card(
-      child: Column(
-        children: [
-          const Text(
-            'Saved for future notification support. Annora does not send these alerts yet.',
-            style: TextStyle(fontSize: 11, height: 1.4, color: _muted),
-          ),
-          const SizedBox(height: 8),
-          _notificationSwitch(
-            preferences,
-            'meal_plan_updates',
-            'Meal plan updates',
-            'When your plan changes',
-          ),
-          _notificationSwitch(
-            preferences,
-            'grocery_reminders',
-            'Grocery reminders',
-            'Shopping and pantry reminders',
-          ),
-          _notificationSwitch(
-            preferences,
-            'cooking_reminders',
-            'Cooking reminders',
-            'Reminders for planned meals',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _notificationSwitch(
-    Map<String, dynamic> preferences,
-    String key,
-    String title,
-    String subtitle,
-  ) {
-    return SwitchListTile(
-      contentPadding: EdgeInsets.zero,
-      dense: true,
-      activeThumbColor: _green,
-      title: Text(title, style: const TextStyle(fontSize: 12, color: _text)),
-      subtitle:
-          Text(subtitle, style: const TextStyle(fontSize: 10, color: _muted)),
-      value: preferences[key] == true,
-      onChanged: _savingNotifications
-          ? null
-          : (value) => _setNotificationPreference(key, value),
-    );
-  }
-
-  Widget _buildAccountCard(String email) {
-    return _card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _detailRow(Icons.email_outlined, 'Signed in as', email),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _signingOut ? null : _signOut,
-              icon: const Icon(Icons.logout, size: 17),
-              label: const Text('Sign out'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFB34331),
-                side: const BorderSide(color: Color(0xFFE8D3CE)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHelpSupportCard() {
-    return _card(
-      child: ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        childrenPadding: EdgeInsets.zero,
-        shape: const Border(),
-        collapsedShape: const Border(),
-        visualDensity: VisualDensity.compact,
-        leading: const Icon(Icons.support_agent_outlined, color: _orange),
-        title: const Text(
-          'Contact Annora',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: _text,
-          ),
-        ),
-        subtitle: const Text(
-          'Office address, email and phone',
-          style: TextStyle(fontSize: 10, color: _muted),
-        ),
-        children: [
-          const SizedBox(height: 10),
-          _detailRow(
-            Icons.location_on_outlined,
-            'Office address',
-            'Registered Office: Atal Center, BHU Varanasi, Uttar Pradesh –221005 India',
-          ),
-          const Divider(height: 20, color: _border),
-          _detailRow(
-            Icons.email_outlined,
-            'Email',
-            'annora.techie@gmail.com',
-          ),
-          const Divider(height: 20, color: _border),
-          _detailRow(
-            Icons.phone_outlined,
-            'Phone number',
-            '+91 9675866766',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _detailRow(IconData icon, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 18, color: _muted),
-        const SizedBox(width: 10),
+        const SizedBox(width: 14),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 10, color: _muted)),
-              const SizedBox(height: 3),
-              Text(
-                value,
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(shownName,
                 style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: _text,
-                ),
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700)),
+            if (_email.isNotEmpty)
+              Text(_email,
+                  style: const TextStyle(
+                      color: AppColors.textMuted, fontSize: 13.5)),
+            if (_phone != null)
+              Text(_prettyPhone(_phone!),
+                  style: const TextStyle(
+                      color: AppColors.textMuted, fontSize: 13.5))
+            else
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: LinkButton(
+                    label: 'Add a mobile number', onTap: _editDetails),
               ),
-            ],
-          ),
+          ]),
         ),
-      ],
+        LinkButton(label: 'Edit', onTap: _editDetails),
+      ]),
     );
   }
 
-  Widget _card({required Widget child}) => Container(
-        padding: const EdgeInsets.all(14),
+  Widget _householdCard(OnboardingProfile h) {
+    final goals = _goals
+        .where((g) => h.dietaryGoals.contains(g.$1))
+        .map((g) => g.$2)
+        .toList();
+    final diet = _diets
+        .firstWhere((d) => d.$1 == h.dietaryPreference,
+            orElse: () => (h.dietaryPreference, h.dietaryPreference))
+        .$2;
+    return ACard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          const Expanded(child: _CardTitle('Household & food')),
+          LinkButton(label: 'Edit', onTap: _editHousehold),
+        ]),
+        _row(Icons.groups_outlined, 'Household',
+            '${h.familySize} ${h.familySize == 1 ? 'person' : 'people'}'),
+        _row(Icons.account_balance_wallet_outlined, 'Monthly budget',
+            '₹${_inr(h.monthlyBudget.round())}'),
+        _row(Icons.eco_outlined, 'Diet', diet),
+        _row(Icons.flag_outlined, 'Health goals',
+            goals.isEmpty ? 'None' : goals.join(', ')),
+        _row(Icons.block_outlined, 'Avoid',
+            _exclusions.isEmpty ? 'Nothing' : _exclusions.join(', '),
+            last: true),
+        const SizedBox(height: 8),
+        const Text('Changes apply to your next meal plan.',
+            style: TextStyle(color: AppColors.textFaint, fontSize: 12.5)),
+      ]),
+    );
+  }
+
+  Widget _row(IconData icon, String label, String value, {bool last = false}) =>
+      Container(
+        padding: const EdgeInsets.symmetric(vertical: 11),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: _border),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0C000000),
-              blurRadius: 10,
-              offset: Offset(0, 3),
+            border: last
+                ? null
+                : const Border(bottom: BorderSide(color: AnnoraUi.line))),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(icon, size: 20, color: AppColors.orange),
+          const SizedBox(width: 12),
+          Text(label,
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 14)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(value,
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600)),
+          ),
+        ]),
+      );
+
+  Widget _notificationsCard() => ACard(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const _CardTitle('Notifications'),
+          const SizedBox(height: 2),
+          const Text(
+              "Annora doesn't send these yet. Your choices are saved for when it does.",
+              style: TextStyle(color: AppColors.textFaint, fontSize: 12.5)),
+          for (final n in _notifications)
+            SwitchListTile(
+              key: Key('notif-${n.$1}'),
+              contentPadding: EdgeInsets.zero,
+              value: _prefs[n.$1] ?? true,
+              onChanged: (_) => _toggleNotification(n.$1),
+              activeThumbColor: Colors.white,
+              activeTrackColor: AppColors.orange,
+              inactiveTrackColor: const Color(0x24FFFFFF),
+              title: Text(n.$2,
+                  style: const TextStyle(
+                      color: AppColors.textPrimary, fontSize: 14.5)),
+              subtitle: Text(n.$3,
+                  style: const TextStyle(
+                      color: AppColors.textFaint, fontSize: 12.5)),
             ),
+        ]),
+      );
+
+  Widget _supportCard() => ACard(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const _CardTitle('Help & support'),
+          _contact('Email', supportEmail),
+          _contact('Phone', '+91 96758 66766', copyValue: supportPhone),
+          _contact('Office', 'Atal Center, BHU, Varanasi, Uttar Pradesh 221005',
+              copyValue: supportAddress, last: true),
+        ]),
+      );
+
+  Widget _contact(String label, String value,
+          {String? copyValue, bool last = false}) =>
+      Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+            border: last
+                ? null
+                : const Border(bottom: BorderSide(color: AnnoraUi.line))),
+        child: Row(children: [
+          Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(label,
+                  style: const TextStyle(
+                      color: AppColors.textFaint, fontSize: 12)),
+              SelectableText(value,
+                  style: const TextStyle(
+                      color: AppColors.textPrimary, fontSize: 14)),
+            ]),
+          ),
+          GhostButton(label: 'Copy', onTap: () => _copy(copyValue ?? value)),
+        ]),
+      );
+
+  Widget _accountCard() => ACard(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const _CardTitle('Account'),
+          if (_email.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text('Signed in with Google as $_email',
+                style: const TextStyle(
+                    color: AppColors.textFaint, fontSize: 12.5)),
           ],
-        ),
-        child: child,
+          const SizedBox(height: 12),
+          if (_confirmSignOut || _signingOut)
+            ConfirmBox(
+              message: 'Sign out of Annora on this device?',
+              confirmLabel: 'Sign out',
+              busy: _signingOut,
+              onConfirm: _signOut,
+              onCancel: () => setState(() => _confirmSignOut = false),
+            )
+          else
+            GhostButton(
+              key: const Key('sign-out'),
+              label: 'Sign out',
+              color: AnnoraUi.danger,
+              onTap: () => setState(() => _confirmSignOut = true),
+            ),
+        ]),
       );
 
-  Widget _sectionTitle(String title) => Text(
-        title,
-        style: const TextStyle(
-          fontSize: 10,
-          letterSpacing: 1.1,
-          fontWeight: FontWeight.w600,
-          color: _muted,
-        ),
-      );
-
-
-  String _prettyLabel(String value) => value
-      .split('_')
-      .map((part) =>
-          part.isEmpty ? part : '${part[0].toUpperCase()}${part.substring(1)}')
-      .join(' ');
-
-  String _formatBudget(double amount) => amount == amount.roundToDouble()
-      ? amount.toStringAsFixed(0)
-      : amount.toStringAsFixed(2);
-}
-
-class _ProfileData {
-  final OnboardingProfile? profile;
-  final List<String> exclusions;
-  final Map<String, dynamic> userProfile;
-
-  const _ProfileData(this.profile, this.exclusions, this.userProfile);
-}
-
-class _ProfileEditSheet extends StatefulWidget {
-  final OnboardingProfile profile;
-  final List<String> exclusions;
-
-  const _ProfileEditSheet({
-    required this.profile,
-    required this.exclusions,
-  });
-
-  @override
-  State<_ProfileEditSheet> createState() => _ProfileEditSheetState();
-}
-
-class _ProfileEditSheetState extends State<_ProfileEditSheet> {
-  static const _preferences = [
-    ('vegetarian', 'Vegetarian'),
-    ('eggetarian', 'Eggetarian'),
-    ('non_vegetarian', 'Non-vegetarian'),
-    ('vegan', 'Vegan'),
-    ('no_restriction', 'No restriction'),
-  ];
-  static const _goals = [
-    ('keto', 'Keto'),
-    ('diabetic_friendly', 'Diabetic-friendly'),
-    ('high_protein', 'High protein'),
-    ('low_sodium', 'Low sodium'),
-    ('no_preference', 'No preference'),
-  ];
-
-  late int _familySize;
-  late String _dietaryPreference;
-  late Set<String> _dietaryGoals;
-  late List<String> _exclusions;
-  late final TextEditingController _budgetController;
-  final _exclusionController = TextEditingController();
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _familySize = widget.profile.familySize;
-    _dietaryPreference = widget.profile.dietaryPreference;
-    _dietaryGoals = widget.profile.dietaryGoals.toSet();
-    _exclusions = [...widget.exclusions];
-    _budgetController = TextEditingController(
-      text: widget.profile.monthlyBudget.toStringAsFixed(0),
-    );
+  static String _prettyPhone(String phone) {
+    final d = phone.replaceAll(RegExp(r'\D'), '');
+    if (d.length == 12 && d.startsWith('91'))
+      return '+91 ${d.substring(2, 7)} ${d.substring(7)}';
+    return phone;
   }
+}
+
+String _inr(int value) {
+  final s = value.toString();
+  if (s.length <= 3) return s;
+  final last3 = s.substring(s.length - 3);
+  var rest = s.substring(0, s.length - 3);
+  final groups = <String>[];
+  while (rest.length > 2) {
+    groups.insert(0, rest.substring(rest.length - 2));
+    rest = rest.substring(0, rest.length - 2);
+  }
+  if (rest.isNotEmpty) groups.insert(0, rest);
+  return '${groups.join(',')},$last3';
+}
+
+class _CardTitle extends StatelessWidget {
+  final String text;
+  const _CardTitle(this.text);
+
+  @override
+  Widget build(BuildContext context) => Text(text,
+      style: const TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 15.5,
+          fontWeight: FontWeight.w600));
+}
+
+// ---------- details sheet ----------
+
+class _DetailsSheet extends StatefulWidget {
+  final String name;
+  final String? phone;
+  final Future<void> Function(String name, String? phone) onSave;
+  const _DetailsSheet(
+      {required this.name, required this.phone, required this.onSave});
+
+  @override
+  State<_DetailsSheet> createState() => _DetailsSheetState();
+}
+
+class _DetailsSheetState extends State<_DetailsSheet> {
+  late final _name = TextEditingController(text: widget.name);
+  late final _phone = TextEditingController(text: widget.phone ?? '');
+  String? _error;
+  bool _saving = false;
 
   @override
   void dispose() {
-    _budgetController.dispose();
-    _exclusionController.dispose();
+    _name.dispose();
+    _phone.dispose();
     super.dispose();
   }
 
-  void _addExclusion() {
-    final value = _exclusionController.text.trim();
-    if (value.isEmpty) return;
-    if (_exclusions.any(
-      (item) => item.toLowerCase() == value.toLowerCase(),
-    )) {
-      setState(() => _error = 'That ingredient is already on the list.');
-      return;
+  Future<void> _save() async {
+    final name = _name.text.trim();
+    if (name.isEmpty) return setState(() => _error = 'Enter your name.');
+    String? phone;
+    try {
+      phone = normalizeIndianMobile(_phone.text);
+    } on FormatException catch (e) {
+      return setState(() => _error = e.message);
     }
     setState(() {
-      _exclusions.add(value);
-      _exclusionController.clear();
+      _saving = true;
       _error = null;
     });
-  }
-
-  void _save() {
-    final budget = double.tryParse(_budgetController.text.trim());
-    if (budget == null || budget <= 0) {
-      setState(() => _error = 'Enter a monthly budget greater than zero.');
-      return;
+    try {
+      await widget.onSave(name, phone);
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) setState(() => _error = "Couldn't save: $e");
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
-    if (_dietaryPreference.isEmpty) {
-      setState(() => _error = 'Choose a dietary preference.');
-      return;
-    }
-    Navigator.pop(
-      context,
-      _ProfileEdits(
-        familySize: _familySize,
-        monthlyBudget: budget,
-        dietaryPreference: _dietaryPreference,
-        dietaryGoals: _dietaryGoals.toList(),
-        exclusions: _exclusions,
-      ),
-    );
   }
 
   @override
-  Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(bottom: bottomInset),
-        child: DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: .9,
-          minChildSize: .6,
-          maxChildSize: .95,
-          builder: (context, controller) => Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
-                child: Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Household & food preferences',
-                        style: TextStyle(
-                          color: Color(0xFF211C18),
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ListView(
-                  controller: controller,
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                  children: [
-                    const Text('Household size'),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: _familySize > 1
-                              ? () => setState(() => _familySize--)
-                              : null,
-                          icon: const Icon(Icons.remove_circle_outline),
-                        ),
-                        Text(
-                          '$_familySize ${_familySize == 1 ? 'person' : 'people'}',
-                        ),
-                        IconButton(
-                          onPressed: _familySize < 20
-                              ? () => setState(() => _familySize++)
-                              : null,
-                          icon: const Icon(Icons.add_circle_outline),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    const Text('Monthly grocery budget'),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _budgetController,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      style: const TextStyle(color: Color(0xFF211C18)),
-                      decoration: const InputDecoration(
-                        prefixText: '₹ ',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    const Text('Dietary preference'),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        for (final option in _preferences)
-                          ChoiceChip(
-                            label: Text(option.$2),
-                            selected: _dietaryPreference == option.$1,
-                            onSelected: (_) => setState(
-                              () => _dietaryPreference = option.$1,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    const Text('Dietary goals'),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: [
-                        for (final goal in _goals)
-                          FilterChip(
-                            label: Text(goal.$2),
-                            selected: _dietaryGoals.contains(goal.$1),
-                            onSelected: (selected) => setState(() {
-                              if (selected) {
-                                _dietaryGoals.add(goal.$1);
-                              } else {
-                                _dietaryGoals.remove(goal.$1);
-                              }
-                            }),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    const Text('Avoid ingredients'),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _exclusionController,
-                            textCapitalization: TextCapitalization.sentences,
-                            onSubmitted: (_) => _addExclusion(),
-                            style: const TextStyle(color: Color(0xFF211C18)),
-                            decoration: const InputDecoration(
-                              hintText: 'Add an ingredient',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: _addExclusion,
-                          icon: const Icon(Icons.add_circle_outline),
-                        ),
-                      ],
-                    ),
-                    if (_exclusions.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: [
-                          for (final exclusion in _exclusions)
-                            InputChip(
-                              label: Text(exclusion),
-                              onDeleted: () => setState(
-                                () => _exclusions.remove(exclusion),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                    if (_error != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        _error!,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    ],
-                    const SizedBox(height: 18),
-                    SizedBox(
-                      height: 48,
-                      child: FilledButton(
-                        onPressed: _save,
-                        child: const Text('Save preferences'),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProfileEdits {
-  final int familySize;
-  final double monthlyBudget;
-  final String dietaryPreference;
-  final List<String> dietaryGoals;
-  final List<String> exclusions;
-
-  const _ProfileEdits({
-    required this.familySize,
-    required this.monthlyBudget,
-    required this.dietaryPreference,
-    required this.dietaryGoals,
-    required this.exclusions,
-  });
-}
-
-class _LoadError extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-
-  const _LoadError({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
+  Widget build(BuildContext context) => SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+        child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off_outlined, color: Color(0xFF7B746D)),
-              const SizedBox(height: 10),
-              Text(
-                'Could not load profile: $message',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Color(0xFF7B746D)),
+              Text('Your details',
+                  style: AppTheme.displayFont
+                      .copyWith(fontSize: 24, color: AppColors.textPrimary)),
+              const SizedBox(height: 16),
+              _SheetField(
+                  key: const Key('details-name'),
+                  label: 'Name',
+                  controller: _name,
+                  capitalization: TextCapitalization.words),
+              const SizedBox(height: 14),
+              _SheetField(
+                key: const Key('details-phone'),
+                label: 'Mobile number (optional)',
+                controller: _phone,
+                hint: '+91 98765 43210',
+                keyboardType: TextInputType.phone,
               ),
-              const SizedBox(height: 8),
-              TextButton(onPressed: onRetry, child: const Text('Retry')),
-            ],
-          ),
-        ),
+              if (_error != null) ...[
+                const SizedBox(height: 10),
+                Text(_error!,
+                    style: const TextStyle(
+                        color: AnnoraUi.danger, fontSize: 12.5)),
+              ],
+              const SizedBox(height: 18),
+              Row(children: [
+                PrimaryButton(
+                    key: const Key('details-save'),
+                    label: 'Save',
+                    busy: _saving,
+                    onTap: _save),
+                const SizedBox(width: 8),
+                if (!_saving)
+                  GhostButton(
+                      label: 'Cancel',
+                      onTap: () => Navigator.of(context).pop()),
+              ]),
+            ]),
       );
 }
 
+// ---------- household sheet ----------
+
+class _HouseholdDraft {
+  int people;
+  int? budget;
+  String diet;
+  Set<String> goals;
+  List<String> avoid;
+  _HouseholdDraft(
+      {required this.people,
+      required this.budget,
+      required this.diet,
+      required this.goals,
+      required this.avoid});
+}
+
+class _HouseholdSheet extends StatefulWidget {
+  final _HouseholdDraft initial;
+  final Future<void> Function(_HouseholdDraft draft) onSave;
+  const _HouseholdSheet({required this.initial, required this.onSave});
+
+  @override
+  State<_HouseholdSheet> createState() => _HouseholdSheetState();
+}
+
+class _HouseholdSheetState extends State<_HouseholdSheet> {
+  late final _HouseholdDraft d = widget.initial;
+  late final _amount = TextEditingController(
+      text: _budgets.contains(d.budget) || d.budget == null
+          ? ''
+          : _inr(d.budget!));
+  final _extra = TextEditingController();
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _amount.dispose();
+    _extra.dispose();
+    super.dispose();
+  }
+
+  void _addExtra() {
+    final v = _extra.text.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (v.isEmpty) return;
+    setState(() {
+      if (!d.avoid.any((a) => a.toLowerCase() == v.toLowerCase()))
+        d.avoid.add(v);
+      _extra.clear();
+    });
+  }
+
+  Future<void> _save() async {
+    if ((d.budget ?? 0) <= 0)
+      return setState(() => _error = 'Choose or enter a monthly budget.');
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      await widget.onSave(d);
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) setState(() => _error = "Couldn't save: $e");
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Widget _choice(String label, bool selected, VoidCallback onTap, {Key? key}) =>
+      Semantics(
+        button: true,
+        selected: selected,
+        child: Material(
+          key: key,
+          color: selected ? AppColors.orange : const Color(0x08FFFFFF),
+          shape: StadiumBorder(
+              side: selected
+                  ? BorderSide.none
+                  : const BorderSide(color: AnnoraUi.lineStrong)),
+          child: InkWell(
+            customBorder: const StadiumBorder(),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+              child: Text(label,
+                  style: TextStyle(
+                      color: selected ? Colors.white : AppColors.textPrimary,
+                      fontSize: 13.5,
+                      fontWeight:
+                          selected ? FontWeight.w600 : FontWeight.w500)),
+            ),
+          ),
+        ),
+      );
+
+  Widget _label(String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 8, top: 16),
+        child: Text(text,
+            style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 13,
+                fontWeight: FontWeight.w500)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final presetAndCustom = [
+      ..._avoidPresets,
+      ...d.avoid.where((a) => !_avoidPresets.contains(a))
+    ];
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Household & food',
+                style: AppTheme.displayFont
+                    .copyWith(fontSize: 24, color: AppColors.textPrimary)),
+            _label('People who eat at home'),
+            Row(children: [
+              IconButton.outlined(
+                tooltip: 'Fewer people',
+                onPressed:
+                    d.people > 1 ? () => setState(() => d.people--) : null,
+                icon: const Icon(Icons.remove_rounded),
+                color: AppColors.textPrimary,
+              ),
+              SizedBox(
+                width: 56,
+                child: Text('${d.people}',
+                    key: const Key('house-people'),
+                    textAlign: TextAlign.center,
+                    style: AppTheme.displayFont
+                        .copyWith(fontSize: 30, color: AppColors.textPrimary)),
+              ),
+              IconButton.filled(
+                tooltip: 'More people',
+                onPressed:
+                    d.people < 20 ? () => setState(() => d.people++) : null,
+                style: IconButton.styleFrom(
+                    backgroundColor: AppColors.orange,
+                    foregroundColor: Colors.white),
+                icon: const Icon(Icons.add_rounded),
+              ),
+            ]),
+            _label('Diet'),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final diet in _diets)
+                _choice(diet.$2, d.diet == diet.$1,
+                    () => setState(() => d.diet = diet.$1)),
+            ]),
+            _label('Monthly grocery budget'),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final b in _budgets)
+                _choice(b >= 40000 ? '₹40k+' : '₹${b ~/ 1000}k',
+                    d.budget == b && _amount.text.isEmpty, () {
+                  setState(() {
+                    d.budget = b;
+                    _amount.clear();
+                  });
+                }),
+            ]),
+            const SizedBox(height: 10),
+            _SheetField(
+              key: const Key('house-amount'),
+              label: 'or an exact amount',
+              controller: _amount,
+              hint: 'e.g. 12,000',
+              keyboardType: TextInputType.number,
+              prefix: '₹',
+              onChanged: (v) {
+                final digits = v.replaceAll(RegExp(r'\D'), '');
+                setState(() => d.budget = digits.isEmpty
+                    ? null
+                    : int.parse(
+                        digits.length > 7 ? digits.substring(0, 7) : digits));
+              },
+            ),
+            _label('Health goals (optional)'),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final g in _goals)
+                _choice(
+                    g.$2,
+                    d.goals.contains(g.$1),
+                    () => setState(() => d.goals.contains(g.$1)
+                        ? d.goals.remove(g.$1)
+                        : d.goals.add(g.$1))),
+            ]),
+            _label('Foods to avoid (optional)'),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final a in presetAndCustom)
+                _choice(
+                    a,
+                    d.avoid.contains(a),
+                    () => setState(() => d.avoid.contains(a)
+                        ? d.avoid.remove(a)
+                        : d.avoid.add(a))),
+            ]),
+            const SizedBox(height: 10),
+            _SheetField(
+              key: const Key('house-extra'),
+              label: 'Something else?',
+              controller: _extra,
+              hint: 'Add an ingredient and press Enter',
+              onSubmitted: (_) => _addExtra(),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 10),
+              Text(_error!,
+                  style:
+                      const TextStyle(color: AnnoraUi.danger, fontSize: 12.5)),
+            ],
+            const SizedBox(height: 18),
+            Row(children: [
+              PrimaryButton(
+                  key: const Key('house-save'),
+                  label: 'Save',
+                  busy: _saving,
+                  onTap: _save),
+              const SizedBox(width: 8),
+              if (!_saving)
+                GhostButton(
+                    label: 'Cancel', onTap: () => Navigator.of(context).pop()),
+            ]),
+          ]),
+    );
+  }
+}
+
+class _SheetField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final String? hint;
+  final String? prefix;
+  final TextInputType? keyboardType;
+  final TextCapitalization capitalization;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+
+  const _SheetField({
+    super.key,
+    required this.label,
+    required this.controller,
+    this.hint,
+    this.prefix,
+    this.keyboardType,
+    this.capitalization = TextCapitalization.none,
+    this.onChanged,
+    this.onSubmitted,
+  });
+
+  @override
+  Widget build(BuildContext context) =>
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label,
+            style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 13,
+                fontWeight: FontWeight.w500)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          textCapitalization: capitalization,
+          onChanged: onChanged,
+          onSubmitted: onSubmitted,
+          cursorColor: AppColors.orange,
+          style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.w500),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: AppColors.textFaint),
+            prefixText: prefix == null ? null : '$prefix ',
+            prefixStyle:
+                const TextStyle(color: AppColors.textPrimary, fontSize: 15),
+            filled: true,
+            fillColor: AnnoraUi.field,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AnnoraUi.line)),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AnnoraUi.line)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AppColors.orange)),
+          ),
+        ),
+      ]);
+}

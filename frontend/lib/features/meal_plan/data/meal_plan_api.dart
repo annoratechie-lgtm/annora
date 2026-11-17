@@ -81,6 +81,25 @@ class MealPlanApi {
     return _decode(response);
   }
 
+  /// PATCH /meal-plans/{plan}/grocery-list/items/{item} {is_purchased}.
+  /// Used for ticking items off and for "have it" on pantry items.
+  Future<Map<String, dynamic>> setGroceryItemPurchased(
+    String mealPlanId,
+    String itemId,
+    bool purchased,
+  ) async {
+    final user = _requireUser();
+    final uri = Uri.parse(
+            '$baseUrl/api/v1/meal-plans/$mealPlanId/grocery-list/items/$itemId')
+        .replace(queryParameters: {'user_id': user.id});
+    final response = await _client.patch(
+      uri,
+      headers: {...await _headers(), 'Content-Type': 'application/json'},
+      body: jsonEncode({'is_purchased': purchased}),
+    );
+    return _decode(response);
+  }
+
   User _requireUser() {
     final user = _supabase.auth.currentUser;
     if (user == null) {
@@ -92,7 +111,8 @@ class MealPlanApi {
   Future<Map<String, String>> _headers() async {
     final session = _supabase.auth.currentSession;
     if (session == null) {
-      throw MealPlanApiException('Your session has expired. Please sign in again.');
+      throw MealPlanApiException(
+          'Your session has expired. Please sign in again.');
     }
     return {
       'Accept': 'application/json',
@@ -118,7 +138,8 @@ class MealPlanApi {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       final detail = body is Map<String, dynamic> ? body['detail'] : null;
       throw MealPlanApiException(
-        detail?.toString() ?? 'Meal plan request failed (${response.statusCode}).',
+        detail?.toString() ??
+            'Meal plan request failed (${response.statusCode}).',
         statusCode: response.statusCode,
       );
     }
