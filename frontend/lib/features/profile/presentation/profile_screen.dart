@@ -359,7 +359,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
             ),
-            _buildBottomNav(),
           ],
         ),
       ),
@@ -715,39 +714,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
 
-  Widget _buildBottomNav() {
-    const items = [
-      ('⌂', 'Home'),
-      ('▦', 'Plan'),
-      ('🛒', 'Shop'),
-      ('📦', 'Pantry'),
-      ('♙', 'Profile'),
-    ];
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: _border)),
-      ),
-      padding: const EdgeInsets.only(top: 7, bottom: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          for (var index = 0; index < items.length; index++)
-            GestureDetector(
-              onTap: () {
-                if (index == 0) widget.onOpenHome?.call();
-                if (index == 1) widget.onOpenMealPlan?.call();
-              },
-              child: _ProfileNavItem(
-                icon: items[index].$1,
-                label: items[index].$2,
-                selected: index == 4,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
 
   String _prettyLabel(String value) => value
       .split('_')
@@ -1081,43 +1047,3 @@ class _LoadError extends StatelessWidget {
       );
 }
 
-class _ProfileNavItem extends StatelessWidget {
-  final String icon;
-  final String label;
-  final bool selected;
-
-  const _ProfileNavItem({
-    required this.icon,
-    required this.label,
-    required this.selected,
-  });
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-        width: 52,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              icon,
-              style: TextStyle(
-                fontSize: 17,
-                color: selected
-                    ? const Color(0xFFF47A2A)
-                    : const Color(0xFF82766A),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 9,
-                color: selected
-                    ? const Color(0xFFF47A2A)
-                    : const Color(0xFF82766A),
-              ),
-            ),
-          ],
-        ),
-      );
-}

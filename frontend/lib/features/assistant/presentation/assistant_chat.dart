@@ -5,7 +5,10 @@ import '../data/assistant_api.dart';
 class AssistantChat extends StatefulWidget {
   final AssistantApi api;
 
-  const AssistantChat({super.key, required this.api});
+  /// Sent automatically when the chat opens (e.g. "How do I make Appam?").
+  final String? initialMessage;
+
+  const AssistantChat({super.key, required this.api, this.initialMessage});
 
   @override
   State<AssistantChat> createState() => _AssistantChatState();
@@ -21,6 +24,18 @@ class _AssistantChatState extends State<AssistantChat> {
   final _scrollController = ScrollController();
   final _messages = <_ChatMessage>[];
   bool _sending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialMessage?.trim();
+    if (initial != null && initial.isNotEmpty) {
+      _messageController.text = initial;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _sendMessage();
+      });
+    }
+  }
 
   @override
   void dispose() {

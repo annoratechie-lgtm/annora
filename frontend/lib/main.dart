@@ -8,6 +8,7 @@ import 'features/assistant/data/assistant_api.dart';
 import 'features/meal_plan/data/meal_plan_api.dart';
 import 'features/meal_plan/data/meal_plan_config.dart';
 import 'features/meal_plan/presentation/meal_plan_screen.dart';
+import 'features/groceries/presentation/groceries_screen.dart';
 import 'features/home/presentation/home_screen.dart';
 import 'features/profile/data/user_profile_api.dart';
 import 'features/profile/presentation/profile_screen.dart';
@@ -143,31 +144,88 @@ class PostOnboardingShell extends StatefulWidget {
 }
 
 class _PostOnboardingShellState extends State<PostOnboardingShell> {
-  int _selectedScreen = 0;
+  static const _home = 0, _plan = 1, _groceries = 2, _profile = 3;
+  int _selectedScreen = _home;
+
+  void _go(int index) => setState(() => _selectedScreen = index);
 
   @override
-  Widget build(BuildContext context) => IndexedStack(
-        index: _selectedScreen,
-        children: [
-          HomeScreen(
-            mealPlanApi: widget.api,
-            isActive: _selectedScreen == 0,
-            onOpenMealPlan: () => setState(() => _selectedScreen = 1),
-            onOpenProfile: () => setState(() => _selectedScreen = 2),
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: AppColors.background,
+        body: IndexedStack(
+          index: _selectedScreen,
+          children: [
+            HomeScreen(
+              mealPlanApi: widget.api,
+              assistantApi: widget.assistantApi,
+              isActive: _selectedScreen == _home,
+              onOpenMealPlan: () => _go(_plan),
+              onOpenGroceries: () => _go(_groceries),
+              onOpenProfile: () => _go(_profile),
+            ),
+            MealPlanScreen(
+              api: widget.api,
+              assistantApi: widget.assistantApi,
+              isActive: _selectedScreen == _plan,
+              onOpenHome: () => _go(_home),
+              onOpenProfile: () => _go(_profile),
+            ),
+            GroceriesScreen(
+              api: widget.api,
+              isActive: _selectedScreen == _groceries,
+              onOpenHome: () => _go(_home),
+            ),
+            ProfileScreen(
+              api: widget.userProfileApi,
+              isActive: _selectedScreen == _profile,
+              onOpenHome: () => _go(_home),
+              onOpenMealPlan: () => _go(_plan),
+            ),
+          ],
+        ),
+        bottomNavigationBar: NavigationBarTheme(
+          data: NavigationBarThemeData(
+            backgroundColor: const Color(0xF0120E0C),
+            indicatorColor: const Color(0x24FF7A3D),
+            surfaceTintColor: Colors.transparent,
+            labelTextStyle:
+                WidgetStateProperty.resolveWith((states) => TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: states.contains(WidgetState.selected)
+                          ? AppColors.orange
+                          : AppColors.textFaint,
+                    )),
+            iconTheme:
+                WidgetStateProperty.resolveWith((states) => IconThemeData(
+                      color: states.contains(WidgetState.selected)
+                          ? AppColors.orange
+                          : AppColors.textFaint,
+                    )),
           ),
-          MealPlanScreen(
-            api: widget.api,
-            assistantApi: widget.assistantApi,
-            isActive: _selectedScreen == 1,
-            onOpenHome: () => setState(() => _selectedScreen = 0),
-            onOpenProfile: () => setState(() => _selectedScreen = 2),
+          child: NavigationBar(
+            height: 64,
+            selectedIndex: _selectedScreen,
+            onDestinationSelected: _go,
+            destinations: const [
+              NavigationDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home_rounded),
+                  label: 'Home'),
+              NavigationDestination(
+                  icon: Icon(Icons.calendar_month_outlined),
+                  selectedIcon: Icon(Icons.calendar_month),
+                  label: 'Plan'),
+              NavigationDestination(
+                  icon: Icon(Icons.shopping_bag_outlined),
+                  selectedIcon: Icon(Icons.shopping_bag),
+                  label: 'Groceries'),
+              NavigationDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person),
+                  label: 'Profile'),
+            ],
           ),
-          ProfileScreen(
-            api: widget.userProfileApi,
-            isActive: _selectedScreen == 2,
-            onOpenHome: () => setState(() => _selectedScreen = 0),
-            onOpenMealPlan: () => setState(() => _selectedScreen = 1),
-          ),
-        ],
+        ),
       );
 }

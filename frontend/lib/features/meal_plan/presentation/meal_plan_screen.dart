@@ -64,14 +64,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     });
   }
 
-  void _openToday() {
-    setState(() {
-      _selectTodayOnNextBuild = true;
-      _ingredientsByPlan.clear();
-      _future = _fetchMealPlanWithRecipeNames();
-    });
-  }
-
   Future<Map<String, dynamic>> _fetchMealPlanWithRecipeNames() async {
     final result = await widget.api.fetchMealPlan();
     final rawMeals = result['meals'];
@@ -238,7 +230,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                     onAction: _generate,
                   ),
           ),
-          _buildBottomNav(),
         ],
       );
     }
@@ -296,7 +287,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
                   ),
                 ),
         ),
-        _buildBottomNav(),
       ],
     );
   }
@@ -895,31 +885,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
         ]));
   }
 
-  Widget _buildBottomNav() {
-    const items = [
-      ('⌂', 'Home'),
-      ('▦', 'Plan'),
-      ('🛒', 'Shop'),
-      ('📦', 'Pantry'),
-      ('♟', 'Profile')
-    ];
-    return Container(
-      decoration: const BoxDecoration(
-          color: Colors.white, border: Border(top: BorderSide(color: _border))),
-      padding: const EdgeInsets.only(top: 7, bottom: 6),
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-        for (var i = 0; i < items.length; i++)
-          GestureDetector(
-            onTap: () {
-              if (i == 0) widget.onOpenHome?.call();
-              if (i == 1) _openToday();
-              if (i == 4) widget.onOpenProfile?.call();
-            },
-            child: _NavItem(icon: items[i].$1, label: items[i].$2, selected: i == 1),
-          ),
-      ]),
-    );
-  }
 
   Widget _pill(String text, Color background, Color foreground) => Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -930,31 +895,6 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
   String _formatDate(DateTime date) => '${date.day}/${date.month}';
 }
 
-class _NavItem extends StatelessWidget {
-  final String icon;
-  final String label;
-  final bool selected;
-  const _NavItem(
-      {required this.icon, required this.label, required this.selected});
-  @override
-  Widget build(BuildContext context) => SizedBox(
-      width: 52,
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text(icon,
-            style: TextStyle(
-                fontSize: 18,
-                color: selected
-                    ? const Color(0xFFF47A2A)
-                    : const Color(0xFF6E6259))),
-        const SizedBox(height: 2),
-        Text(label,
-            style: TextStyle(
-                fontSize: 8.5,
-                color: selected
-                    ? const Color(0xFFF47A2A)
-                    : const Color(0xFF8A8179)))
-      ]));
-}
 
 class _ErrorState extends StatelessWidget {
   final String message;
