@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -172,10 +172,9 @@ async def generate_meal_plan(
         )
 
     try:
-        # plan = await run_llm_meal_plan(context, start_date)
-        next7days = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
-        plan = {'2026-10-24': {'breakfast': 'BFP153', 'lunch': ['BFP185', 'ASC113'], 'dinner': ['ASC226', 'ASC113']}, '2026-10-25': {'breakfast': 'BFP114', 'lunch': ['ASC138'], 'dinner': ['ASC069']}, '2026-10-26': {'breakfast': 'BFP116', 'lunch': ['BFP205', 'ASC118'], 'dinner': ['ASC167', 'BFP552']}, '2026-10-27': {'breakfast': 'ASC106', 'lunch': ['BFP152'], 'dinner': ['ASC142']}, '2026-10-28': {'breakfast': 'BFP570', 'lunch': ['BFP257', 'ASC150'], 'dinner': ['ASC195', 'ASC150']}, '2026-10-29': {'breakfast': 'OSR100', 'lunch': ['ASC134'], 'dinner': ['ASC138']}, '2026-10-30': {'breakfast': 'ASC115', 'lunch': ['ASC214', 'BFP041'], 'dinner': ['ASC215', 'ASC123']}}
-        plan = {next7days[i]: day_plan for i, day_plan in enumerate(plan.values())}
+        # The LLM picks from recipes filtered by the household's diet and
+        # foods to avoid, guided by its health goals (see meal_planner.py).
+        plan = await run_llm_meal_plan(context, start_date)
         meal_id = await save_meal_plan(user_id, start_date, plan)
     except (RuntimeError, MealPlanRepositoryError) as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc

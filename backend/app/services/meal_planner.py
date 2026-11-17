@@ -9,13 +9,20 @@ from groq import Groq
 from instructor.v2.core.errors import InstructorRetryException
 from app.core.config import settings
 from app.schemas.meal_plan import MealPlanningContext, mealPlanResponse
+from app.services.recipe_filters import (
+    excluded_recipe_codes,
+    exclusion_rules,
+    goals_guidance,
+    match_terms,
+    recipe_preferences_for,
+)
 
 
 def _expected_dates(start_date: date) -> list[str]:
     return [(start_date + timedelta(days=i)).isoformat() for i in range(7)]
 
 
-async def _load_recipe_reference(mealPreference) -> list[dict[str, str | None]]:
+async def _load_recipe_reference(preferences: list[str]) -> list[dict[str, str | None]]:
     """Load the only allowed recipe names/codes for meal generation from Supabase."""
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise RuntimeError("Supabase backend configuration is missing.")
@@ -33,7 +40,7 @@ async def _load_recipe_reference(mealPreference) -> list[dict[str, str | None]]:
                 params={
                     "select": "recipe_name,source_recipe_code,category",
                     "status": "eq.active",
-                    "preference": f"eq.{mealPreference}",
+                    "preference": f"in.({','.join(preferences)})",
                     "category": "in.(breakfast,main_course,staple)",
                     "order": "recipe_name.asc",
                 },
@@ -80,8 +87,35 @@ async def _load_recipe_reference(mealPreference) -> list[dict[str, str | None]]:
     return recipes
 
 
-def _build_system_prompt(start_date: date,) -> str:
+async def _load_excluded_codes(exclusions: list[str]) -> set[str]:
+    """Recipe codes containing any ingredient the household wants to avoid."""
+    rules = exclusion_rules(exclusions)
+    terms = match_terms(rules)
+    if not terms:
+        return set()
+    headers = {
+        "apikey": settings.supabase_service_role_key,
+        "Authorization": f"Bearer {settings.supabase_service_role_key}",
+    }
+    or_filter = "(" + ",".join(f"food_name.ilike.*{t}*" for t in terms) + ")"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.get(
+                f"{settings.supabase_url.rstrip('/')}/rest/v1/recipe_ingredient",
+                params={"select": "source_recipe_code,food_name", "or": or_filter},
+                headers=headers,
+            )
+    except httpx.HTTPError as exc:
+        raise RuntimeError("Could not reach Supabase to apply foods to avoid.") from exc
+    if response.status_code != 200:
+        raise RuntimeError(f"Could not apply foods to avoid (status {response.status_code}).")
+    return excluded_recipe_codes(response.json(), rules)
+
+
+def _build_system_prompt(start_date: date, context: MealPlanningContext | None = None) -> str:
     dates = _expected_dates(start_date)
+    household = goals_guidance(context.dietary_goals) if context else ""
+    household_block = f"\nHOUSEHOLD PREFERENCES:\n{household}\n" if household else ""
     return f"""
 You are Annora's household meal-planning engine.
 
@@ -135,6 +169,7 @@ This is WRONG:
 This is CORRECT:
 ["C123", "S001"]
 
+{household_block}
 REPETITION:
 - Do not use the same recipe on consecutive days for breakfast.
 - Do not use the same recipe on consecutive days for lunch and dinner.
@@ -159,8 +194,22 @@ async def generate_meal_plan(context: MealPlanningContext, start_date: date):
     if not settings.grokapi or not settings.llm_model:
         raise RuntimeError("Groq provider is not configured.")
 
-    dietary_preference = context.dietary_preference
-    recipe_reference = await _load_recipe_reference(dietary_preference)
+    recipe_reference = await _load_recipe_reference(recipe_preferences_for(context.dietary_preference))
+
+    # Foods to avoid are a hard filter: excluded recipes never reach the LLM,
+    # and sanitize_meal_plan() drops any code outside this reference.
+    excluded = await _load_excluded_codes(context.dietary_exclusions)
+    if excluded:
+        recipe_reference = [
+            r for r in recipe_reference
+            if (r.get("source_recipe_code") or "").strip().upper() not in excluded
+        ]
+    if not any(r.get("category") == "breakfast" for r in recipe_reference) or not any(
+        r.get("category") == "main_course" for r in recipe_reference
+    ):
+        raise RuntimeError(
+            "No recipes are left after applying your foods to avoid. Remove some items in Profile and try again."
+        )
     breakfast_recipes = [f'{r.get("recipe_name")}-{r.get("source_recipe_code")}' for r in recipe_reference if r.get("category") == "breakfast"]
     main_course = [f'{r.get("recipe_name")}-{r.get("source_recipe_code")}' for r in recipe_reference if r.get("category") == "main_course"]
     staple_recipes = [f'{r.get("recipe_name")}-{r.get("source_recipe_code")}'  for r in recipe_reference if r.get("category") == "staple"]
@@ -174,7 +223,7 @@ async def generate_meal_plan(context: MealPlanningContext, start_date: date):
         response, completion = client.chat.completions.create_with_completion(
             model=settings.llm_model,
             messages=[
-                {"role": "system", "content": _build_system_prompt(start_date)},
+                {"role": "system", "content": _build_system_prompt(start_date, context)},
                 {"role": "user", "content": json.dumps(recipes)},
             ],
             # temperature=settings.llm_temperature,

@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 import httpx
+from app.core.auth import require_matching_user
 from app.core.config import settings
 from app.schemas.ingredients import GeneratedIngredients
 from app.services.ingredient_planner import IngredientPlannerError, generate_ingredients
@@ -7,7 +8,7 @@ from app.services.ingredient_planner import IngredientPlannerError, generate_ing
 router = APIRouter(prefix="/meal-plans", tags=["meal-plan-ingredients"])
 
 @router.post("/{meal_id}/ingredients", response_model=GeneratedIngredients)
-async def generate_meal_plan_ingredients(meal_id: str, user_id: str):
+async def generate_meal_plan_ingredients(meal_id: str, user_id: str, _: str = Depends(require_matching_user)):
     
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(

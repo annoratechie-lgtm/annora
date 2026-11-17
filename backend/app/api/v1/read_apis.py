@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 import httpx
 
+from app.core.auth import require_matching_user
 from app.core.config import settings
 
 router = APIRouter(prefix="/meal-plans", tags=["meal-plan-reads"])
@@ -28,7 +29,7 @@ async def _get(client: httpx.AsyncClient, path: str, params: dict):
 
 
 @router.get("/{user_id}")
-async def get_user_meal_plan(user_id: str):
+async def get_user_meal_plan(user_id: str, _: str = Depends(require_matching_user)):
     """Return the active meal plan stored in the current meal/meal_plan schema."""
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(status_code=503, detail="Supabase backend configuration is missing.")
@@ -82,7 +83,7 @@ async def get_user_meal_plan(user_id: str):
 
 
 @router.get("/{meal_id}/ingredients")
-async def get_meal_plan_ingredients(meal_id: str, user_id: str):
+async def get_meal_plan_ingredients(meal_id: str, user_id: str, _: str = Depends(require_matching_user)):
     """Return saved ingredients grouped by the meal type/recipe in the plan."""
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(status_code=503, detail="Supabase backend configuration is missing.")
@@ -134,7 +135,7 @@ async def get_meal_plan_ingredients(meal_id: str, user_id: str):
 
 
 @router.get("/{meal_id}/grocery-list")
-async def get_meal_plan_grocery_list(meal_id: str, user_id: str):
+async def get_meal_plan_grocery_list(meal_id: str, user_id: str, _: str = Depends(require_matching_user)):
     """Return the saved grocery list and its items for a meal plan."""
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(status_code=503, detail="Supabase backend configuration is missing.")

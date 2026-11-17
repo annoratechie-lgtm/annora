@@ -90,6 +90,26 @@ async def require_authenticated_user(
     return (await _get_authenticated_user(credentials)).id
 
 
+async def require_matching_user(
+    user_id: str,
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> str:
+    """Endpoint guard for routes that take a `user_id` (path or query).
+
+    The caller's Supabase token must belong to that user. ENVIRONMENT=development
+    skips the check, matching the meal-plan generate endpoint, for local work.
+    """
+    if settings.environment.lower() == "development":
+        return user_id
+    user = await _get_authenticated_user(credentials)
+    if user.id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only access your own meal plans.",
+        )
+    return user.id
+
+
 async def require_authenticated_user_details(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> AuthenticatedUser:

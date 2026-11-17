@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 import httpx
 
+from app.core.auth import require_matching_user
 from app.core.config import settings
 from app.schemas.grocery import GroceryListResponse
 from app.services.grocery_list_service import GroceryListError, aggregate_ingredients
@@ -9,7 +10,7 @@ router = APIRouter(prefix="/meal-plans", tags=["grocery-lists"])
 
 
 @router.post("/{meal_id}/grocery-list", response_model=GroceryListResponse)
-async def generate_grocery_list(meal_id: str, user_id: str):
+async def generate_grocery_list(meal_id: str, user_id: str, _: str = Depends(require_matching_user)):
     """Aggregate saved meal ingredients and replace one grocery list for the meal plan."""
     if not settings.supabase_url or not settings.supabase_service_role_key:
         raise HTTPException(
