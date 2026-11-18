@@ -79,3 +79,50 @@ def test_rebuild_keeps_ticked_items():
 def test_nothing_to_buy_is_an_error():
     with pytest.raises(GroceryListError):
         aggregate_ingredients([row("Water, distilled", 100, "ml")])
+
+
+def test_spoons_of_dry_things_become_grams_and_liquids_stay_ml():
+    items = by_name(aggregate_ingredients([
+        row("Cumin seeds (Cuminum cyminum)", 1, "tsp"),     # 5 ml -> 3 g
+        row("Salt", 1, "tsp"),                              # 5 ml -> 6 g
+        row("Oil, olive", 1, "tbsp"),                       # stays 15 ml
+        row("Milk, whole, Cow", 1, "tbsp"),
+    ]))
+    assert (items["Cumin seeds"]["required_quantity"], items["Cumin seeds"]["unit"]) == (3, "g")
+    assert (items["Salt"]["required_quantity"], items["Salt"]["unit"]) == (6, "g")
+    assert items["Olive oil"]["unit"] == "ml" and items["Milk"]["unit"] == "ml"
+
+
+def test_tiny_amounts_are_not_rounded_up_to_a_big_pack():
+    items = by_name(aggregate_ingredients([
+        row("Saffron", 0.5, "g"),
+        row("Nutmeg (Myristica fragrans)", 0.25, "tsp"),
+        row("Ajwain seed whole organic spices", 2.5, "tsp"),   # 7.5 g
+    ]))
+    assert (items["Saffron"]["purchase_quantity"], items["Saffron"]["unit"]) == (1, "g")
+    assert items["Nutmeg"]["purchase_quantity"] == 1
+    assert items["Ajwain"]["purchase_quantity"] == 10
+
+
+def test_frying_oil_is_one_reusable_batch_not_a_sum():
+    items = by_name(aggregate_ingredients([
+        row("Oil, sunflower", 480, "ml"),
+        row("Oil, sunflower", 240, "ml"),
+        row("Oil, sunflower", 2, "C"),
+        row("Oil, sunflower", 1, "tbsp"),
+        row("Oil, sunflower", 2, "tsp"),
+    ], household_size=2))
+    assert items["Sunflower oil (for frying)"]["required_quantity"] == 480   # biggest batch, once
+    assert items["Sunflower oil (for frying)"]["category"] == "Pantry"
+    assert items["Sunflower oil"]["required_quantity"] == 50                 # (15 + 10) x 2
+
+
+def test_herb_sprigs_and_grams_become_one_line():
+    items = aggregate_ingredients([
+        row("Coriander leaves (Coriandrum sativum)", 4, "g"),
+        row("Coriander leaves (Coriandrum sativum)", 5, "sprig"),
+        row("Curry leaves", 6, "sprig"),
+    ])
+    coriander = [i for i in items if i["ingredient_name"] == "Coriander leaves"]
+    assert len(coriander) == 1 and coriander[0]["unit"] == "g" and coriander[0]["required_quantity"] == 14
+    assert by_name(items)["Curry leaves"]["unit"] == "sprig"

@@ -3,6 +3,8 @@
 Steps: drop water, clean dataset names ("Onion, big (Allium cepa)" -> "Onion"),
 convert units to grams / millilitres / counts and merge them, scale by the
 household size, sort into aisles, and round up to sizes shops sell.
+Spoon measures of dry things (spices, salt, dal) become grams; only liquids stay
+in ml. Deep-frying oil is reused, so it is one separate line, not a running sum.
 Pure functions only; the API layer does the Supabase I/O.
 """
 
@@ -104,6 +106,16 @@ _UNITS = {
     "c": ("ml", 240), "cup": ("ml", 240), "cups": ("ml", 240),
 }
 
+_SPOON_UNITS = {"tsp", "teaspoon", "tbsp", "tablespoon", "c", "cup", "cups"}
+# Things measured by volume in a kitchen and sold by volume.
+_LIQUID_WORDS = ("oil", "ghee", "milk", "sauce", "vinegar", "juice", "cream", "honey", "syrup", "puree", "water")
+# Grams per ml for dry things measured with spoons (1 tsp of a ground spice is about 3 g).
+_SPOON_DENSITY = (("salt", 1.2), ("sugar", 0.85), ("butter", 0.95), ("dal", 0.8), ("coconut", 0.5))
+_DRY_SPOON_DENSITY = 0.6
+# A single recipe line with this much oil per serving is deep-frying oil.
+FRYING_OIL_ML = 120
+SPRIG_GRAMS = 2
+
 _VEGETABLE_WORDS = {
     "onion", "tomato", "potato", "spinach", "carrot", "peas", "beans", "capsicum", "cabbage", "cauliflower",
     "brinjal", "bhindi", "radish", "turnip", "beetroot", "drumstick", "mushroom", "ginger", "garlic", "chillies",
@@ -139,11 +151,31 @@ def _is_water(food_name: str) -> bool:
     return bool(re.match(r"^\s*water\b", str(food_name or ""), re.I))
 
 
+def _is_liquid(name: str) -> bool:
+    lowered = name.lower()
+    return any(w in lowered for w in _LIQUID_WORDS)
+
+
+def _to_base(name: str, amount: float, unit: str) -> tuple[float, str]:
+    """Convert one recipe quantity to g, ml or a count unit."""
+    base, factor = _UNITS.get(unit, (unit or "piece", 1))
+    quantity = amount * factor
+    if unit in _SPOON_UNITS and not _is_liquid(name):
+        lowered = name.lower()
+        density = next((d for w, d in _SPOON_DENSITY if w in lowered), _DRY_SPOON_DENSITY)
+        return quantity * density, "g"
+    return quantity, base
+
+
 def _shop_round(base_unit: str, quantity: float) -> tuple[float, str]:
-    """Round up to a size shops sell. g/ml -> 25/50/250 steps; >=1000 shown in kg/l."""
+    """Round up to a size shops sell: 1/5/25/50/250 steps by size; >=1000 shown in kg/l."""
     if base_unit in ("g", "ml"):
         big = "kg" if base_unit == "g" else "l"
-        if quantity < 100:
+        if quantity < 5:
+            step = 1  # saffron, hing, nutmeg: a pinch, not a 25 g pack
+        elif quantity < 25:
+            step = 5
+        elif quantity < 100:
             step = 25
         elif quantity < 1000:
             step = 50
@@ -161,6 +193,7 @@ def aggregate_ingredients(ingredients: list[dict], household_size: int = 1) -> l
     scale = max(1, int(household_size or 1))
     totals: dict[tuple[str, str], float] = defaultdict(float)
     names: dict[tuple[str, str], str] = {}
+    frying: dict[str, float] = {}  # oil name -> largest single frying quantity (ml)
 
     for row in ingredients:
         food = str(row.get("food_name") or "").strip()
@@ -173,11 +206,21 @@ def aggregate_ingredients(ingredients: list[dict], household_size: int = 1) -> l
         if amount <= 0:
             continue
         unit = str(row.get("unit") or "").strip().lower()
-        base, factor = _UNITS.get(unit, (unit or "piece", 1))
         name = display_name(food)
+        quantity, base = _to_base(name, amount, unit)
+        if base == "ml" and "oil" in name.lower() and quantity >= FRYING_OIL_ML:
+            frying[name] = max(frying.get(name, 0), quantity)
+            continue
         key = (name.casefold(), base)
         names[key] = name
-        totals[key] += amount * factor * scale
+        totals[key] += quantity * scale
+
+    # Frying oil is topped up and reused across the week: buy the biggest batch once.
+    for name, quantity in frying.items():
+        label = f"{name} (for frying)"
+        key = (label.casefold(), "ml")
+        names[key] = label
+        totals[key] = quantity
 
     if not totals:
         raise GroceryListError("No ingredients to shop for in this meal plan.")
@@ -187,6 +230,13 @@ def aggregate_ingredients(ingredients: list[dict], household_size: int = 1) -> l
     for key in totals:
         by_name[key[0]].append(key)
     for keys in by_name.values():
+        # Herbs listed both in grams and sprigs (coriander) -> one line in grams.
+        sprig = next((k for k in keys if k[1] == "sprig"), None)
+        grams = next((k for k in keys if k[1] == "g"), None)
+        if sprig and grams:
+            totals[grams] += totals.pop(sprig) * SPRIG_GRAMS
+            names.pop(sprig, None)
+            keys = [k for k in keys if k != sprig]
         measures = [k for k in keys if k[1] in ("g", "ml")]
         if len(measures) == 2:
             keep, drop = sorted(measures, key=lambda k: totals[k], reverse=True)

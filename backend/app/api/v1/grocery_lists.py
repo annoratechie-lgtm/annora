@@ -116,7 +116,7 @@ async def generate_grocery_list(meal_id: str, user_id: str, _: str = Depends(req
                 update_list = await client.patch(
                     f"{base_url}/rest/v1/grocery_lists",
                     params={"id": f"eq.{grocery_list_id}"},
-                    json={"status": "active"},
+                    json={"status": "active", "updated_at": datetime.now(timezone.utc).isoformat()},
                     headers=headers,
                 )
                 if update_list.status_code not in (200, 204):
