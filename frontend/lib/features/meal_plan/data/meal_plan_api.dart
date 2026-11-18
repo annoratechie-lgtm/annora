@@ -103,10 +103,13 @@ class MealPlanApi {
   /// GET /meal-plans/meals/{row}/alternatives -> {meal, alternatives: [...]}.
   /// [sort]: 'any' | 'protein' | 'lighter'.
   Future<Map<String, dynamic>> fetchAlternatives(String mealRowId,
-      {String sort = 'any'}) async {
+      {String sort = 'any', String query = ''}) async {
     final uri = Uri.parse(
             '$baseUrl/api/v1/meal-plans/meals/$mealRowId/alternatives')
-        .replace(queryParameters: {'sort': sort});
+        .replace(queryParameters: {
+      'sort': sort,
+      if (query.trim().isNotEmpty) 'q': query.trim(),
+    });
     final response = await _client.get(uri, headers: await _headers());
     return _decode(response);
   }

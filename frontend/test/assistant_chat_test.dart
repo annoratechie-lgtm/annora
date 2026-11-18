@@ -103,16 +103,19 @@ class FakeAssistant implements AssistantApi {
 
 class FakeMealPlanApi implements MealPlanApi {
   final swaps = <String>[];
+  final queries = <String>[];
 
   @override
   Future<Map<String, dynamic>> fetchAlternatives(String mealRowId,
-          {String sort = 'any'}) async =>
-      {
+      {String sort = 'any', String query = ''}) async {
+    queries.add(query);
+    return {
         'alternatives': [
           {'code': 'ASC300', 'name': 'Palak paneer', 'kcal': 210, 'protein_g': 11.0},
           {'code': 'ASC301', 'name': 'Chana masala', 'kcal': 230, 'protein_g': 9.0},
         ]
       };
+  }
 
   @override
   Future<Map<String, dynamic>> swapMeal(String mealRowId, String recipeCode,
@@ -240,6 +243,10 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.text('Replace Aloo gobhi with:'), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('swap-search')), 'palak');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(plans.queries.last, 'palak');
     await tester.tap(find.text('Palak paneer'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Swap to Palak paneer'));

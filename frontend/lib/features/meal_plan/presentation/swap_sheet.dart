@@ -83,6 +83,7 @@ class _SwapSheetState extends State<SwapSheet> {
   late Dish _dish = widget.dishes.firstWhere((d) => d.id != null,
       orElse: () => widget.dishes.first);
   String _sort = 'any';
+  final _search = TextEditingController();
   List<SwapOption>? _options;
   String? _error;
   SwapOption? _picked;
@@ -92,6 +93,12 @@ class _SwapSheetState extends State<SwapSheet> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -106,7 +113,8 @@ class _SwapSheetState extends State<SwapSheet> {
       return;
     }
     try {
-      final response = await widget.api.fetchAlternatives(id, sort: _sort);
+      final response = await widget.api
+          .fetchAlternatives(id, sort: _sort, query: _search.text);
       if (mounted) setState(() => _options = SwapOption.listFrom(response));
     } catch (e) {
       if (mounted) setState(() => _error = '$e');
@@ -198,6 +206,31 @@ class _SwapSheetState extends State<SwapSheet> {
             ),
         ]),
       ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
+        child: TextField(
+          key: const Key('swap-search'),
+          controller: _search,
+          textInputAction: TextInputAction.search,
+          onSubmitted: (_) => _load(),
+          cursorColor: AppColors.orange,
+          style: const TextStyle(color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            hintText: 'Search a dish, e.g. besan chilla',
+            hintStyle: const TextStyle(color: AppColors.textFaint),
+            prefixIcon: const Icon(Icons.search, color: AppColors.textMuted),
+            isDense: true,
+            filled: true,
+            fillColor: AnnoraUi.field,
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AnnoraUi.line)),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: AnnoraUi.line)),
+          ),
+        ),
+      ),
       const SizedBox(height: 8),
       Expanded(child: _list()),
       Padding(
@@ -237,7 +270,7 @@ class _SwapSheetState extends State<SwapSheet> {
     if (options.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(20),
-        child: Text('No other dishes fit your diet and foods to avoid here.',
+        child: Text('No matching dishes fit your diet and foods to avoid here.',
             style: TextStyle(color: AppColors.textMuted)),
       );
     }

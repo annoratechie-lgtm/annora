@@ -167,14 +167,45 @@ async def recipe_details(client: httpx.AsyncClient, code: str) -> dict | None:
     }
 
 
+# Spellings people type -> words used in recipe names (both directions apply).
+_SYNONYMS = {
+    "besan": ["gram flour"], "chilla": ["cheela"], "cheela": ["chilla"], "poori": ["puri"],
+    "puri": ["poori"], "paratha": ["parantha"], "parantha": ["paratha"], "dal": ["dhal"],
+    "chana": ["channa", "chickpea", "chick pea"], "channa": ["chana"], "rajma": ["kidney bean"],
+    "aloo": ["potato"], "gobhi": ["cauliflower", "gobi"], "gobi": ["gobhi", "cauliflower"],
+    "palak": ["spinach"], "bhindi": ["okra", "ladies finger"], "baingan": ["brinjal"],
+    "matar": ["peas"], "chawal": ["rice"], "roti": ["chapati"], "chapati": ["roti"],
+    "poha": ["flattened rice"], "upma": ["suji", "semolina"], "suji": ["semolina"],
+}
+_STOPWORDS = {"ka", "ki", "ke", "with", "and", "the", "a", "of", "aur", "some", "something"}
+
+
+def _query_terms(query: str) -> list[list[str]]:
+    """'besan ka chilla' -> [['besan', 'gram flour'], ['chilla', 'cheela']]."""
+    words = [w for w in "".join(ch if ch.isalnum() else " " for ch in query.lower()).split()
+             if len(w) > 1 and w not in _STOPWORDS]
+    return [[w, *_SYNONYMS.get(w, [])] for w in words]
+
+
+def match_score(name: str, terms: list[list[str]]) -> int:
+    """How many query words (or their synonyms) appear in a recipe name."""
+    lowered = name.lower()
+    return sum(1 for options in terms if any(o in lowered for o in options))
+
+
 async def find_alternatives(
     client: httpx.AsyncClient,
     user_id: str,
     meal_plan_id: str,
     sort: str = "any",
     limit: int = 6,
+    query: str = "",
 ) -> dict:
-    """Recipes that could replace one dish in the active plan."""
+    """Recipes that could replace one dish in the active plan.
+
+    With a query ("besan ka chilla"), recipes whose names match it come first;
+    `exact_match` says whether every query word matched one of them.
+    """
     plan, rows = await load_active_plan(client, user_id)
     row = next((r for r in rows if r["id"] == meal_plan_id), None)
     if plan is None or row is None:
@@ -188,18 +219,28 @@ async def find_alternatives(
     candidates = [c for code, c in allowed.items() if code not in in_plan] or [
         c for code, c in allowed.items() if code != current
     ]
-    if sort in ("protein", "lighter"):
+    terms = _query_terms(query)
+    exact_match = None
+    if terms:
+        scored = [(match_score(c["name"], terms), c) for c in candidates]
+        matched = [(s, c) for s, c in scored if s > 0]
+        matched.sort(key=lambda sc: -sc[0])
+        exact_match = bool(matched) and matched[0][0] == len(terms)
+        sample = [c for _, c in matched[: limit * 4]]
+    elif sort in ("protein", "lighter"):
         sample = candidates
     else:
         sample = random.sample(candidates, min(len(candidates), limit * 4))
     nutrition = await _nutrition(client, [c["code"] for c in sample])
     options = [dict(c, **_nutrition_summary(nutrition.get(c["code"]))) for c in sample]
-    if sort == "protein":
+    if terms:
+        pass  # a searched-for dish: keep best name matches first
+    elif sort == "protein":
         options.sort(key=lambda o: -(o["protein_g"] or 0))
     elif sort == "lighter":
         options = [o for o in options if o["kcal"] and not o["kcal_unverified"]]
         options.sort(key=lambda o: o["kcal"])
-    return {
+    result = {
         "meal": {
             "meal_plan_id": row["id"],
             "date": row["meal_date"],
@@ -209,6 +250,10 @@ async def find_alternatives(
         },
         "alternatives": options[:limit],
     }
+    if terms:
+        result["query"] = query
+        result["exact_match"] = exact_match
+    return result
 
 
 async def validate_swaps(client: httpx.AsyncClient, user_id: str, changes: list[dict]) -> tuple[dict, list[dict]]:

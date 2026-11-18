@@ -6,7 +6,7 @@ Ask Annora swaps use the same plan_ops code via /assistant/messages/{id}/apply.
 from typing import Literal
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.auth import require_authenticated_user
@@ -33,12 +33,13 @@ def _require_supabase() -> None:
 async def alternatives(
     meal_plan_id: str,
     sort: Literal["any", "protein", "lighter"] = "any",
+    q: str = Query(default="", max_length=80),
     user_id: str = Depends(require_authenticated_user),
 ):
     _require_supabase()
     try:
         async with httpx.AsyncClient(timeout=20) as client:
-            return await plan_ops.find_alternatives(client, user_id, meal_plan_id, sort, limit=8)
+            return await plan_ops.find_alternatives(client, user_id, meal_plan_id, sort, limit=8, query=q)
     except plan_ops.PlanChangeError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except (db.SupabaseError, httpx.HTTPError) as exc:

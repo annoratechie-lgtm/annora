@@ -70,3 +70,36 @@ def test_swap_endpoints_need_a_token():
     c = TestClient(app)
     assert c.get("/api/v1/meal-plans/meals/row-1/alternatives").status_code == 401
     assert c.post("/api/v1/meal-plans/meals/row-1/swap", json={"recipe_code": "ASC300"}).status_code == 401
+
+
+def test_dish_search_understands_hindi_names_and_spellings():
+    terms = plan_ops._query_terms("besan ka chilla")
+    assert plan_ops.match_score("Gram flour chilla/cheela (Besan chilla/cheela)", terms) == 2
+    assert plan_ops.match_score("Paneer stuffed cheela/chilla", terms) == 1
+    assert plan_ops.match_score("Poha", terms) == 0
+    assert plan_ops.match_score("Aloo gobi", plan_ops._query_terms("aloo gobhi")) == 2
+
+
+def test_find_alternatives_puts_the_named_dish_first(monkeypatch):
+    async def allowed(client, household, category):
+        return {c: {"code": c, "name": n, "category": "breakfast"} for c, n in [
+            ("BFP047", "Paneer stuffed cheela/chilla"),
+            ("OSR100", "Gram flour chilla/cheela (Besan chilla/cheela)"),
+            ("BFP153", "Poha"),
+        ]}
+
+    async def categories(client, codes):
+        return {"ASC226": "breakfast"}
+
+    async def nutrition(client, codes):
+        return {}
+
+    monkeypatch.setattr(plan_ops, "allowed_recipes", allowed)
+    monkeypatch.setattr(plan_ops, "recipe_categories", categories)
+    monkeypatch.setattr(plan_ops, "_nutrition", nutrition)
+    result = asyncio.run(plan_ops.find_alternatives(None, "user-a", "row-1", query="besan ka chilla"))
+    assert [o["code"] for o in result["alternatives"]] == ["OSR100", "BFP047"]
+    assert result["exact_match"] is True
+
+    missing = asyncio.run(plan_ops.find_alternatives(None, "user-a", "row-1", query="masala dosa"))
+    assert missing["exact_match"] is False and missing["alternatives"] == []

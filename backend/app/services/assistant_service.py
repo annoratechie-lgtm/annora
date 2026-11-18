@@ -51,6 +51,7 @@ TOOLS = [
                 "properties": {
                     "meal_ref": {"type": "string", "description": "Ref of the dish to replace, e.g. M3."},
                     "sort": {"type": "string", "enum": ["any", "protein", "lighter"], "description": "protein = most protein first; lighter = fewest calories first."},
+                    "query": {"type": "string", "description": "Dish the user asked for, in their words (e.g. 'besan ka chilla'). Matching recipes come first."},
                 },
                 "required": ["meal_ref"],
             },
@@ -126,6 +127,9 @@ You can:
   steps, so build the method from get_recipe's ingredients and say it is a suggested method.
 - Swap dishes: call find_alternatives, pick suitable options, then propose_swaps.
   Swap a curry for a curry and a roti/rice for a roti/rice; keep the meal structure.
+- When the user names a dish ("swap it with besan ka chilla"), pass it as `query`.
+  If exact_match is false, do NOT propose a different dish silently: say that exact
+  dish isn't available for them and offer the closest matches to choose from.
 - Plan a fresh week: propose_new_week.
 - Remember lasting preferences the user states ("I don't like bhindi", "light dinners
   on weekdays") with remember, and use remembered facts in every suggestion.
@@ -194,12 +198,16 @@ class ToolRunner:
         details = await plan_ops.recipe_details(self.client, code)
         return details or {"error": "Recipe not found."}
 
-    async def _tool_find_alternatives(self, meal_ref: str, sort: str = "any") -> dict:
+    async def _tool_find_alternatives(self, meal_ref: str, sort: str = "any", query: str = "") -> dict:
         meal_plan_id = self.context.slot_id(meal_ref)
         if meal_plan_id is None:
             return {"error": f"No meal {meal_ref} in the plan."}
         result = await plan_ops.find_alternatives(
-            self.client, self.context.user_id, meal_plan_id, sort if sort in ("any", "protein", "lighter") else "any"
+            self.client,
+            self.context.user_id,
+            meal_plan_id,
+            sort if sort in ("any", "protein", "lighter") else "any",
+            query=str(query or "")[:80],
         )
         result["meal"]["ref"] = meal_ref.upper()
         result["meal"].pop("meal_plan_id", None)
