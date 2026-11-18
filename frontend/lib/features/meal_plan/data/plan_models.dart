@@ -16,14 +16,29 @@ String fmtInt(num value) {
 }
 
 class Dish {
+  /// meal_plan row id (used for swaps).
+  final String? id;
+  final String? code;
   final String name;
   final String? unit;
   final double? kcal;
   final double? protein;
   final double? carbs;
 
+  /// 'planner' | 'app_swap' | 'annora_chat': who put this dish in the plan.
+  final String origin;
+
   const Dish(
-      {required this.name, this.unit, this.kcal, this.protein, this.carbs});
+      {this.id,
+      this.code,
+      required this.name,
+      this.unit,
+      this.kcal,
+      this.protein,
+      this.carbs,
+      this.origin = 'planner'});
+
+  bool get changedByAnnora => origin == 'annora_chat';
 
   /// 64 recipes claim >1,500 kcal per serving while protein + carbs explain
   /// <600 kcal; their calories are left out of totals until the data is fixed.
@@ -95,6 +110,9 @@ ParsedPlan parsePlan(Map<String, dynamic> response) {
       double? num(String key) =>
           n is Map ? double.tryParse('${n[key] ?? ''}') : null;
       menu.putIfAbsent(date, () => {}).putIfAbsent(type, () => []).add(Dish(
+            id: row['id']?.toString(),
+            code: row['source_recipe_code']?.toString(),
+            origin: row['origin']?.toString() ?? 'planner',
             name: name,
             unit: n is Map ? n['servings_unit']?.toString() : null,
             kcal: num('unit_serving_energy_kcal'),

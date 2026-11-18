@@ -5,7 +5,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/ui/annora_ui.dart';
 import '../../onboarding/data/onboarding_repository.dart';
+import '../../assistant/data/assistant_api.dart';
 import '../data/user_profile_api.dart';
+import 'memory_card.dart';
 
 const _diets = [
   ('vegetarian', 'Vegetarian'),
@@ -56,6 +58,9 @@ String? normalizeIndianMobile(String input) {
 
 class ProfileScreen extends StatefulWidget {
   final UserProfileApi api;
+
+  /// Shows "What Annora remembers" when set.
+  final AssistantApi? assistantApi;
   final OnboardingRepository? repository;
   final bool isActive;
   final VoidCallback? onOpenHome;
@@ -71,6 +76,7 @@ class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
     super.key,
     required this.api,
+    this.assistantApi,
     this.repository,
     this.isActive = true,
     this.onOpenHome,
@@ -291,6 +297,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               if (_household != null) ...[
                 _householdCard(_household!),
                 const SizedBox(height: 14)
+              ],
+              if (widget.assistantApi != null) ...[
+                MemoryCard(api: widget.assistantApi!),
+                const SizedBox(height: 14),
               ],
               _notificationsCard(),
               const SizedBox(height: 14),

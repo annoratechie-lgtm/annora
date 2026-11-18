@@ -157,9 +157,13 @@ class FakeApi implements MealPlanApi {
 class FakeAssistant implements AssistantApi {
   final asked = <String>[];
   @override
-  Future<String> ask(String message) async {
+  Future<List<ChatMessage>> history() async => [];
+
+  @override
+  Future<ChatTurn> send(String message) async {
     asked.add(message);
-    return 'ok';
+    return ChatTurn(ChatMessage(id: 'u', isUser: true, text: message),
+        ChatMessage(id: 'r', isUser: false, text: 'ok'), const []);
   }
 
   @override

@@ -169,10 +169,11 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _openAssistant([String? question]) {
+  Future<void> _openAssistant([String? question]) async {
     final api = widget.assistantApi;
     if (api == null) return;
-    showAssistantSheet(context, api, question);
+    // Home stays the active tab while the sheet is open, so reload here.
+    if (await showAssistantSheet(context, api, question) && mounted) _reload();
   }
 
   void _snack(String message) {
@@ -742,9 +743,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _askCard() {
     const suggestions = [
-      'What can I make with leftover rice?',
-      'Make Thursday lighter',
-      'Is this week high in protein?'
+      "Swap tonight's dinner",
+      'Make tomorrow lighter',
+      'What can I make with leftover rice?'
     ];
     void submit() {
       final q = _askController.text.trim();
@@ -768,7 +769,7 @@ class _HomeScreenState extends State<HomeScreen> {
         const _IconRow(
           icon: Icons.auto_awesome,
           title: 'Ask Annora',
-          body: 'Cooking tips, swaps and what to make with what you have.',
+          body: 'Swap meals, plan a fresh week or ask how to cook anything. Annora asks before changing your plan.',
         ),
         const SizedBox(height: 12),
         Container(

@@ -177,6 +177,7 @@ class _PostOnboardingShellState extends State<PostOnboardingShell> {
             ),
             ProfileScreen(
               api: widget.userProfileApi,
+              assistantApi: widget.assistantApi,
               isActive: _selectedScreen == _profile,
               onOpenHome: () => _go(_home),
               onOpenMealPlan: () => _go(_plan),

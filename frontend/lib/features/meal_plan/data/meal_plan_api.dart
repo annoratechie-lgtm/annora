@@ -100,6 +100,32 @@ class MealPlanApi {
     return _decode(response);
   }
 
+  /// GET /meal-plans/meals/{row}/alternatives -> {meal, alternatives: [...]}.
+  /// [sort]: 'any' | 'protein' | 'lighter'.
+  Future<Map<String, dynamic>> fetchAlternatives(String mealRowId,
+      {String sort = 'any'}) async {
+    final uri = Uri.parse(
+            '$baseUrl/api/v1/meal-plans/meals/$mealRowId/alternatives')
+        .replace(queryParameters: {'sort': sort});
+    final response = await _client.get(uri, headers: await _headers());
+    return _decode(response);
+  }
+
+  /// POST /meal-plans/meals/{row}/swap. The backend also refreshes the plan's
+  /// ingredients and grocery list (ticked items stay ticked).
+  Future<Map<String, dynamic>> swapMeal(
+      String mealRowId, String recipeCode, {String? fromCode}) async {
+    final response = await _client.post(
+      Uri.parse('$baseUrl/api/v1/meal-plans/meals/$mealRowId/swap'),
+      headers: {...await _headers(), 'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'recipe_code': recipeCode,
+        if (fromCode != null) 'from_code': fromCode,
+      }),
+    );
+    return _decode(response);
+  }
+
   User _requireUser() {
     final user = _supabase.auth.currentUser;
     if (user == null) {

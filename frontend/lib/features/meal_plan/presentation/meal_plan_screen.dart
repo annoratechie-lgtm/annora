@@ -8,6 +8,7 @@ import '../../groceries/presentation/groceries_screen.dart';
 import '../../onboarding/data/onboarding_repository.dart';
 import '../data/meal_plan_api.dart';
 import '../data/plan_models.dart';
+import 'swap_sheet.dart';
 
 const _mealOrder = ['breakfast', 'lunch', 'dinner'];
 const _mealColors = {
@@ -173,10 +174,34 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             (m['ingredients'] as List).isNotEmpty);
   }
 
-  void _ask(String question) {
+  Future<void> _ask(String question) async {
     final api = widget.assistantApi;
-    if (api != null) showAssistantSheet(context, api, question);
+    if (api == null) return;
+    final changed = await showAssistantSheet(context, api, question);
+    if (changed && mounted) _reloadAfterChange();
   }
+
+  Future<void> _swap(DateTime day, String type, List<Dish> dishes) async {
+    final weekday = _weekdays[day.weekday - 1];
+    final changed = await showSwapSheet(
+      context,
+      api: widget.api,
+      title: 'Swap $weekday ${type[0].toUpperCase()}${type.substring(1)}',
+      dishes: dishes,
+      onAskAnnora: widget.assistantApi == null
+          ? null
+          : () => _ask(
+              'Suggest a swap for ${dishes.first.name}, my $type on $weekday, that fits my household\'s diet and goals.'),
+    );
+    if (changed && mounted) _reloadAfterChange();
+  }
+
+  /// The plan (and so its ingredients) changed: reload, drop cached ingredients.
+  void _reloadAfterChange() => setState(() {
+        _ingredients = null;
+        _shownIngredients.clear();
+        _loading = _load();
+      });
 
   void _snack(String message) {
     if (!mounted) return;
@@ -524,6 +549,10 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
           _fact('${protein.toStringAsFixed(1)} g protein'),
           _fact('${carbs.round()} g carbs'),
           if (unverified) _fact('Calories unverified', warn: true),
+          if (dishes.any((d) => d.changedByAnnora))
+            _fact('Changed by Annora', accent: true)
+          else if (dishes.any((d) => d.origin == 'app_swap'))
+            _fact('Swapped by you'),
         ]),
         const SizedBox(height: 4),
         Wrap(spacing: 4, children: [
@@ -531,16 +560,11 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
             label: shown ? 'Hide ingredients' : 'Show ingredients',
             onTap: () => _toggleIngredients(key),
           ),
-          if (widget.assistantApi != null) ...[
+          if (widget.assistantApi != null)
             LinkButton(
                 label: 'Cooking tips',
                 onTap: () => _ask('How do I make ${dishes.first.name}?')),
-            LinkButton(
-              label: 'Swap',
-              onTap: () => _ask(
-                  'Suggest a swap for ${dishes.first.name}, my $type on ${_weekdays[day.weekday - 1]}, that fits my household\'s diet and goals.'),
-            ),
-          ],
+          LinkButton(label: 'Swap', onTap: () => _swap(day, type, dishes)),
         ]),
         if (shown)
           Padding(
@@ -574,15 +598,24 @@ class _MealPlanScreenState extends State<MealPlanScreen> {
     );
   }
 
-  Widget _fact(String text, {bool warn = false}) => Container(
+  Widget _fact(String text, {bool warn = false, bool accent = false}) =>
+      Container(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
         decoration: BoxDecoration(
-          color: warn ? const Color(0x1AF2B544) : const Color(0x0DFFFFFF),
+          color: warn
+              ? const Color(0x1AF2B544)
+              : accent
+                  ? AnnoraUi.accentSoft
+                  : const Color(0x0DFFFFFF),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(text,
             style: TextStyle(
-                color: warn ? AnnoraUi.warn : AppColors.textMuted,
+                color: warn
+                    ? AnnoraUi.warn
+                    : accent
+                        ? AppColors.orange
+                        : AppColors.textMuted,
                 fontSize: 12)),
       );
 
