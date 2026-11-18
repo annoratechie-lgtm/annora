@@ -1,10 +1,14 @@
+import logging
 from datetime import date
+from typing import Literal
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from app.core.config import settings
 from app.schemas.meal_plan import MealPlanningContext
+from app.services import assistant_store
+from app.services import supabase_rest as db
 from app.services.meal_plan_repository import MealPlanRepositoryError, save_meal_plan
 from app.services.meal_planner import generate_meal_plan as run_llm_meal_plan
 
@@ -15,6 +19,9 @@ bearer_scheme = HTTPBearer(auto_error=False)
 class GenerateMealPlanRequest(BaseModel):
     user_id: str
     start_date: date | None = None
+    # Where the request came from: the first plan after onboarding, or the app.
+    # Plans made from Ask Annora go through /assistant/messages/{id}/apply.
+    origin: Literal["onboarding", "app"] = "app"
     
 GeneratedMealPlan = dict[str, dict[str, str | list[str]]]
 
@@ -155,6 +162,55 @@ async def _load_planning_context(user_id: str) -> MealPlanningContext:
     )
 
 
+logger = logging.getLogger(__name__)
+
+
+async def create_meal_plan(
+    user_id: str,
+    start_date: date,
+    origin: str,
+    notes: list[str] | None = None,
+    message_id: str | None = None,
+) -> tuple[str, dict]:
+    """Generate and save a 7-day plan, guided by Ask Annora memory; log its source."""
+    if not settings.grokapi or not settings.llm_model:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Groq provider is not configured.",
+        )
+    context = await _load_planning_context(user_id)
+    async with httpx.AsyncClient(timeout=10) as client:
+        memory = await assistant_store.memory_facts(client, user_id)
+        if origin == "app":
+            # A user's very first plan is the one made right after onboarding.
+            earlier = await db.select(client, "meal", {"select": "id", "user_id": f"eq.{user_id}", "limit": "1"})
+            if not earlier:
+                origin = "onboarding"
+    context.notes = [*memory, *(notes or [])]
+
+    try:
+        # The LLM picks from recipes filtered by the household's diet and
+        # foods to avoid, guided by its health goals (see meal_planner.py).
+        plan = await run_llm_meal_plan(context, start_date)
+        meal_id = await save_meal_plan(user_id, start_date, plan, origin=origin, origin_message_id=message_id)
+    except (RuntimeError, MealPlanRepositoryError) as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            await db.insert(client, "plan_changes", {
+                "user_id": user_id,
+                "meal_id": meal_id,
+                "change_type": "generate",
+                "source": origin,
+                "message_id": message_id,
+                "after": {"start_date": start_date.isoformat(), "notes": notes or []},
+            })
+    except (db.SupabaseError, httpx.HTTPError) as exc:
+        logger.warning("Could not log plan change for %s: %s", meal_id, exc)
+    return meal_id, plan
+
+
 @router.post("/generate", response_model=GenerateMealPlanResponse)
 async def generate_meal_plan(
     request: GenerateMealPlanRequest,
@@ -162,23 +218,7 @@ async def generate_meal_plan(
 ):
     """Generate a 7-day meal plan with LLM and persist it in Supabase."""
     user_id = await _get_authenticated_user_id(request.user_id, credentials)
-    context = await _load_planning_context(user_id)
-    start_date = request.start_date or date.today()
-
-    if not settings.grokapi or not settings.llm_model:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Groq provider is not configured.",
-        )
-
-    try:
-        # The LLM picks from recipes filtered by the household's diet and
-        # foods to avoid, guided by its health goals (see meal_planner.py).
-        plan = await run_llm_meal_plan(context, start_date)
-        meal_id = await save_meal_plan(user_id, start_date, plan)
-    except (RuntimeError, MealPlanRepositoryError) as exc:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
-
+    meal_id, plan = await create_meal_plan(user_id, request.start_date or date.today(), request.origin)
     return GenerateMealPlanResponse(
         status="active",
         message="7-day meal plan generated and saved successfully.",

@@ -7,6 +7,7 @@ from app.api.v1 import (
     health,
     ingredients,
     meal_plans,
+    meal_swaps,
     nutrition,
     read_apis,
     users,
@@ -49,6 +50,7 @@ app.add_middleware(
 app.include_router(health.router, prefix="/api/v1")
 app.include_router(assistant.router, prefix="/api/v1")
 app.include_router(meal_plans.router, prefix="/api/v1")
+app.include_router(meal_swaps.router, prefix="/api/v1")
 app.include_router(ingredients.router, prefix="/api/v1")
 app.include_router(grocery_lists.router, prefix="/api/v1")
 app.include_router(read_apis.router, prefix="/api/v1")

@@ -1,138 +1,106 @@
+"""The signed-in user's own Annora data, shaped for the Ask Annora prompt.
+
+Meal slots are given short refs (M1, M2, ...) so the model never sees or
+invents database ids; the backend maps refs back to meal_plan ids.
+"""
+
+from dataclasses import dataclass, field
+
 import httpx
 
-from app.core.config import settings
+from app.services import assistant_store, plan_ops
+from app.services import supabase_rest as db
 
 
 class AssistantContextError(RuntimeError):
     pass
 
 
-async def _get_rows(
-    client: httpx.AsyncClient,
-    table: str,
-    params: dict[str, str],
-) -> list[dict]:
-    response = await client.get(
-        f"{settings.supabase_url.rstrip('/')}/rest/v1/{table}",
-        params=params,
-        headers={
-            "apikey": settings.supabase_service_role_key,
-            "Authorization": f"Bearer {settings.supabase_service_role_key}",
-        },
-    )
-    if response.status_code != 200:
-        raise AssistantContextError(
-            f"Could not load Annora context from {table} (status {response.status_code})."
-        )
+@dataclass
+class UserContext:
+    user_id: str
+    data: dict
+    plan: dict | None = None
+    slots: dict[str, dict] = field(default_factory=dict)  # "M1" -> meal_plan row
 
+    def slot_id(self, ref: str) -> str | None:
+        row = self.slots.get(str(ref or "").strip().upper())
+        return row["id"] if row else None
+
+    def ref_for(self, meal_plan_id: str) -> str | None:
+        return next((ref for ref, row in self.slots.items() if row["id"] == meal_plan_id), None)
+
+
+def _kcal(nutrition: dict | None) -> int | None:
+    value = (nutrition or {}).get("unit_serving_energy_kcal")
+    return round(value) if isinstance(value, (int, float)) and value <= plan_ops.IMPLAUSIBLE_KCAL else None
+
+
+def _protein(nutrition: dict | None) -> float | None:
+    value = (nutrition or {}).get("unit_serving_protein_g")
+    return round(value, 1) if isinstance(value, (int, float)) else None
+
+
+async def load_user_context(client: httpx.AsyncClient, user_id: str) -> UserContext:
     try:
-        rows = response.json()
-    except ValueError as exc:
-        raise AssistantContextError(f"Supabase returned invalid data for {table}.") from exc
+        household = await plan_ops.load_household(client, user_id)
+        profiles = await db.select(client, "onboarding_profiles", {
+            "select": "monthly_budget", "user_id": f"eq.{user_id}", "limit": "1",
+        })
+        plan, rows = await plan_ops.load_active_plan(client, user_id)
+        memory = await assistant_store.memory_facts(client, user_id)
 
-    if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
-        raise AssistantContextError(f"Supabase returned an invalid result for {table}.")
-    return rows
-
-
-async def load_user_context(user_id: str) -> dict:
-    if not settings.supabase_url or not settings.supabase_service_role_key:
-        raise AssistantContextError("Supabase backend configuration is missing.")
-
-    base_params = {"user_id": f"eq.{user_id}"}
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            profiles = await _get_rows(
-                client,
-                "onboarding_profiles",
-                {
-                    **base_params,
-                    "select": "family_size,monthly_budget,dietary_preference,dietary_goals",
-                    "limit": "1",
-                },
-            )
-            exclusions = await _get_rows(
-                client,
-                "dietary_exclusions",
-                {
-                    **base_params,
-                    "select": "ingredient_name",
+        grocery = None
+        if plan is not None:
+            lists = await db.select(client, "grocery_lists", {
+                "select": "id",
+                "meal_id": f"eq.{plan['id']}",
+                "user_id": f"eq.{user_id}",
+                "limit": "1",
+            })
+            if lists:
+                items = await db.select(client, "grocery_items", {
+                    "select": "ingredient_name,purchase_quantity,unit,category,is_purchased",
+                    "grocery_list_id": f"eq.{lists[0]['id']}",
                     "order": "ingredient_name.asc",
-                    "limit": "100",
-                },
-            )
-            plans = await _get_rows(
-                client,
-                "meal",
-                {
-                    **base_params,
-                    "select": "id,start_date,end_date,status",
-                    "status": "eq.active",
-                    "order": "created_at.desc",
-                    "limit": "1",
-                },
-            )
+                    "limit": "150",
+                })
+                grocery = {
+                    "to_buy": [f"{i['ingredient_name']} {float(i.get('purchase_quantity') or 0):g} {i['unit']}".strip()
+                               for i in items if not i.get("is_purchased")],
+                    "already_bought": [i["ingredient_name"] for i in items if i.get("is_purchased")],
+                }
+    except (db.SupabaseError, httpx.HTTPError, KeyError, TypeError, ValueError) as exc:
+        raise AssistantContextError("Could not load your Annora data.") from exc
 
-            plan = plans[0] if plans else None
-            meals: list[dict] = []
-            grocery_list = None
-            if plan is not None:
-                meals = await _get_rows(
-                    client,
-                    "meal_plan",
-                    {
-                        "meal_id": f"eq.{plan['id']}",
-                        "select": "meal_date,meal_type,name,description,status,nutrition",
-                        "order": "meal_date.asc,meal_type.asc",
-                        "limit": "50",
-                    },
-                )
-                grocery_lists = await _get_rows(
-                    client,
-                    "grocery_lists",
-                    {
-                        **base_params,
-                        "meal_id": f"eq.{plan['id']}",
-                        "select": "id,status",
-                        "order": "created_at.desc",
-                        "limit": "1",
-                    },
-                )
-                if grocery_lists:
-                    saved_list = grocery_lists[0]
-                    grocery_items = await _get_rows(
-                        client,
-                        "grocery_items",
-                        {
-                            "grocery_list_id": f"eq.{saved_list['id']}",
-                            "select": (
-                                "ingredient_name,required_quantity,purchase_quantity,"
-                                "unit,category,is_purchased,is_urgent"
-                            ),
-                            "order": "ingredient_name.asc",
-                            "limit": "100",
-                        },
-                    )
-                    grocery_list = {
-                        "status": saved_list.get("status"),
-                        "items": grocery_items,
-                    }
-    except httpx.HTTPError as exc:
-        raise AssistantContextError("Could not reach Supabase to load Annora context.") from exc
-    except KeyError as exc:
-        raise AssistantContextError("Supabase returned incomplete Annora context.") from exc
+    slots: dict[str, dict] = {}
+    meals = []
+    for i, row in enumerate(rows, start=1):
+        ref = f"M{i}"
+        slots[ref] = row
+        meals.append({
+            "ref": ref,
+            "date": row["meal_date"],
+            "meal_type": row["meal_type"],
+            "dish": row.get("name"),
+            "recipe_code": row.get("source_recipe_code"),
+            "kcal_per_serving": _kcal(row.get("nutrition")),
+            "protein_g": _protein(row.get("nutrition")),
+            "changed_by": {"app_swap": "you in the app", "annora_chat": "Ask Annora"}.get(row.get("origin") or ""),
+        })
 
-    return {
-        "profile": profiles[0] if profiles else None,
-        "dietary_exclusions": [row["ingredient_name"] for row in exclusions],
+    data = {
+        "household": {
+            "people": household["family_size"],
+            "diet": household["dietary_preference"],
+            "health_goals": household["dietary_goals"],
+            "foods_to_avoid": household["dietary_exclusions"],
+            "monthly_budget_inr": (profiles[0].get("monthly_budget") if profiles else None),
+        },
+        "remembered_about_user": memory,
         "active_meal_plan": (
-            {
-                "start_date": plan.get("start_date"),
-                "end_date": plan.get("end_date"),
-                "meals": meals,
-            }
-            if plan is not None
-            else None
+            {"start_date": plan["start_date"], "end_date": plan["end_date"], "meals": meals} if plan else None
         ),
-        "grocery_list": grocery_list,
+        "grocery_list": grocery,
     }
+    return UserContext(user_id=user_id, data=data, plan=plan, slots=slots)

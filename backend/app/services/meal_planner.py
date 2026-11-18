@@ -115,6 +115,11 @@ async def _load_excluded_codes(exclusions: list[str]) -> set[str]:
 def _build_system_prompt(start_date: date, context: MealPlanningContext | None = None) -> str:
     dates = _expected_dates(start_date)
     household = goals_guidance(context.dietary_goals) if context else ""
+    notes = [n.strip()[:200] for n in (context.notes if context else []) if n and n.strip()][:30]
+    if notes:
+        # From Ask Annora memory / the user's request. Preferences only: recipe
+        # codes are still restricted to the reference and sanitised afterwards.
+        household = "\n".join(filter(None, [household, *[f"- User note: {n}" for n in notes]]))
     household_block = f"\nHOUSEHOLD PREFERENCES:\n{household}\n" if household else ""
     return f"""
 You are Annora's household meal-planning engine.

@@ -44,7 +44,13 @@ def _raise_supabase_error(action: str, response: httpx.Response) -> None:
         )
 
 
-async def save_meal_plan(user_id: str, start_date: date, plan) -> str:
+async def save_meal_plan(
+    user_id: str,
+    start_date: date,
+    plan,
+    origin: str = "app",
+    origin_message_id: str | None = None,
+) -> str:
     headers = _headers()
     base_url = settings.supabase_url.rstrip("/")
     end_date = list(plan.keys())[-1]  # The last date in the plan is the end date
@@ -96,6 +102,8 @@ async def save_meal_plan(user_id: str, start_date: date, plan) -> str:
                     "end_date": date.fromisoformat(end_date).isoformat(),
                     "status": "active",
                     "generation_source": "llm",
+                    "origin": origin,
+                    "origin_message_id": origin_message_id,
                 },
             )
             _raise_supabase_error("Saving meal plan", plan_response)

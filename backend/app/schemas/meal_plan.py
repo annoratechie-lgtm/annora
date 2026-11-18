@@ -9,6 +9,8 @@ class MealPlanningContext(BaseModel):
     dietary_preference: str | None = None
     dietary_goals: list[str] = Field(default_factory=list)
     dietary_exclusions: list[str] = Field(default_factory=list)
+    # Things Ask Annora remembers about the user, plus notes for this plan.
+    notes: list[str] = Field(default_factory=list)
 
 class mealPlan(BaseModel):
     meal_date: str

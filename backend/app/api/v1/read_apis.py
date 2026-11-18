@@ -41,7 +41,7 @@ async def get_user_meal_plan(user_id: str, _: str = Depends(require_matching_use
                 client,
                 "meal",
                 {
-                    "select": "id,user_id,start_date,end_date,status,generation_source,created_at,updated_at",
+                    "select": "id,user_id,start_date,end_date,status,generation_source,origin,created_at,updated_at",
                     "user_id": f"eq.{user_id}",
                     "status": "eq.active",
                     "order": "created_at.desc",
@@ -56,7 +56,7 @@ async def get_user_meal_plan(user_id: str, _: str = Depends(require_matching_use
                 client,
                 "meal_plan",
                 {
-                    "select": "id,meal_id,meal_date,meal_type,source_recipe_code,name,description,status,prep_time_minutes,nutrition,created_at,updated_at",
+                    "select": "id,meal_id,meal_date,meal_type,source_recipe_code,name,description,status,prep_time_minutes,nutrition,origin,created_at,updated_at",
                     "meal_id": f"eq.{plan['id']}",
                     "order": "meal_date.asc,meal_type.asc",
                 },
@@ -73,6 +73,7 @@ async def get_user_meal_plan(user_id: str, _: str = Depends(require_matching_use
                     "status": row.get("status", "planned"),
                     "prep_time_minutes": row.get("prep_time_minutes"),
                     "nutrition": row.get("nutrition") or {},
+                    "origin": row.get("origin") or "planner",
                     "created_at": row.get("created_at"),
                     "updated_at": row.get("updated_at"),
                 }
